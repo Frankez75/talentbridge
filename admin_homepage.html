@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TalentBridge · Admin Dashboard</title>
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.css">
+
+<link rel="stylesheet" href="fontawesome/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F9F9FB;
+            color: #111100;
+            min-height: 100vh;
+        }
+        .navbar {
+            background-color: #FFFFFF;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(17, 17, 0, 0.05);
+        }
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.8rem;
+            letter-spacing: -0.02em;
+            color: #111100;
+            text-decoration: none;
+        }
+        .navbar-brand span {
+            color: #e67300;
+        }
+        .sidebar {
+            background-color: #FFFFFF;
+            border-right: 1px solid #efefe7;
+            min-height: calc(100vh - 80px);
+            padding: 2rem 0;
+        }
+        .nav-item-custom {
+            display: block;
+            padding: 0.75rem 1.5rem;
+            color: #111100;
+            text-decoration: none;
+            font-weight: 500;
+            margin: 0.25rem 0;
+        }
+        .nav-item-custom i {
+            margin-right: 0.75rem;
+            color: #e67300;
+        }
+        .nav-item-custom:hover {
+            background-color: #fff4eb;
+            color: #e67300;
+        }
+        .nav-item-custom.active {
+            background-color: #fff4eb;
+            color: #e67300;
+            border-right: 3px solid #e67300;
+        }
+        .dashboard-card {
+            background: #FFFFFF;
+            border-radius: 24px;
+            padding: 1.5rem;
+            border: 1px solid #efefe7;
+            margin-bottom: 1.5rem;
+        }
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #111100;
+        }
+        .stat-label {
+            color: #6c6c5a;
+            font-size: 0.9rem;
+        }
+        .table-custom {
+            width: 100%;
+        }
+        .table-custom th {
+            padding: 1rem 0.75rem;
+            border-bottom: 1px solid #efefe7;
+            color: #111100;
+            font-weight: 600;
+        }
+        .table-custom td {
+            padding: 1rem 0.75rem;
+            border-bottom: 1px solid #efefe7;
+            color: #4a4a38;
+        }
+        .badge-active {
+            background-color: #e67300;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-pending {
+            background-color: #e0e0d5;
+            color: #111100;
+            padding: 0.25rem 0.75rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .btn-sm-danger {
+            background-color: transparent;
+            border: 1px solid #dc3545;
+            color: #dc3545;
+            padding: 0.25rem 0.75rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            text-decoration: none;
+        }
+        .btn-sm-danger:hover {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-sm-warning {
+            background-color: transparent;
+            border: 1px solid #e67300;
+            color: #e67300;
+            padding: 0.25rem 0.75rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            text-decoration: none;
+        }
+        .btn-sm-warning:hover {
+            background-color: #e67300;
+            color: white;
+        }
+        .content-pane {
+            padding: 2rem;
+        }
+        .btn-logout {
+            background-color: #e67300;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 40px;
+            font-weight: 600;
+        }
+        .btn-logout:hover {
+            background-color: #cc6600;
+            color: white;
+        }
+        a {
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand" href="index.html">Talent<span>Bridge</span></a>
+            <div>
+                <span class="me-3" style="color: #e67300; font-weight: 600;">Admin</span>
+                <a href="index.html" class="btn-logout">Logout</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-3 col-lg-2 sidebar">
+                <a href="#" class="nav-item-custom active" data-tab="users">
+                    <i class="bi bi-people"></i> Manage Users
+                </a>
+                <a href="#" class="nav-item-custom" data-tab="artworks">
+                    <i class="bi bi-grid-3x3-gap-fill"></i> Manage Artworks
+                </a>
+                <a href="#" class="nav-item-custom" data-tab="orders">
+                    <i class="bi bi-cart-check"></i> Manage Orders
+                </a>
+                <a href="#" class="nav-item-custom" data-tab="reports">
+                    <i class="bi bi-flag"></i> Reports
+                </a>
+            </div>
+            
+            <div class="col-md-9 col-lg-10">
+                <div class="content-pane">
+                    <div id="usersPanel">
+                        <div class="dashboard-card">
+                            <h3 class="fw-bold mb-4">Manage Users</h3>
+                            <div class="table-responsive">
+                                <table class="table-custom">
+                                    <thead>
+                                        <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Action</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>Amara Okonkwo</td><td>amara@art.com</td><td>Artist</td><td><span class="badge-active">Active</span></td><td><a href="#" class="btn-sm-danger" data-action="suspend" data-user="1">Suspend</a></td></tr>
+                                        <tr><td>James Wilson</td><td>james@patron.com</td><td>Patron</td><td><span class="badge-active">Active</span></td><td><a href="#" class="btn-sm-danger" data-action="suspend" data-user="2">Suspend</a></td></tr>
+                                        <tr><td>Sarah Chen</td><td>sarah.chen@sculpt.com</td><td>Artist</td><td><span class="badge-pending">Pending</span></td><td><a href="#" class="btn-sm-warning" data-action="approve" data-user="3">Approve</a></td></tr>
+                                        <tr><td>Michael Brown</td><td>mbrown@business.com</td><td>Patron</td><td><span class="badge-active">Active</span></td><td><a href="#" class="btn-sm-danger" data-action="suspend" data-user="4">Suspend</a></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="dashboard-card">
+                            <h4 class="fw-bold mb-3">User Statistics</h4>
+                            <div class="row">
+                                <div class="col-4"><div class="stat-number">47</div><div class="stat-label">Total Artists</div></div>
+                                <div class="col-4"><div class="stat-number">32</div><div class="stat-label">Total Patrons</div></div>
+                                <div class="col-4"><div class="stat-number">79</div><div class="stat-label">Total Users</div></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="artworksPanel" style="display: none;">
+                        <div class="dashboard-card">
+                            <h3 class="fw-bold mb-4">Manage Artworks</h3>
+                            <div class="table-responsive">
+                                <table class="table-custom">
+                                    <thead><tr><th>Title</th><th>Artist</th><th>Category</th><th>Price</th><th>Status</th><th>Action</th></tr></thead>
+                                    <tbody>
+                                        <tr><td>Sunset Dreams</td><td>Amara Okonkwo</td><td>Painting</td><td>$450</td><td><span class="badge-active">Listed</span></td><td><a href="#" class="btn-sm-danger" data-artwork="1">Remove</a></td></tr>
+                                        <tr><td>Bronze Warrior</td><td>Sarah Chen</td><td>Sculpture</td><td>$1,200</td><td><span class="badge-pending">Pending Review</span></td><td><a href="#" class="btn-sm-warning" data-artwork="2">Approve</a></td></tr>
+                                        <tr><td>Beaded Crown</td><td>Amara Okonkwo</td><td>Craft</td><td>$89</td><td><span class="badge-active">Listed</span></td><td><a href="#" class="btn-sm-danger" data-artwork="3">Remove</a></td></tr>
+                                        <tr><td>Abstract No. 7</td><td>David Okafor</td><td>Digital Art</td><td>$320</td><td><span class="badge-active">Listed</span></td><td><a href="#" class="btn-sm-danger" data-artwork="4">Remove</a></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="dashboard-card">
+                            <h4 class="fw-bold mb-3">Artwork Statistics</h4>
+                            <div class="row">
+                                <div class="col-4"><div class="stat-number">156</div><div class="stat-label">Total Artworks</div></div>
+                                <div class="col-4"><div class="stat-number">142</div><div class="stat-label">Listed</div></div>
+                                <div class="col-4"><div class="stat-number">14</div><div class="stat-label">Pending Review</div></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="ordersPanel" style="display: none;">
+                        <div class="dashboard-card">
+                            <h3 class="fw-bold mb-4">Manage Orders</h3>
+                            <div class="table-responsive">
+                                <table class="table-custom">
+                                    <thead><tr><th>Order ID</th><th>Artwork</th><th>Buyer</th><th>Artist</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
+                                    <tbody>
+                                        <tr><td>#TB-1001</td><td>Sunset Dreams</td><td>James Wilson</td><td>Amara Okonkwo</td><td>$450</td><td><span class="badge-active">Completed</span></td><td><a href="#" class="btn-sm-warning" data-order="1">View</a></td></tr>
+                                        <tr><td>#TB-1002</td><td>Bronze Warrior</td><td>Michael Brown</td><td>Sarah Chen</td><td>$1,200</td><td><span class="badge-pending">Pending</span></td><td><a href="#" class="btn-sm-warning" data-order="2">Process</a></td></tr>
+                                        <tr><td>#TB-1003</td><td>Beaded Crown</td><td>Lisa Wong</td><td>Amara Okonkwo</td><td>$89</td><td><span class="badge-active">Shipped</span></td><td><a href="#" class="btn-sm-warning" data-order="3">Track</a></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="dashboard-card">
+                            <h4 class="fw-bold mb-3">Order Statistics</h4>
+                            <div class="row">
+                                <div class="col-4"><div class="stat-number">89</div><div class="stat-label">Total Orders</div></div>
+                                <div class="col-4"><div class="stat-number">$23,450</div><div class="stat-label">Total Revenue</div></div>
+                                <div class="col-4"><div class="stat-number">12</div><div class="stat-label">Pending Orders</div></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="reportsPanel" style="display: none;">
+                        <div class="dashboard-card">
+                            <h3 class="fw-bold mb-4">Reported Content</h3>
+                            <div class="table-responsive">
+                                <table class="table-custom">
+                                    <thead><tr><th>Report ID</th><th>Content Type</th><th>Reported By</th><th>Reason</th><th>Status</th><th>Action</th></tr></thead>
+                                    <tbody>
+                                        <tr><td>#R-001</td><td>Artwork: Abstract No. 7</td><td>Anonymous</td><td>Copyright issue</td><td><span class="badge-pending">Under Review</span></td><td><a href="#" class="btn-sm-warning" data-report="1">Review</a></td></tr>
+                                        <tr><td>#R-002</td><td>User: John Smith</td><td>Artist</td><td>Harassment</td><td><span class="badge-pending">Under Review</span></td><td><a href="#" class="btn-sm-warning" data-report="2">Review</a></td></tr>
+                                        <tr><td>#R-003</td><td>Artwork: Dark Forest</td><td>Patron</td><td>Inappropriate content</td><td><span class="badge-active">Resolved</span></td><td><a href="#" class="btn-sm-danger" data-report="3">Dismiss</a></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function switchTab(tabId) {
+            var panels = ['usersPanel', 'artworksPanel', 'ordersPanel', 'reportsPanel'];
+            for(var i = 0; i < panels.length; i++) {
+                var panel = document.getElementById(panels[i]);
+                if(panel) {
+                    panel.style.display = 'none';
+                }
+            }
+            var activePanel = document.getElementById(tabId);
+            if(activePanel) {
+                activePanel.style.display = 'block';
+            }
+            
+            var navLinks = document.getElementsByClassName('nav-item-custom');
+            for(var j = 0; j < navLinks.length; j++) {
+                navLinks[j].classList.remove('active');
+            }
+        }
+        
+        var userTab = document.getElementById('usersPanel');
+        var artworkTab = document.getElementById('artworksPanel');
+        var orderTab = document.getElementById('ordersPanel');
+        var reportTab = document.getElementById('reportsPanel');
+        
+        var navUsers = document.getElementsByClassName('nav-item-custom')[0];
+        var navArtworks = document.getElementsByClassName('nav-item-custom')[1];
+        var navOrders = document.getElementsByClassName('nav-item-custom')[2];
+        var navReports = document.getElementsByClassName('nav-item-custom')[3];
+        
+        navUsers.onclick = function(e) {
+            e.preventDefault();
+            switchTab('usersPanel');
+            navUsers.classList.add('active');
+            navArtworks.classList.remove('active');
+            navOrders.classList.remove('active');
+            navReports.classList.remove('active');
+        };
+        
+        navArtworks.onclick = function(e) {
+            e.preventDefault();
+            switchTab('artworksPanel');
+            navArtworks.classList.add('active');
+            navUsers.classList.remove('active');
+            navOrders.classList.remove('active');
+            navReports.classList.remove('active');
+        };
+        
+        navOrders.onclick = function(e) {
+            e.preventDefault();
+            switchTab('ordersPanel');
+            navOrders.classList.add('active');
+            navUsers.classList.remove('active');
+            navArtworks.classList.remove('active');
+            navReports.classList.remove('active');
+        };
+        
+        navReports.onclick = function(e) {
+            e.preventDefault();
+            switchTab('reportsPanel');
+            navReports.classList.add('active');
+            navUsers.classList.remove('active');
+            navArtworks.classList.remove('active');
+            navOrders.classList.remove('active');
+        };
+        
+        var suspendBtns = document.getElementsByClassName('btn-sm-danger');
+        for(var k = 0; k < suspendBtns.length; k++) {
+            suspendBtns[k].onclick = function(e) {
+                e.preventDefault();
+                var confirmAction = confirm('Are you sure you want to perform this action?');
+                if(confirmAction) {
+                    alert('Action completed (demo mode)');
+                }
+            };
+        }
+        
+        var approveBtns = document.getElementsByClassName('btn-sm-warning');
+        for(var m = 0; m < approveBtns.length; m++) {
+            approveBtns[m].onclick = function(e) {
+                e.preventDefault();
+                var confirmAction = confirm('Process this item?');
+                if(confirmAction) {
+                    alert('Action completed (demo mode)');
+                }
+            };
+        }
+    </script>
+</body>
+</html>
