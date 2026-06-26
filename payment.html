@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TalentBridge · Payment</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F9F9FB;
+            color: #111100;
+            min-height: 100vh;
+        }
+        .navbar {
+            background-color: #FFFFFF;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(17, 17, 0, 0.05);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.02);
+        }
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.8rem;
+            letter-spacing: -0.02em;
+            color: #111100;
+            text-decoration: none;
+        }
+        .navbar-brand span {
+            color: #e67300;
+        }
+        .page-header {
+            background: linear-gradient(135deg, #111100 0%, #2a2a1a 100%);
+            color: white;
+            padding: 2.5rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 32px 32px;
+        }
+        .payment-card {
+            background: #FFFFFF;
+            border-radius: 24px;
+            padding: 2rem;
+            border: 1px solid #efefe7;
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+        .payment-card:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+        }
+        .form-control {
+            border: 1.5px solid #e0e0d5;
+            border-radius: 16px;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+        }
+        .form-control:focus {
+            border-color: #e67300;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(230,115,0,0.1);
+        }
+        .form-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #111100;
+        }
+        .btn-primary-custom {
+            background-color: #e67300;
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 0.85rem 2rem;
+            border-radius: 40px;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        .btn-primary-custom:hover {
+            background-color: #cc6600;
+            transform: scale(1.01);
+        }
+        .btn-outline-custom {
+            border: 1.5px solid #111100;
+            background: transparent;
+            color: #111100;
+            font-weight: 600;
+            padding: 0.6rem 1.5rem;
+            border-radius: 40px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .btn-outline-custom:hover {
+            background-color: #111100;
+            color: #FFFFFF;
+            transform: scale(1.02);
+        }
+        .btn-logout {
+            background-color: #e67300;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 40px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-logout:hover {
+            background-color: #cc6600;
+            transform: scale(1.02);
+        }
+        .breadcrumb-custom {
+            background: transparent;
+            padding: 0;
+            margin-bottom: 0;
+        }
+        .breadcrumb-custom .breadcrumb-item a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .breadcrumb-custom .breadcrumb-item a:hover {
+            color: white;
+        }
+        .breadcrumb-custom .breadcrumb-item.active {
+            color: white;
+        }
+        .payment-method {
+            border: 2px solid #e0e0d5;
+            border-radius: 16px;
+            padding: 1.25rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .payment-method:hover {
+            border-color: #e67300;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.04);
+        }
+        .payment-method.selected {
+            border-color: #e67300;
+            background-color: #fff4eb;
+        }
+        .payment-method input {
+            display: none;
+        }
+        .payment-method i {
+            font-size: 2rem;
+            color: #e67300;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        .payment-method .method-name {
+            font-weight: 700;
+        }
+        .payment-method .method-desc {
+            font-size: 0.8rem;
+            color: #6c6c5a;
+        }
+        .secure-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #28a745;
+            font-weight: 600;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+        }
+        .summary-total {
+            border-top: 2px solid #e67300;
+            padding-top: 1rem;
+            margin-top: 0.5rem;
+            font-weight: 700;
+            font-size: 1.3rem;
+        }
+        .card-icons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .card-icons img {
+            height: 25px;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .payment-card {
+            animation: fadeInUp 0.4s ease-out;
+        }
+        .processing-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(17, 17, 0, 0.7);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        .processing-overlay.show {
+            display: flex;
+        }
+        .processing-content {
+            background: #FFFFFF;
+            border-radius: 24px;
+            padding: 3rem;
+            text-align: center;
+            max-width: 400px;
+        }
+        .processing-content .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #e0e0d5;
+            border-top: 4px solid #e67300;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        footer {
+            background: #FFFFFF;
+            padding: 2rem 0;
+            border-top: 1px solid #efefe7;
+            margin-top: 3rem;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="container">
+        <a class="navbar-brand" href="index.html">Talent<span>Bridge</span></a>
+        <div>
+            <span class="me-3" style="color: #e67300; font-weight: 600;" id="userNameDisplay">Patron</span>
+            <button class="btn-logout" id="logoutBtn">Logout</button>
+        </div>
+    </div>
+</nav>
+
+<div class="page-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-custom">
+                <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+                <li class="breadcrumb-item"><a href="artwork-listing.html">Gallery</a></li>
+                <li class="breadcrumb-item"><a href="checkout-order.html">Checkout</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Payment</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <div>
+                <h1 class="display-5 fw-bold mb-2">Payment</h1>
+                <p class="lead mb-0" style="opacity: 0.9;">Secure your purchase with confidence</p>
+            </div>
+            <div class="secure-badge">
+                <i class="bi bi-shield-lock-fill"></i> 256-bit SSL Secure
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="payment-card">
+                <h4 class="fw-bold mb-4"><i class="bi bi-credit-card"></i> Payment Method</h4>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="payment-method selected" id="paymentCard">
+                            <input type="radio" name="payment" value="card" checked>
+                            <i class="bi bi-credit-card"></i>
+                            <div class="method-name">Credit / Debit Card</div>
+                            <div class="method-desc">Visa, Mastercard, Amex, Discover</div>
+                            <div class="card-icons">
+                                <span class="badge bg-light text-dark border">Visa</span>
+                                <span class="badge bg-light text-dark border">Mastercard</span>
+                                <span class="badge bg-light text-dark border">Amex</span>
+                                <span class="badge bg-light text-dark border">Discover</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="payment-method" id="paymentPayPal">
+                            <input type="radio" name="payment" value="paypal">
+                            <i class="bi bi-paypal"></i>
+                            <div class="method-name">PayPal</div>
+                            <div class="method-desc">Pay with your PayPal account</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="payment-method" id="paymentApple">
+                            <input type="radio" name="payment" value="apple">
+                            <i class="bi bi-apple"></i>
+                            <div class="method-name">Apple Pay</div>
+                            <div class="method-desc">Pay with Touch ID / Face ID</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="payment-method" id="paymentGoogle">
+                            <input type="radio" name="payment" value="google">
+                            <i class="bi bi-google"></i>
+                            <div class="method-name">Google Pay</div>
+                            <div class="method-desc">Pay with your Google account</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="payment-card" id="cardDetailsSection">
+                <h4 class="fw-bold mb-3"><i class="bi bi-card-text"></i> Card Details</h4>
+                <form id="paymentForm">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Card Number *</label>
+                            <input type="text" class="form-control" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Expiry Date *</label>
+                            <input type="text" class="form-control" id="cardExpiry" placeholder="MM/YY" maxlength="5">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">CVV *</label>
+                            <input type="password" class="form-control" id="cardCvv" placeholder="123" maxlength="4">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Cardholder Name *</label>
+                            <input type="text" class="form-control" id="cardName" placeholder="John Doe">
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="saveCard">
+                                <label class="form-check-label" for="saveCard">
+                                    Save this card for future purchases
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="payment-card" id="billingSection">
+                <h4 class="fw-bold mb-3"><i class="bi bi-house"></i> Billing Address</h4>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="sameAsShipping" checked>
+                    <label class="form-check-label" for="sameAsShipping">
+                        Same as shipping address
+                    </label>
+                </div>
+                <div id="billingAddressFields" style="display: none;">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Address</label>
+                            <input type="text" class="form-control" id="billingAddress" placeholder="123 Main St">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">City</label>
+                            <input type="text" class="form-control" id="billingCity" placeholder="New York">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">State</label>
+                            <input type="text" class="form-control" id="billingState" placeholder="NY">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Zip Code</label>
+                            <input type="text" class="form-control" id="billingZip" placeholder="10001">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="payment-card">
+                <h4 class="fw-bold mb-3"><i class="bi bi-shield-check"></i> Security</h4>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <span class="badge bg-success bg-opacity-10 text-success p-2"><i class="bi bi-lock-fill"></i> PCI Compliant</span>
+                    <span class="badge bg-success bg-opacity-10 text-success p-2"><i class="bi bi-shield-fill"></i> Fraud Protection</span>
+                    <span class="badge bg-success bg-opacity-10 text-success p-2"><i class="bi bi-credit-card"></i> Encrypted Payment</span>
+                </div>
+                <p class="text-secondary small mt-2 mb-0">
+                    <i class="bi bi-info-circle"></i> Your payment information is encrypted and secure. We never store your full card details.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="payment-card" style="position: sticky; top: 2rem;">
+                <h4 class="fw-bold mb-3"><i class="bi bi-receipt"></i> Order Summary</h4>
+                <div id="summaryItems"></div>
+                <hr>
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span id="subtotal">$0.00</span>
+                </div>
+                <div class="summary-row">
+                    <span>Shipping</span>
+                    <span id="shippingCost">$0.00</span>
+                </div>
+                <div class="summary-row">
+                    <span>Tax (5%)</span>
+                    <span id="taxAmount">$0.00</span>
+                </div>
+                <div class="summary-row">
+                    <span>Processing Fee</span>
+                    <span id="processingFee">$0.00</span>
+                </div>
+                <div class="summary-row summary-total">
+                    <span>Total</span>
+                    <span id="totalAmount">$0.00</span>
+                </div>
+                <button class="btn-primary-custom mt-3" id="payNowBtn">
+                    <i class="bi bi-lock"></i> Pay Now
+                </button>
+                <div class="text-center mt-2">
+                    <a href="checkout-order.html" class="btn-outline-custom btn-sm">← Back to Checkout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="processing-overlay" id="processingOverlay">
+    <div class="processing-content">
+        <div class="spinner"></div>
+        <h4 class="fw-bold">Processing Payment</h4>
+        <p class="text-secondary">Please wait while we secure your transaction...</p>
+    </div>
+</div>
+
+<footer>
+    <div class="container text-center">
+        <p class="text-secondary">&copy; 2025 TalentBridge. Secure payment processing.</p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let currentUser = localStorage.getItem('tb_user_name');
+    let userType = localStorage.getItem('tb_user_type');
+
+    if(!currentUser || userType !== 'patron') {
+        window.location.href = 'register.html';
+    }
+
+    document.getElementById('userNameDisplay').innerText = currentUser;
+
+    let orderItems = JSON.parse(localStorage.getItem('tb_checkout_items')) || [
+        {
+            id: 1,
+            title: 'Sunset Dreams',
+            artist: 'Sarah Chen',
+            price: 450,
+            image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=200&h=200&fit=crop',
+            quantity: 1
+        },
+        {
+            id: 3,
+            title: 'Ethereal Forest',
+            artist: 'David Okafor',
+            price: 680,
+            image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=200&fit=crop',
+            quantity: 1
+        }
+    ];
+
+    let shippingCost = 25.00;
+    let processingFee = 2.50;
+
+    function renderSummary() {
+        let container = document.getElementById('summaryItems');
+        let subtotal = 0;
+
+        for(let i = 0; i < orderItems.length; i++) {
+            let item = orderItems[i];
+            let total = item.price * item.quantity;
+            subtotal += total;
+        }
+
+        let tax = subtotal * 0.05;
+        let total = subtotal + shippingCost + tax + processingFee;
+
+        let summaryHtml = '';
+        for(let i = 0; i < orderItems.length; i++) {
+            let item = orderItems[i];
+            let total = item.price * item.quantity;
+            summaryHtml += `
+                <div class="summary-row">
+                    <span>${item.title} × ${item.quantity}</span>
+                    <span>$${total.toFixed(2)}</span>
+                </div>
+            `;
+        }
+        container.innerHTML = summaryHtml;
+
+        document.getElementById('subtotal').innerText = '$' + subtotal.toFixed(2);
+        document.getElementById('shippingCost').innerText = '$' + shippingCost.toFixed(2);
+        document.getElementById('taxAmount').innerText = '$' + tax.toFixed(2);
+        document.getElementById('processingFee').innerText = '$' + processingFee.toFixed(2);
+        document.getElementById('totalAmount').innerText = '$' + total.toFixed(2);
+    }
+
+    function formatCardNumber(value) {
+        let v = value.replace(/\s/g, '').replace(/\D/g, '');
+        let parts = [];
+        for(let i = 0; i < v.length && i < 16; i += 4) {
+            parts.push(v.substring(i, i + 4));
+        }
+        return parts.join(' ');
+    }
+
+    $('#cardNumber').on('input', function() {
+        let raw = $(this).val().replace(/\s/g, '');
+        $(this).val(formatCardNumber(raw));
+    });
+
+    $('#cardExpiry').on('input', function() {
+        let value = $(this).val().replace(/\D/g, '');
+        if(value.length >= 2) {
+            $(this).val(value.substring(0, 2) + '/' + value.substring(2, 4));
+        } else {
+            $(this).val(value);
+        }
+    });
+
+    $('#cardCvv').on('input', function() {
+        $(this).val($(this).val().replace(/\D/g, ''));
+    });
+
+    $('.payment-method').click(function() {
+        $('.payment-method').removeClass('selected');
+        $(this).addClass('selected');
+        $(this).find('input[type="radio"]').prop('checked', true);
+
+        let id = $(this).attr('id');
+        if(id === 'paymentCard' || id === 'paymentCard' && !id) {
+            $('#cardDetailsSection').show();
+        } else {
+            $('#cardDetailsSection').hide();
+        }
+    });
+
+    $('#sameAsShipping').change(function() {
+        if($(this).is(':checked')) {
+            $('#billingAddressFields').hide();
+        } else {
+            $('#billingAddressFields').show();
+        }
+    });
+
+    $('#payNowBtn').click(function() {
+        let selectedMethod = $('input[name="payment"]:checked').val();
+        
+        if(selectedMethod === 'card') {
+            let cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
+            let cardExpiry = document.getElementById('cardExpiry').value;
+            let cardCvv = document.getElementById('cardCvv').value;
+            let cardName = document.getElementById('cardName').value.trim();
+
+            if(cardNumber.length < 16) {
+                alert('Please enter a valid 16-digit card number.');
+                return;
+            }
+            if(!cardExpiry.match(/^\d{2}\/\d{2}$/)) {
+                alert('Please enter a valid expiry date (MM/YY).');
+                return;
+            }
+            if(cardCvv.length < 3) {
+                alert('Please enter a valid CVV code.');
+                return;
+            }
+            if(!cardName) {
+                alert('Please enter the cardholder name.');
+                return;
+            }
+        }
+
+        document.getElementById('processingOverlay').classList.add('show');
+
+        setTimeout(function() {
+            document.getElementById('processingOverlay').classList.remove('show');
+            let orderNumber = 'ORD-' + Date.now().toString().slice(-8);
+            
+            let orders = JSON.parse(localStorage.getItem('tb_patron_orders')) || [];
+            for(let i = 0; i < orderItems.length; i++) {
+                orders.push({
+                    id: orderNumber + '-' + (i + 1),
+                    artworkId: orderItems[i].id,
+                    artworkTitle: orderItems[i].title,
+                    artistName: orderItems[i].artist,
+                    image: orderItems[i].image,
+                    amount: orderItems[i].price,
+                    status: 'Processing',
+                    orderDate: new Date().toISOString().split('T')[0],
+                    processingDate: new Date().toISOString().split('T')[0],
+                    shippedDate: null,
+                    deliveredDate: null,
+                    reviewed: false
+                });
+            }
+            localStorage.setItem('tb_patron_orders', JSON.stringify(orders));
+
+            let artistOrders = JSON.parse(localStorage.getItem('tb_artist_orders')) || [];
+            for(let i = 0; i < orderItems.length; i++) {
+                artistOrders.push({
+                    id: orderNumber + '-' + (i + 1),
+                    artworkId: orderItems[i].id,
+                    artworkTitle: orderItems[i].title,
+                    artworkImage: orderItems[i].image,
+                    buyerName: currentUser,
+                    buyerEmail: localStorage.getItem('tb_user_email') || '',
+                    amount: orderItems[i].price,
+                    status: 'Processing',
+                    orderDate: new Date().toISOString().split('T')[0],
+                    processingDate: new Date().toISOString().split('T')[0],
+                    shippedDate: null,
+                    deliveredDate: null
+                });
+            }
+            localStorage.setItem('tb_artist_orders', JSON.stringify(artistOrders));
+
+            localStorage.removeItem('tb_checkout_items');
+
+            alert('Payment successful!\nOrder Number: ' + orderNumber + '\nTotal: ' + document.getElementById('totalAmount').innerText + '\n\nYou will receive a confirmation email shortly.');
+            window.location.href = 'order-confirmation.html?order=' + orderNumber;
+        }, 2500);
+    });
+
+    $('#logoutBtn').click(function() {
+        localStorage.removeItem('tb_user_type');
+        localStorage.removeItem('tb_user_name');
+        localStorage.removeItem('tb_user_email');
+        window.location.href = 'index.html';
+    });
+
+    renderSummary();
+
+    if(orderItems.length === 0) {
+        alert('Your cart is empty. Please add items before proceeding to payment.');
+        window.location.href = 'artwork-listing.html';
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TalentBridge · Ratings & Reviews</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F9F9FB;
+            color: #111100;
+            min-height: 100vh;
+        }
+        .navbar {
+            background-color: #FFFFFF;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(17, 17, 0, 0.05);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.02);
+        }
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.8rem;
+            letter-spacing: -0.02em;
+            color: #111100;
+            text-decoration: none;
+        }
+        .navbar-brand span {
+            color: #e67300;
+        }
+        .page-header {
+            background: linear-gradient(135deg, #111100 0%, #2a2a1a 100%);
+            color: white;
+            padding: 2.5rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 32px 32px;
+        }
+        .review-card {
+            background: #FFFFFF;
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid #efefe7;
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+        .review-card:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+        }
+        .btn-primary-custom {
+            background-color: #e67300;
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.6rem 2rem;
+            border-radius: 40px;
+            transition: all 0.3s ease;
+        }
+        .btn-primary-custom:hover {
+            background-color: #cc6600;
+            transform: scale(1.02);
+        }
+        .btn-outline-custom {
+            border: 1.5px solid #111100;
+            background: transparent;
+            color: #111100;
+            font-weight: 600;
+            padding: 0.5rem 1.5rem;
+            border-radius: 40px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .btn-outline-custom:hover {
+            background-color: #111100;
+            color: #FFFFFF;
+            transform: scale(1.02);
+        }
+        .btn-logout {
+            background-color: #e67300;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 40px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-logout:hover {
+            background-color: #cc6600;
+            transform: scale(1.02);
+        }
+        .rating-stars {
+            color: #ffc107;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+        }
+        .rating-stars-large {
+            color: #ffc107;
+            font-size: 2rem;
+            letter-spacing: 4px;
+        }
+        .form-control, .form-select {
+            border: 1.5px solid #e0e0d5;
+            border-radius: 16px;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #e67300;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(230,115,0,0.1);
+        }
+        .form-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #111100;
+        }
+        .stat-card {
+            background: #FFFFFF;
+            border-radius: 20px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid #efefe7;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+        }
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #e67300;
+        }
+        .stat-label {
+            color: #6c6c5a;
+            font-size: 0.9rem;
+        }
+        .breadcrumb-custom {
+            background: transparent;
+            padding: 0;
+            margin-bottom: 0;
+        }
+        .breadcrumb-custom .breadcrumb-item a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .breadcrumb-custom .breadcrumb-item a:hover {
+            color: white;
+        }
+        .breadcrumb-custom .breadcrumb-item.active {
+            color: white;
+        }
+        .review-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e67300, #cc6600);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+        .rating-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: #e0e0d5;
+            overflow: hidden;
+            flex: 1;
+        }
+        .rating-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: #e67300;
+            transition: width 0.5s ease;
+        }
+        .modal-content-custom {
+            border-radius: 24px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: #FFFFFF;
+            border-radius: 20px;
+            border: 2px dashed #e0e0d5;
+        }
+        .empty-state i {
+            font-size: 4rem;
+            color: #e67300;
+            margin-bottom: 1rem;
+        }
+        .section-tabs {
+            border-bottom: 2px solid #efefe7;
+            margin-bottom: 2rem;
+        }
+        .section-tab {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            color: #6c6c5a;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.3s ease;
+        }
+        .section-tab:hover {
+            color: #e67300;
+        }
+        .section-tab.active {
+            color: #e67300;
+            border-bottom-color: #e67300;
+        }
+        .filter-select {
+            border: 1.5px solid #e0e0d5;
+            border-radius: 40px;
+            padding: 0.5rem 1.2rem;
+            font-size: 0.9rem;
+            background: white;
+        }
+        .filter-select:focus {
+            outline: none;
+            border-color: #e67300;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .review-card {
+            animation: fadeInUp 0.4s ease-out;
+        }
+        footer {
+            background: #FFFFFF;
+            padding: 2rem 0;
+            border-top: 1px solid #efefe7;
+            margin-top: 3rem;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="container">
+        <a class="navbar-brand" href="index.html">Talent<span>Bridge</span></a>
+        <div>
+            <span class="me-3" style="color: #e67300; font-weight: 600;" id="userNameDisplay">Guest</span>
+            <a href="login.html" class="btn-outline-custom" style="border: 1.5px solid #111100; background: transparent; color: #111100; padding: 0.5rem 1.5rem; border-radius: 40px; text-decoration: none; font-weight: 600; margin-right: 0.75rem;">Sign In</a>
+            <a href="register.html" class="btn-primary-custom" style="background-color: #e67300; color: white; padding: 0.5rem 1.5rem; border-radius: 40px; text-decoration: none; font-weight: 600;">Join</a>
+        </div>
+    </div>
+</nav>
+
+<div class="page-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-custom">
+                <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Ratings & Reviews</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <div>
+                <h1 class="display-5 fw-bold mb-2">Ratings & Reviews</h1>
+                <p class="lead mb-0" style="opacity: 0.9;">See what the community is saying</p>
+            </div>
+            <button class="btn-primary-custom" id="writeReviewBtn">
+                <i class="bi bi-pencil"></i> Write a Review
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number" id="totalReviews">0</div>
+                <div class="stat-label">Total Reviews</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number" id="avgRating">0.0</div>
+                <div class="stat-label">Average Rating</div>
+                <div class="rating-stars" id="avgRatingStars"></div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number" id="fiveStarCount">0</div>
+                <div class="stat-label">5-Star Reviews</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number" id="fourStarCount">0</div>
+                <div class="stat-label">4-Star Reviews</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-4">
+            <div class="review-card">
+                <h5 class="fw-bold mb-3">Rating Distribution</h5>
+                <div id="ratingDistribution"></div>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div class="review-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0">Filter Reviews</h5>
+                    <div class="d-flex gap-2">
+                        <select class="filter-select" id="ratingFilter">
+                            <option value="all">All Ratings</option>
+                            <option value="5">5 Stars</option>
+                            <option value="4">4 Stars</option>
+                            <option value="3">3 Stars</option>
+                            <option value="2">2 Stars</option>
+                            <option value="1">1 Star</option>
+                        </select>
+                        <select class="filter-select" id="sortFilter">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="highest">Highest Rated</option>
+                            <option value="lowest">Lowest Rated</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="reviewsContainer"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="reviewModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-custom">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-star"></i> Write a Review</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reviewForm">
+                    <div class="mb-3">
+                        <label class="form-label">Your Name</label>
+                        <input type="text" class="form-control" id="reviewerName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Artwork / Artist</label>
+                        <select class="form-select" id="reviewTarget" required>
+                            <option value="">Select an artwork or artist</option>
+                            <option value="Sunset Dreams by Sarah Chen">Sunset Dreams by Sarah Chen</option>
+                            <option value="Bronze Warrior by Sarah Chen">Bronze Warrior by Sarah Chen</option>
+                            <option value="Ethereal Forest by David Okafor">Ethereal Forest by David Okafor</option>
+                            <option value="Abstract No. 7 by David Okafor">Abstract No. 7 by David Okafor</option>
+                            <option value="Beaded Crown by Amara Okonkwo">Beaded Crown by Amara Okonkwo</option>
+                            <option value="Urban Rhythms by James Wilson">Urban Rhythms by James Wilson</option>
+                            <option value="Sarah Chen (Artist)">Sarah Chen (Artist)</option>
+                            <option value="David Okafor (Artist)">David Okafor (Artist)</option>
+                            <option value="Amara Okonkwo (Artist)">Amara Okonkwo (Artist)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Rating</label>
+                        <div class="rating-stars-large" id="modalRatingStars">
+                            <i class="bi bi-star" data-rating="1"></i>
+                            <i class="bi bi-star" data-rating="2"></i>
+                            <i class="bi bi-star" data-rating="3"></i>
+                            <i class="bi bi-star" data-rating="4"></i>
+                            <i class="bi bi-star" data-rating="5"></i>
+                        </div>
+                        <input type="hidden" id="selectedRating" value="0">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Review</label>
+                        <textarea class="form-control" id="reviewText" rows="4" placeholder="Share your experience..." required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-primary-custom" id="submitReviewBtn">Submit Review</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="container text-center">
+        <p class="text-secondary">&copy; 2025 TalentBridge. Community reviews.</p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let currentUser = localStorage.getItem('tb_user_name');
+    let userType = localStorage.getItem('tb_user_type');
+    
+    if(currentUser) {
+        document.getElementById('userNameDisplay').innerText = currentUser;
+        document.getElementById('reviewerName').value = currentUser;
+    }
+
+    let reviews = JSON.parse(localStorage.getItem('tb_reviews')) || [
+        {
+            id: 1,
+            reviewer: 'James Wilson',
+            target: 'Sunset Dreams by Sarah Chen',
+            rating: 5,
+            text: 'Absolutely stunning piece! The colors are vibrant and the detail is incredible. It exceeded all my expectations. Highly recommend!',
+            date: '2024-06-14',
+            helpful: 12,
+            reported: false
+        },
+        {
+            id: 2,
+            reviewer: 'Michael Brown',
+            target: 'Bronze Warrior by Sarah Chen',
+            rating: 4,
+            text: 'Beautiful sculpture, very well crafted. The bronze work is exceptional. Would definitely buy from this artist again.',
+            date: '2024-06-12',
+            helpful: 8,
+            reported: false
+        },
+        {
+            id: 3,
+            reviewer: 'Lisa Wong',
+            target: 'Beaded Crown by Amara Okonkwo',
+            rating: 5,
+            text: 'This crown is a masterpiece! The beadwork is intricate and the colors are breathtaking. I feel like royalty wearing it!',
+            date: '2024-06-10',
+            helpful: 15,
+            reported: false
+        },
+        {
+            id: 4,
+            reviewer: 'David Kim',
+            target: 'Ethereal Forest by David Okafor',
+            rating: 5,
+            text: 'Incredible depth and atmosphere. This painting brings such peace to my office. The artist has a true gift.',
+            date: '2024-06-08',
+            helpful: 9,
+            reported: false
+        },
+        {
+            id: 5,
+            reviewer: 'Emma Thompson',
+            target: 'Sarah Chen (Artist)',
+            rating: 5,
+            text: 'Sarah is an incredible artist with a unique vision. Her sculptures and paintings are always breathtaking. Highly recommend following her work!',
+            date: '2024-06-06',
+            helpful: 7,
+            reported: false
+        },
+        {
+            id: 6,
+            reviewer: 'Robert Chen',
+            target: 'Abstract No. 7 by David Okafor',
+            rating: 4,
+            text: 'Great abstract piece. The colors work well together and it\'s a great conversation starter. Happy with my purchase.',
+            date: '2024-06-05',
+            helpful: 5,
+            reported: false
+        },
+        {
+            id: 7,
+            reviewer: 'Sarah Johnson',
+            target: 'Urban Rhythms by James Wilson',
+            rating: 4,
+            text: 'Beautiful photography. Captures the energy of the city perfectly. The print quality is excellent.',
+            date: '2024-06-03',
+            helpful: 6,
+            reported: false
+        },
+        {
+            id: 8,
+            reviewer: 'Mark Wilson',
+            target: 'David Okafor (Artist)',
+            rating: 5,
+            text: 'David is a true visionary. His digital art is unlike anything I\'ve seen before. Every piece tells a story.',
+            date: '2024-06-01',
+            helpful: 11,
+            reported: false
+        }
+    ];
+
+    let currentRatingFilter = 'all';
+    let currentSortFilter = 'newest';
+
+    function saveReviews() {
+        localStorage.setItem('tb_reviews', JSON.stringify(reviews));
+    }
+
+    function getInitials(name) {
+        return name.split(' ').map(function(n) { return n[0]; }).join('').toUpperCase();
+    }
+
+    function getRatingStars(rating, size) {
+        let stars = '';
+        let starClass = size === 'large' ? 'rating-stars-large' : 'rating-stars';
+        for(let i = 0; i < 5; i++) {
+            if(i < rating) {
+                stars += '<i class="bi bi-star-fill"></i>';
+            } else {
+                stars += '<i class="bi bi-star"></i>';
+            }
+        }
+        return '<span class="' + starClass + '">' + stars + '</span>';
+    }
+
+    function updateStats() {
+        let total = reviews.length;
+        let sum = 0;
+        let fiveStar = 0;
+        let fourStar = 0;
+        let distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+
+        for(let i = 0; i < reviews.length; i++) {
+            sum += reviews[i].rating;
+            distribution[reviews[i].rating]++;
+            if(reviews[i].rating === 5) fiveStar++;
+            if(reviews[i].rating === 4) fourStar++;
+        }
+
+        let avg = total > 0 ? (sum / total) : 0;
+
+        document.getElementById('totalReviews').innerText = total;
+        document.getElementById('avgRating').innerText = avg.toFixed(1);
+        document.getElementById('avgRatingStars').innerHTML = getRatingStars(Math.round(avg), '');
+        document.getElementById('fiveStarCount').innerText = fiveStar;
+        document.getElementById('fourStarCount').innerText = fourStar;
+
+        let distributionHtml = '';
+        let ratings = [5, 4, 3, 2, 1];
+        for(let i = 0; i < ratings.length; i++) {
+            let count = distribution[ratings[i]] || 0;
+            let percentage = total > 0 ? (count / total * 100) : 0;
+            distributionHtml += `
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span style="width: 60px; font-weight: 600;">${ratings[i]} ★</span>
+                    <div class="rating-bar">
+                        <div class="rating-bar-fill" style="width: ${percentage}%;"></div>
+                    </div>
+                    <span style="width: 40px; text-align: right; font-weight: 500;">${count}</span>
+                </div>
+            `;
+        }
+        document.getElementById('ratingDistribution').innerHTML = distributionHtml;
+    }
+
+    function renderReviews() {
+        let filtered = [...reviews];
+
+        if(currentRatingFilter !== 'all') {
+            filtered = filtered.filter(function(r) { return r.rating === parseInt(currentRatingFilter); });
+        }
+
+        if(currentSortFilter === 'newest') {
+            filtered.sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+        } else if(currentSortFilter === 'oldest') {
+            filtered.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+        } else if(currentSortFilter === 'highest') {
+            filtered.sort(function(a, b) { return b.rating - a.rating; });
+        } else if(currentSortFilter === 'lowest') {
+            filtered.sort(function(a, b) { return a.rating - b.rating; });
+        }
+
+        let container = document.getElementById('reviewsContainer');
+
+        if(filtered.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-chat-square-text"></i>
+                    <h4 class="fw-bold">No reviews found</h4>
+                    <p class="text-secondary">Be the first to leave a review!</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        for(let i = 0; i < filtered.length; i++) {
+            let review = filtered[i];
+            let initials = getInitials(review.reviewer);
+            let stars = getRatingStars(review.rating, '');
+
+            html += `
+                <div class="review-card">
+                    <div class="d-flex gap-3">
+                        <div class="review-avatar">${initials}</div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="fw-bold mb-0">${review.reviewer}</h6>
+                                    <span class="text-secondary small">${review.target}</span>
+                                </div>
+                                <span class="text-secondary small">${review.date}</span>
+                            </div>
+                            <div class="mt-1">${stars}</div>
+                            <p class="mt-2 mb-0">${review.text}</p>
+                            <div class="d-flex gap-3 mt-2">
+                                <button class="btn btn-sm btn-outline-secondary rounded-pill helpful-btn" data-id="${review.id}">
+                                    <i class="bi bi-hand-thumbs-up"></i> Helpful (${review.helpful})
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger rounded-pill report-btn" data-id="${review.id}">
+                                    <i class="bi bi-flag"></i> Report
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
+
+        $('.helpful-btn').click(function() {
+            let id = parseInt($(this).data('id'));
+            let review = reviews.find(function(r) { return r.id === id; });
+            if(review) {
+                review.helpful++;
+                saveReviews();
+                renderReviews();
+                updateStats();
+            }
+        });
+
+        $('.report-btn').click(function() {
+            let id = parseInt($(this).data('id'));
+            if(confirm('Report this review as inappropriate?')) {
+                let review = reviews.find(function(r) { return r.id === id; });
+                if(review) {
+                    review.reported = true;
+                    saveReviews();
+                    renderReviews();
+                    alert('Thank you. The review has been reported and will be reviewed by our team.');
+                }
+            }
+        });
+    }
+
+    $('#ratingFilter').change(function() {
+        currentRatingFilter = $(this).val();
+        renderReviews();
+    });
+
+    $('#sortFilter').change(function() {
+        currentSortFilter = $(this).val();
+        renderReviews();
+    });
+
+    let modalStars = document.querySelectorAll('#modalRatingStars i');
+    modalStars.forEach(function(star) {
+        star.addEventListener('click', function() {
+            let rating = parseInt(this.getAttribute('data-rating'));
+            document.getElementById('selectedRating').value = rating;
+            
+            modalStars.forEach(function(s) {
+                let starRating = parseInt(s.getAttribute('data-rating'));
+                if(starRating <= rating) {
+                    s.classList.remove('bi-star');
+                    s.classList.add('bi-star-fill');
+                } else {
+                    s.classList.remove('bi-star-fill');
+                    s.classList.add('bi-star');
+                }
+            });
+        });
+        
+        star.addEventListener('mouseenter', function() {
+            let rating = parseInt(this.getAttribute('data-rating'));
+            modalStars.forEach(function(s) {
+                let starRating = parseInt(s.getAttribute('data-rating'));
+                if(starRating <= rating) {
+                    s.classList.remove('bi-star');
+                    s.classList.add('bi-star-fill');
+                } else {
+                    s.classList.remove('bi-star-fill');
+                    s.classList.add('bi-star');
+                }
+            });
+        });
+        
+        star.addEventListener('mouseleave', function() {
+            let selected = parseInt(document.getElementById('selectedRating').value);
+            modalStars.forEach(function(s) {
+                let starRating = parseInt(s.getAttribute('data-rating'));
+                if(starRating <= selected) {
+                    s.classList.remove('bi-star');
+                    s.classList.add('bi-star-fill');
+                } else {
+                    s.classList.remove('bi-star-fill');
+                    s.classList.add('bi-star');
+                }
+            });
+        });
+    });
+
+    $('#writeReviewBtn').click(function() {
+        if(!currentUser) {
+            if(confirm('Please sign in to write a review. Go to login?')) {
+                window.location.href = 'login.html';
+            }
+            return;
+        }
+        document.getElementById('selectedRating').value = 0;
+        document.getElementById('reviewText').value = '';
+        modalStars.forEach(function(s) {
+            s.classList.remove('bi-star-fill');
+            s.classList.add('bi-star');
+        });
+        $('#reviewModal').modal('show');
+    });
+
+    $('#submitReviewBtn').click(function() {
+        let name = document.getElementById('reviewerName').value.trim();
+        let target = document.getElementById('reviewTarget').value;
+        let rating = parseInt(document.getElementById('selectedRating').value);
+        let text = document.getElementById('reviewText').value.trim();
+
+        if(!name) {
+            alert('Please enter your name.');
+            return;
+        }
+        if(!target) {
+            alert('Please select an artwork or artist to review.');
+            return;
+        }
+        if(rating === 0) {
+            alert('Please select a rating.');
+            return;
+        }
+        if(!text || text.length < 10) {
+            alert('Please write a review with at least 10 characters.');
+            return;
+        }
+
+        let newReview = {
+            id: reviews.length + 1,
+            reviewer: name,
+            target: target,
+            rating: rating,
+            text: text,
+            date: new Date().toISOString().split('T')[0],
+            helpful: 0,
+            reported: false
+        };
+
+        reviews.push(newReview);
+        saveReviews();
+        $('#reviewModal').modal('hide');
+        document.getElementById('reviewForm').reset();
+        updateStats();
+        renderReviews();
+        alert('Thank you for your review! It has been published.');
+    });
+
+    updateStats();
+    renderReviews();
+</script>
+</body>
+</html>

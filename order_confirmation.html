@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TalentBridge · Order Confirmation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F9F9FB;
+            color: #111100;
+            min-height: 100vh;
+        }
+        .navbar {
+            background-color: #FFFFFF;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(17, 17, 0, 0.05);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.02);
+        }
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.8rem;
+            letter-spacing: -0.02em;
+            color: #111100;
+            text-decoration: none;
+        }
+        .navbar-brand span {
+            color: #e67300;
+        }
+        .page-header {
+            background: linear-gradient(135deg, #111100 0%, #2a2a1a 100%);
+            color: white;
+            padding: 2.5rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 32px 32px;
+        }
+        .confirmation-card {
+            background: #FFFFFF;
+            border-radius: 24px;
+            padding: 2.5rem;
+            border: 1px solid #efefe7;
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .confirmation-card:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+        }
+        .success-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: #28a745;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+        }
+        .success-icon i {
+            font-size: 3.5rem;
+            color: white;
+        }
+        .btn-primary-custom {
+            background-color: #e67300;
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 0.75rem 2rem;
+            border-radius: 40px;
+            transition: all 0.3s ease;
+        }
+        .btn-primary-custom:hover {
+            background-color: #cc6600;
+            transform: scale(1.01);
+        }
+        .btn-outline-custom {
+            border: 1.5px solid #111100;
+            background: transparent;
+            color: #111100;
+            font-weight: 600;
+            padding: 0.6rem 1.5rem;
+            border-radius: 40px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .btn-outline-custom:hover {
+            background-color: #111100;
+            color: #FFFFFF;
+            transform: scale(1.02);
+        }
+        .btn-logout {
+            background-color: #e67300;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 40px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-logout:hover {
+            background-color: #cc6600;
+            transform: scale(1.02);
+        }
+        .breadcrumb-custom {
+            background: transparent;
+            padding: 0;
+            margin-bottom: 0;
+        }
+        .breadcrumb-custom .breadcrumb-item a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .breadcrumb-custom .breadcrumb-item a:hover {
+            color: white;
+        }
+        .breadcrumb-custom .breadcrumb-item.active {
+            color: white;
+        }
+        .order-detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #efefe7;
+        }
+        .order-detail-row:last-child {
+            border-bottom: none;
+        }
+        .order-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #efefe7;
+        }
+        .order-item:last-child {
+            border-bottom: none;
+        }
+        .order-item-image {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-right: 1rem;
+        }
+        .order-item-details {
+            flex: 1;
+        }
+        .order-item-title {
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        .order-item-artist {
+            color: #6c6c5a;
+            font-size: 0.9rem;
+        }
+        .order-item-price {
+            font-weight: 700;
+            color: #e67300;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+        }
+        .summary-total {
+            border-top: 2px solid #e67300;
+            padding-top: 1rem;
+            margin-top: 0.5rem;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .confirmation-card {
+            animation: fadeInUp 0.5s ease-out;
+        }
+        @keyframes checkmark {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        .success-icon {
+            animation: checkmark 0.6s ease-out;
+        }
+        footer {
+            background: #FFFFFF;
+            padding: 2rem 0;
+            border-top: 1px solid #efefe7;
+            margin-top: 3rem;
+        }
+        .status-timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+        .status-timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e0e0d5;
+        }
+        .status-item {
+            position: relative;
+            margin-bottom: 1.5rem;
+            padding-left: 0.5rem;
+        }
+        .status-item::before {
+            content: '';
+            position: absolute;
+            left: -2rem;
+            top: 0.3rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e67300;
+            border: 2px solid white;
+        }
+        .status-item.completed::before {
+            background: #28a745;
+        }
+        .status-item.pending::before {
+            background: #e0e0d5;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="container">
+        <a class="navbar-brand" href="index.html">Talent<span>Bridge</span></a>
+        <div>
+            <span class="me-3" style="color: #e67300; font-weight: 600;" id="userNameDisplay">Patron</span>
+            <button class="btn-logout" id="logoutBtn">Logout</button>
+        </div>
+    </div>
+</nav>
+
+<div class="page-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-custom">
+                <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+                <li class="breadcrumb-item"><a href="artwork-listing.html">Gallery</a></li>
+                <li class="breadcrumb-item"><a href="checkout-order.html">Checkout</a></li>
+                <li class="breadcrumb-item"><a href="payment.html">Payment</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Confirmation</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <div>
+                <h1 class="display-5 fw-bold mb-2">Order Confirmed!</h1>
+                <p class="lead mb-0" style="opacity: 0.9;">Thank you for your purchase</p>
+            </div>
+            <div>
+                <span class="badge bg-success rounded-pill px-4 py-2 fs-6">
+                    <i class="bi bi-check-circle-fill"></i> Successful
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="confirmation-card">
+        <div class="success-icon">
+            <i class="bi bi-check-lg"></i>
+        </div>
+        <h2 class="fw-bold mb-2">Order Placed Successfully!</h2>
+        <p class="text-secondary">Thank you for your purchase. Your order has been confirmed and is being processed.</p>
+        <div class="mt-3">
+            <span class="badge bg-light text-dark border p-2">Order #: <strong id="orderNumber">N/A</strong></span>
+            <span class="badge bg-light text-dark border p-2 ms-2"><i class="bi bi-calendar3"></i> <span id="orderDate">N/A</span></span>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="confirmation-card" style="text-align: left;">
+                <h4 class="fw-bold mb-3"><i class="bi bi-box"></i> Order Details</h4>
+                <div id="orderItemsContainer"></div>
+            </div>
+
+            <div class="confirmation-card" style="text-align: left;">
+                <h4 class="fw-bold mb-3"><i class="bi bi-truck"></i> Shipping Information</h4>
+                <div id="shippingInfo"></div>
+            </div>
+
+            <div class="confirmation-card" style="text-align: left;">
+                <h4 class="fw-bold mb-3"><i class="bi bi-clock-history"></i> Order Status Timeline</h4>
+                <div class="status-timeline" id="statusTimeline"></div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="confirmation-card" style="text-align: left; position: sticky; top: 2rem;">
+                <h4 class="fw-bold mb-3"><i class="bi bi-receipt"></i> Order Summary</h4>
+                <div id="summaryItems"></div>
+                <hr>
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span id="subtotal">$0.00</span>
+                </div>
+                <div class="summary-row">
+                    <span>Shipping</span>
+                    <span id="shippingCost">$0.00</span>
+                </div>
+                <div class="summary-row">
+                    <span>Tax (5%)</span>
+                    <span id="taxAmount">$0.00</span>
+                </div>
+                <div class="summary-row summary-total">
+                    <span>Total</span>
+                    <span id="totalAmount">$0.00</span>
+                </div>
+
+                <hr>
+                <div class="text-center">
+                    <a href="artwork-listing.html" class="btn-primary-custom w-100 mb-2">
+                        <i class="bi bi-grid-3x3-gap-fill"></i> Continue Shopping
+                    </a>
+                    <a href="my-orders-purchases.html" class="btn-outline-custom w-100">
+                        <i class="bi bi-list-ul"></i> View My Orders
+                    </a>
+                </div>
+            </div>
+
+            <div class="confirmation-card" style="text-align: left;">
+                <h5 class="fw-bold mb-2"><i class="bi bi-envelope"></i> What's Next?</h5>
+                <ul class="list-unstyled small">
+                    <li class="mb-2"><i class="bi bi-check-circle text-success"></i> You'll receive a confirmation email</li>
+                    <li class="mb-2"><i class="bi bi-clock text-warning"></i> Order processing takes 1-2 business days</li>
+                    <li class="mb-2"><i class="bi bi-truck text-primary"></i> Shipping tracking will be provided</li>
+                    <li><i class="bi bi-star text-warning"></i> Don't forget to leave a review!</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="container text-center">
+        <p class="text-secondary">&copy; 2025 TalentBridge. Thank you for supporting artists.</p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let currentUser = localStorage.getItem('tb_user_name');
+    let userType = localStorage.getItem('tb_user_type');
+
+    if(!currentUser || userType !== 'patron') {
+        window.location.href = 'register.html';
+    }
+
+    document.getElementById('userNameDisplay').innerText = currentUser;
+
+    let urlParams = new URLSearchParams(window.location.search);
+    let orderNumber = urlParams.get('order') || 'ORD-' + Date.now().toString().slice(-8);
+
+    document.getElementById('orderNumber').innerText = orderNumber;
+    document.getElementById('orderDate').innerText = new Date().toISOString().split('T')[0];
+
+    let orderItems = JSON.parse(localStorage.getItem('tb_checkout_items')) || [
+        {
+            id: 1,
+            title: 'Sunset Dreams',
+            artist: 'Sarah Chen',
+            price: 450,
+            image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=200&h=200&fit=crop',
+            quantity: 1
+        },
+        {
+            id: 3,
+            title: 'Ethereal Forest',
+            artist: 'David Okafor',
+            price: 680,
+            image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=200&fit=crop',
+            quantity: 1
+        }
+    ];
+
+    let shippingCost = 25.00;
+
+    function renderOrderItems() {
+        let container = document.getElementById('orderItemsContainer');
+        let summaryContainer = document.getElementById('summaryItems');
+        let shippingContainer = document.getElementById('shippingInfo');
+        
+        let subtotal = 0;
+        let itemsHtml = '';
+        let summaryHtml = '';
+
+        for(let i = 0; i < orderItems.length; i++) {
+            let item = orderItems[i];
+            let total = item.price * item.quantity;
+            subtotal += total;
+
+            itemsHtml += `
+                <div class="order-item">
+                    <img src="${item.image}" class="order-item-image" alt="${item.title}" onerror="this.src='https://placehold.co/60x60/e67300/white?text=Art'">
+                    <div class="order-item-details">
+                        <div class="order-item-title">${item.title}</div>
+                        <div class="order-item-artist"><i class="bi bi-person"></i> ${item.artist}</div>
+                    </div>
+                    <div class="text-end">
+                        <div class="order-item-price">$${item.price}</div>
+                        <div class="text-secondary small">× ${item.quantity}</div>
+                    </div>
+                </div>
+            `;
+
+            summaryHtml += `
+                <div class="summary-row">
+                    <span>${item.title} × ${item.quantity}</span>
+                    <span>$${total.toFixed(2)}</span>
+                </div>
+            `;
+        }
+
+        container.innerHTML = itemsHtml;
+        summaryContainer.innerHTML = summaryHtml;
+
+        let tax = subtotal * 0.05;
+        let total = subtotal + shippingCost + tax;
+
+        document.getElementById('subtotal').innerText = '$' + subtotal.toFixed(2);
+        document.getElementById('shippingCost').innerText = '$' + shippingCost.toFixed(2);
+        document.getElementById('taxAmount').innerText = '$' + tax.toFixed(2);
+        document.getElementById('totalAmount').innerText = '$' + total.toFixed(2);
+
+        let userEmail = localStorage.getItem('tb_user_email') || 'patron@example.com';
+        shippingContainer.innerHTML = `
+            <div class="row g-2">
+                <div class="col-12">
+                    <strong>${currentUser}</strong>
+                </div>
+                <div class="col-12 text-secondary">
+                    <i class="bi bi-envelope"></i> ${userEmail}
+                </div>
+                <div class="col-12 text-secondary">
+                    <i class="bi bi-geo-alt"></i> 123 Main Street, New York, NY 10001, United States
+                </div>
+                <div class="col-12 text-secondary">
+                    <i class="bi bi-phone"></i> +1 (555) 123-4567
+                </div>
+                <div class="col-12 mt-2">
+                    <span class="badge bg-success">Estimated Delivery: 3-5 business days</span>
+                </div>
+            </div>
+        `;
+
+        let timelineHtml = '';
+        let statuses = [
+            { label: 'Order Placed', date: new Date().toISOString().split('T')[0], completed: true },
+            { label: 'Processing', date: new Date().toISOString().split('T')[0], completed: true },
+            { label: 'Shipped', date: null, completed: false },
+            { label: 'Delivered', date: null, completed: false }
+        ];
+
+        for(let i = 0; i < statuses.length; i++) {
+            let status = statuses[i];
+            let className = status.completed ? 'status-item completed' : 'status-item pending';
+            timelineHtml += `
+                <div class="${className}">
+                    <div class="fw-bold">${status.label}</div>
+                    <small class="text-secondary">${status.date || 'Not yet'}</small>
+                </div>
+            `;
+        }
+        document.getElementById('statusTimeline').innerHTML = timelineHtml;
+    }
+
+    $('#logoutBtn').click(function() {
+        localStorage.removeItem('tb_user_type');
+        localStorage.removeItem('tb_user_name');
+        localStorage.removeItem('tb_user_email');
+        window.location.href = 'index.html';
+    });
+
+    renderOrderItems();
+
+    if(orderItems.length === 0) {
+        document.querySelector('.confirmation-card .btn-primary-custom').disabled = true;
+        document.querySelector('.confirmation-card .btn-primary-custom').style.opacity = '0.5';
+    }
+</script>
+</body>
+</html>
