@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TalentBridge · Patron Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F9F9FB;
+            color: #111100;
+            min-height: 100vh;
+        }
+        .navbar {
+            background-color: #FFFFFF;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(17, 17, 0, 0.05);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.02);
+        }
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.8rem;
+            letter-spacing: -0.02em;
+            color: #111100;
+            text-decoration: none;
+        }
+        .navbar-brand span {
+            color: #e67300;
+        }
+        .sidebar {
+            background-color: #FFFFFF;
+            border-right: 1px solid #efefe7;
+            min-height: calc(100vh - 80px);
+            padding: 2rem 0;
+        }
+        .nav-item-custom {
+            display: block;
+            padding: 0.75rem 1.5rem;
+            color: #111100;
+            text-decoration: none;
+            font-weight: 500;
+            margin: 0.25rem 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .nav-item-custom i {
+            margin-right: 0.75rem;
+            color: #e67300;
+        }
+        .nav-item-custom:hover {
+            background-color: #fff4eb;
+            color: #e67300;
+        }
+        .nav-item-custom.active {
+            background-color: #fff4eb;
+            color: #e67300;
+            border-right: 3px solid #e67300;
+        }
+        .content-pane {
+            padding: 2rem;
+        }
+        .dashboard-card {
+            background: #FFFFFF;
+            border-radius: 24px;
+            padding: 1.5rem;
+            border: 1px solid #efefe7;
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+        .dashboard-card:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+        }
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #111100;
+        }
+        .stat-label {
+            color: #6c6c5a;
+            font-size: 0.9rem;
+        }
+        .artwork-card {
+            background: #FFFFFF;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid #efefe7;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        .artwork-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+        }
+        .artwork-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        .artwork-info {
+            padding: 1rem;
+        }
+        .artwork-title {
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        .artwork-price {
+            color: #e67300;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        .btn-primary-custom {
+            background-color: #e67300;
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.6rem 1.5rem;
+            border-radius: 40px;
+            transition: all 0.3s ease;
+        }
+        .btn-primary-custom:hover {
+            background-color: #cc6600;
+            transform: scale(1.02);
+        }
+        .btn-outline-custom {
+            border: 1.5px solid #111100;
+            background: transparent;
+            color: #111100;
+            font-weight: 600;
+            padding: 0.5rem 1.25rem;
+            border-radius: 40px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .btn-outline-custom:hover {
+            background-color: #111100;
+            color: #FFFFFF;
+            transform: scale(1.02);
+        }
+        .btn-logout {
+            background-color: #e67300;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 40px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-logout:hover {
+            background-color: #cc6600;
+            transform: scale(1.02);
+        }
+        .badge-pending {
+            background-color: #ffc107;
+            color: #111100;
+            padding: 0.25rem 0.75rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-shipped {
+            background-color: #6f42c1;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-delivered {
+            background-color: #28a745;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-completed {
+            background-color: #e67300;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .order-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #efefe7;
+        }
+        .order-item:last-child {
+            border-bottom: none;
+        }
+        .order-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            object-fit: cover;
+            margin-right: 1rem;
+        }
+        .favorite-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            border-radius: 16px;
+            background: #F9F9FB;
+            transition: all 0.3s ease;
+        }
+        .favorite-item:hover {
+            background: #fff4eb;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .dashboard-card {
+            animation: fadeInUp 0.4s ease-out;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: #FFFFFF;
+            border-radius: 20px;
+            border: 2px dashed #e0e0d5;
+        }
+        .empty-state i {
+            font-size: 3rem;
+            color: #e67300;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand" href="index.html">Talent<span>Bridge</span></a>
+        <div>
+            <span class="me-3" style="color: #e67300; font-weight: 600;" id="patronNameDisplay">Patron</span>
+            <button class="btn-logout" id="logoutBtn">Logout</button>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-3 col-lg-2 sidebar">
+            <div class="nav-item-custom active" data-tab="overview">
+                <i class="bi bi-speedometer2"></i> Overview
+            </div>
+            <div class="nav-item-custom" data-tab="browse">
+                <i class="bi bi-compass"></i> Browse
+            </div>
+            <div class="nav-item-custom" data-tab="favorites">
+                <i class="bi bi-heart"></i> Favorites
+            </div>
+            <div class="nav-item-custom" data-tab="orders">
+                <i class="bi bi-cart-check"></i> My Orders
+            </div>
+            <div class="nav-item-custom" data-tab="messages">
+                <i class="bi bi-chat-dots"></i> Messages
+            </div>
+            <div class="nav-item-custom" data-tab="profile">
+                <i class="bi bi-person-circle"></i> My Profile
+            </div>
+        </div>
+        
+        <div class="col-md-9 col-lg-10">
+            <div class="content-pane" id="mainContent"></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let patronName = localStorage.getItem('tb_user_name') || 'Guest Patron';
+    let patronEmail = localStorage.getItem('tb_user_email') || 'patron@example.com';
+    let userType = localStorage.getItem('tb_user_type');
+
+    if(userType !== 'patron') {
+        window.location.href = 'register.html';
+    }
+
+    document.getElementById('patronNameDisplay').innerText = patronName;
+
+    let favorites = JSON.parse(localStorage.getItem('tb_patron_favorites')) || [
+        {
+            id: 1,
+            title: 'Sunset Dreams',
+            artist: 'Sarah Chen',
+            price: 450,
+            image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=200&h=150&fit=crop',
+            category: 'Painting'
+        },
+        {
+            id: 2,
+            title: 'Bronze Warrior',
+            artist: 'Sarah Chen',
+            price: 1200,
+            image: 'https://images.unsplash.com/photo-1612196808214-b7e239e5b7d1?w=200&h=150&fit=crop',
+            category: 'Sculpture'
+        },
+        {
+            id: 3,
+            title: 'Ethereal Forest',
+            artist: 'David Okafor',
+            price: 680,
+            image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=150&fit=crop',
+            category: 'Painting'
+        }
+    ];
+
+    let orders = JSON.parse(localStorage.getItem('tb_patron_orders')) || [
+        {
+            id: 'ORD-1001',
+            artworkTitle: 'Sunset Dreams',
+            artistName: 'Sarah Chen',
+            image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=100&h=100&fit=crop',
+            amount: 450,
+            status: 'Delivered',
+            orderDate: '2024-06-10',
+            deliveredDate: '2024-06-14'
+        },
+        {
+            id: 'ORD-1003',
+            artworkTitle: 'Ethereal Forest',
+            artistName: 'David Okafor',
+            image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=100&h=100&fit=crop',
+            amount: 680,
+            status: 'Shipped',
+            orderDate: '2024-06-12',
+            shippedDate: '2024-06-13'
+        },
+        {
+            id: 'ORD-1005',
+            artworkTitle: 'Beaded Crown',
+            artistName: 'Amara Okonkwo',
+            image: 'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=100&h=100&fit=crop',
+            amount: 89,
+            status: 'Completed',
+            orderDate: '2024-05-28',
+            deliveredDate: '2024-06-02'
+        }
+    ];
+
+    let messages = [
+        { from: 'Sarah Chen', message: 'Thank you for your purchase! Your artwork will ship soon.', date: '2024-06-13', read: true },
+        { from: 'David Okafor', message: 'I received your inquiry. Yes, I can do custom work.', date: '2024-06-12', read: false },
+        { from: 'Amara Okonkwo', message: 'Would you like to commission a custom piece?', date: '2024-06-10', read: false }
+    ];
+
+    let recommendedArtworks = [
+        {
+            id: 101,
+            title: 'Abstract No. 7',
+            artist: 'David Okafor',
+            price: 320,
+            image: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=400&h=300&fit=crop',
+            category: 'Digital Art'
+        },
+        {
+            id: 102,
+            title: 'Urban Rhythms',
+            artist: 'James Wilson',
+            price: 250,
+            image: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=300&fit=crop',
+            category: 'Photography'
+        },
+        {
+            id: 103,
+            title: 'Zen Garden',
+            artist: 'Lisa Wong',
+            price: 550,
+            image: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=400&h=300&fit=crop',
+            category: 'Painting'
+        }
+    ];
+
+    function saveFavorites() {
+        localStorage.setItem('tb_patron_favorites', JSON.stringify(favorites));
+    }
+
+    function saveOrders() {
+        localStorage.setItem('tb_patron_orders', JSON.stringify(orders));
+    }
+
+    function renderOverview() {
+        let totalOrders = orders.length;
+        let pendingOrders = orders.filter(function(o) { return o.status === 'Pending' || o.status === 'Processing'; }).length;
+        let totalSpent = 0;
+        for(let i = 0; i < orders.length; i++) {
+            if(orders[i].status !== 'Cancelled') {
+                totalSpent += orders[i].amount;
+            }
+        }
+        let favoriteCount = favorites.length;
+
+        let recentOrdersHtml = '';
+        for(let i = 0; i < Math.min(orders.length, 3); i++) {
+            let order = orders[i];
+            let statusClass = order.status === 'Pending' ? 'badge-pending' : 
+                             (order.status === 'Shipped' ? 'badge-shipped' : 
+                             (order.status === 'Delivered' ? 'badge-delivered' : 'badge-completed'));
+            recentOrdersHtml += `
+                <div class="order-item">
+                    <img src="${order.image}" class="order-avatar" alt="${order.artworkTitle}">
+                    <div class="flex-grow-1">
+                        <div class="fw-bold">${order.artworkTitle}</div>
+                        <div class="text-secondary small">${order.artistName}</div>
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold" style="color: #e67300;">$${order.amount}</div>
+                        <span class="${statusClass}">${order.status}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        let favoritesHtml = '';
+        for(let i = 0; i < Math.min(favorites.length, 3); i++) {
+            let fav = favorites[i];
+            favoritesHtml += `
+                <div class="col-4 mb-3">
+                    <div class="favorite-item">
+                        <img src="${fav.image}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 12px; margin-right: 0.75rem;">
+                        <div>
+                            <div class="fw-bold small">${fav.title}</div>
+                            <div class="text-secondary small">$${fav.price}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="dashboard-card">
+                <h3 class="fw-bold mb-4">Welcome back, ${patronName}!</h3>
+                <p class="text-secondary mb-4">Your art journey at a glance</p>
+                <div class="row g-4">
+                    <div class="col-md-3">
+                        <div class="dashboard-card text-center">
+                            <div class="stat-number">${favoriteCount}</div>
+                            <div class="stat-label">Favorites</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="dashboard-card text-center">
+                            <div class="stat-number">${totalOrders}</div>
+                            <div class="stat-label">Total Orders</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="dashboard-card text-center">
+                            <div class="stat-number">${pendingOrders}</div>
+                            <div class="stat-label">Pending Orders</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="dashboard-card text-center">
+                            <div class="stat-number">$${totalSpent}</div>
+                            <div class="stat-label">Total Spent</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-7">
+                    <div class="dashboard-card">
+                        <h5 class="fw-bold mb-3">Recent Orders</h5>
+                        ${recentOrdersHtml || '<p class="text-secondary">No orders yet</p>'}
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="dashboard-card">
+                        <h5 class="fw-bold mb-3">Favorite Artworks</h5>
+                        ${favorites.length > 0 ? 
+                            `<div class="row">${favoritesHtml}</div>` : 
+                            '<p class="text-secondary">No favorites yet</p>'
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h5 class="fw-bold mb-3">Recommended For You</h5>
+                <div class="row">
+                    ${recommendedArtworks.map(function(art) {
+                        return `
+                            <div class="col-md-4">
+                                <div class="artwork-card">
+                                    <img src="${art.image}" class="artwork-image" alt="${art.title}" onerror="this.src='https://placehold.co/400x300/e67300/white?text=Artwork'">
+                                    <div class="artwork-info">
+                                        <div class="artwork-title">${art.title}</div>
+                                        <div class="text-secondary small">${art.artist}</div>
+                                        <div class="d-flex justify-content-between align-items-center mt-2">
+                                            <span class="artwork-price">$${art.price}</span>
+                                            <button class="btn-primary-custom btn-sm view-art" data-id="${art.id}">View</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function renderBrowse() {
+        return `
+            <div class="dashboard-card">
+                <h3 class="fw-bold mb-4"><i class="bi bi-compass"></i> Browse Artworks</h3>
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="artwork-card" style="cursor: pointer;" onclick="window.location.href='artwork-listing.html'">
+                            <div style="padding: 3rem; text-align: center; background: linear-gradient(135deg, #e67300, #cc6600); color: white; border-radius: 16px;">
+                                <i class="bi bi-grid-3x3-gap-fill" style="font-size: 3rem;"></i>
+                                <h5 class="fw-bold mt-3">Explore All Artworks</h5>
+                                <p class="small">Discover new pieces from talented artists</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="artwork-card" style="cursor: pointer;" onclick="window.location.href='artwork-category.html'">
+                            <div style="padding: 3rem; text-align: center; background: #FFFFFF; border: 2px solid #e67300; border-radius: 16px;">
+                                <i class="bi bi-tags" style="font-size: 3rem; color: #e67300;"></i>
+                                <h5 class="fw-bold mt-3">Browse by Category</h5>
+                                <p class="small text-secondary">Filter by medium, style, and more</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="artwork-card" style="cursor: pointer;" onclick="window.location.href='search-results.html'">
+                            <div style="padding: 3rem; text-align: center; background: #F9F9FB; border: 2px solid #e0e0d5; border-radius: 16px;">
+                                <i class="bi bi-search" style="font-size: 3rem; color: #111100;"></i>
+                                <h5 class="fw-bold mt-3">Search Artists</h5>
+                                <p class="small text-secondary">Find specific artists by name</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <hr class="my-4">
+                <h5 class="fw-bold mb-3">Top Categories</h5>
+                <div class="row g-3">
+                    <div class="col-6 col-md-3">
+                        <div style="background: #fff4eb; padding: 1rem; border-radius: 16px; text-align: center;">
+                            <i class="bi bi-brush" style="font-size: 1.5rem; color: #e67300;"></i>
+                            <div class="fw-bold">Painting</div>
+                            <small class="text-secondary">124 pieces</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div style="background: #fff4eb; padding: 1rem; border-radius: 16px; text-align: center;">
+                            <i class="bi bi-gem" style="font-size: 1.5rem; color: #e67300;"></i>
+                            <div class="fw-bold">Sculpture</div>
+                            <small class="text-secondary">56 pieces</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div style="background: #fff4eb; padding: 1rem; border-radius: 16px; text-align: center;">
+                            <i class="bi bi-camera" style="font-size: 1.5rem; color: #e67300;"></i>
+                            <div class="fw-bold">Photography</div>
+                            <small class="text-secondary">89 pieces</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div style="background: #fff4eb; padding: 1rem; border-radius: 16px; text-align: center;">
+                            <i class="bi bi-laptop" style="font-size: 1.5rem; color: #e67300;"></i>
+                            <div class="fw-bold">Digital Art</div>
+                            <small class="text-secondary">67 pieces</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderFavorites() {
+        if(favorites.length === 0) {
+            return `
+                <div class="dashboard-card">
+                    <h3 class="fw-bold mb-4"><i class="bi bi-heart"></i> My Favorites</h3>
+                    <div class="empty-state">
+                        <i class="bi bi-heart"></i>
+                        <h4 class="fw-bold">No favorites yet</h4>
+                        <p class="text-secondary">Start saving artworks you love</p>
+                        <button class="btn-primary-custom" onclick="loadTab('browse')">Browse Artworks</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        let html = `
+            <div class="dashboard-card">
+                <h3 class="fw-bold mb-4"><i class="bi bi-heart-fill" style="color: #e67300;"></i> My Favorites (${favorites.length})</h3>
+                <div class="row">
+        `;
+        
+        for(let i = 0; i < favorites.length; i++) {
+            let fav = favorites[i];
+            html += `
+                <div class="col-md-4 mb-4">
+                    <div class="artwork-card">
+                        <img src="${fav.image}" class="artwork-image" alt="${fav.title}" onerror="this.src='https://placehold.co/400x300/e67300/white?text=Artwork'">
+                        <div class="artwork-info">
+                            <div class="artwork-title">${fav.title}</div>
+                            <div class="text-secondary small">${fav.artist} · ${fav.category}</div>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <span class="artwork-price">$${fav.price}</span>
+                                <button class="btn-sm-danger remove-favorite" data-id="${fav.id}" style="background-color: transparent; border: 1px solid #dc3545; color: #dc3545; padding: 0.25rem 0.75rem; border-radius: 40px;">
+                                    <i class="bi bi-heart-break"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        html += '</div></div>';
+        return html;
+    }
+
+    function renderOrders() {
+        if(orders.length === 0) {
+            return `
+                <div class="dashboard-card">
+                    <h3 class="fw-bold mb-4"><i class="bi bi-cart-check"></i> My Orders</h3>
+                    <div class="empty-state">
+                        <i class="bi bi-box"></i>
+                        <h4 class="fw-bold">No orders yet</h4>
+                        <p class="text-secondary">Start exploring and purchase your favorite artworks</p>
+                        <button class="btn-primary-custom" onclick="loadTab('browse')">Browse Artworks</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        let html = `
+            <div class="dashboard-card">
+                <h3 class="fw-bold mb-4"><i class="bi bi-cart-check"></i> My Orders (${orders.length})</h3>
+                <div class="table-responsive">
+                    <table class="table-custom" style="width: 100%;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #efefe7;">
+                                <th style="padding: 0.75rem 0.5rem; text-align: left;">Artwork</th>
+                                <th style="padding: 0.75rem 0.5rem; text-align: left;">Artist</th>
+                                <th style="padding: 0.75rem 0.5rem; text-align: left;">Amount</th>
+                                <th style="padding: 0.75rem 0.5rem; text-align: left;">Date</th>
+                                <th style="padding: 0.75rem 0.5rem; text-align: left;">Status</th>
+                                <th style="padding: 0.75rem 0.5rem; text-align: left;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+
+        for(let i = 0; i < orders.length; i++) {
+            let order = orders[i];
+            let statusClass = order.status === 'Pending' ? 'badge-pending' : 
+                             (order.status === 'Shipped' ? 'badge-shipped' : 
+                             (order.status === 'Delivered' ? 'badge-delivered' : 'badge-completed'));
+            html += `
+                <tr style="border-bottom: 1px solid #efefe7;">
+                    <td style="padding: 0.75rem 0.5rem;">
+                        <div class="d-flex align-items-center">
+                            <img src="${order.image}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px; margin-right: 0.75rem;">
+                            <span class="fw-bold">${order.artworkTitle}</span>
+                        </div>
+                    </td>
+                    <td style="padding: 0.75rem 0.5rem;">${order.artistName}</td>
+                    <td style="padding: 0.75rem 0.5rem; font-weight: 700; color: #e67300;">$${order.amount}</td>
+                    <td style="padding: 0.75rem 0.5rem;">${order.orderDate}</td>
+                    <td style="padding: 0.75rem 0.5rem;"><span class="${statusClass}">${order.status}</span></td>
+                    <td style="padding: 0.75rem 0.5rem;">
+                        <button class="btn-sm-track" style="background-color: transparent; border: 1.5px solid #e67300; color: #e67300; padding: 0.25rem 0.75rem; border-radius: 40px; font-size: 0.75rem; cursor: pointer; transition: all 0.3s ease;" onclick="alert('Tracking details for ${order.id}')">
+                            <i class="bi bi-geo-alt"></i> Track
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+
+        html += '</tbody></table></div></div>';
+        return html;
+    }
+
+    function renderMessages() {
+        let html = `
+            <div class="dashboard-card">
+                <h3 class="fw-bold mb-4"><i class="bi bi-chat-dots"></i> Messages</h3>
+        `;
+
+        if(messages.length === 0) {
+            html += `
+                <div class="empty-state">
+                    <i class="bi bi-chat-square-text"></i>
+                    <h4 class="fw-bold">No messages</h4>
+                    <p class="text-secondary">Messages from artists will appear here</p>
+                </div>
+            `;
+        } else {
+            for(let i = 0; i < messages.length; i++) {
+                let msg = messages[i];
+                let unreadClass = !msg.read ? 'border-left: 3px solid #e67300;' : '';
+                html += `
+                    <div class="dashboard-card" style="margin-bottom: 0.75rem; ${unreadClass} cursor: pointer;" onclick="alert('Open conversation with ${msg.from}')">
+                        <div class="d-flex justify-content-between">
+                            <strong style="color: #e67300;">${msg.from}</strong>
+                            <small class="text-secondary">${msg.date}</small>
+                        </div>
+                        <p class="mt-2 mb-1">${msg.message}</p>
+                        ${!msg.read ? '<span class="badge-pending" style="font-size: 0.7rem;">New</span>' : ''}
+                    </div>
+                `;
+            }
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    function renderProfile() {
+        return `
+            <div class="dashboard-card">
+                <h3 class="fw-bold mb-4"><i class="bi bi-person-circle"></i> My Profile</h3>
+                <form id="profileForm">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Display Name</label>
+                        <input type="text" class="form-control" id="profileName" value="${patronName}" style="border-radius: 12px; border: 1.5px solid #e0e0d5; padding: 0.75rem;">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Email</label>
+                        <input type="email" class="form-control" id="profileEmail" value="${patronEmail}" style="border-radius: 12px; border: 1.5px solid #e0e0d5; padding: 0.75rem;">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Bio</label>
+                        <textarea class="form-control" id="profileBio" rows="3" style="border-radius: 12px; border: 1.5px solid #e0e0d5; padding: 0.75rem;">Art enthusiast and collector. Love discovering new talent and unique pieces.</textarea>
+                    </div>
+                    <button type="submit" class="btn-primary-custom">Save Changes</button>
+                </form>
+            </div>
+        `;
+    }
+
+    function loadTab(tabName) {
+        let content = '';
+        switch(tabName) {
+            case 'overview':
+                content = renderOverview();
+                break;
+            case 'browse':
+                content = renderBrowse();
+                break;
+            case 'favorites':
+                content = renderFavorites();
+                break;
+            case 'orders':
+                content = renderOrders();
+                break;
+            case 'messages':
+                content = renderMessages();
+                break;
+            case 'profile':
+                content = renderProfile();
+                break;
+            default:
+                content = renderOverview();
+        }
+        document.getElementById('mainContent').innerHTML = content;
+
+        if(tabName === 'favorites') {
+            $('.remove-favorite').click(function() {
+                let id = parseInt($(this).data('id'));
+                if(confirm('Remove this artwork from favorites?')) {
+                    let index = favorites.findIndex(function(f) { return f.id === id; });
+                    if(index !== -1) {
+                        favorites.splice(index, 1);
+                        saveFavorites();
+                        loadTab('favorites');
+                    }
+                }
+            });
+        }
+
+        if(tabName === 'profile') {
+            $('#profileForm').submit(function(e) {
+                e.preventDefault();
+                let newName = $('#profileName').val();
+                let newEmail = $('#profileEmail').val();
+                localStorage.setItem('tb_user_name', newName);
+                localStorage.setItem('tb_user_email', newEmail);
+                patronName = newName;
+                patronEmail = newEmail;
+                document.getElementById('patronNameDisplay').innerText = newName;
+                alert('Profile updated successfully!');
+            });
+        }
+
+        if(tabName === 'browse') {
+            $('.view-art').click(function() {
+                let artId = $(this).data('id');
+                alert('Viewing artwork details for ID: ' + artId);
+            });
+        }
+    }
+
+    let navItems = document.querySelectorAll('.nav-item-custom');
+    navItems.forEach(function(item) {
+        item.addEventListener('click', function(e) {
+            let tab = this.getAttribute('data-tab');
+            navItems.forEach(function(n) { n.classList.remove('active'); });
+            this.classList.add('active');
+            loadTab(tab);
+        });
+    });
+
+    $('#logoutBtn').click(function() {
+        localStorage.removeItem('tb_user_type');
+        localStorage.removeItem('tb_user_name');
+        localStorage.removeItem('tb_user_email');
+        window.location.href = 'index.html';
+    });
+
+    loadTab('overview');
+</script>
+</body>
+</html>

@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TalentBridge · Patron Messages</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F9F9FB;
+            color: #111100;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .navbar {
+            background-color: #FFFFFF;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(17, 17, 0, 0.05);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.02);
+        }
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.8rem;
+            letter-spacing: -0.02em;
+            color: #111100;
+            text-decoration: none;
+        }
+        .navbar-brand span {
+            color: #e67300;
+        }
+        .chat-container {
+            display: flex;
+            height: calc(100vh - 80px);
+            background: #F9F9FB;
+        }
+        .conversations-sidebar {
+            width: 350px;
+            background: #FFFFFF;
+            border-right: 1px solid #efefe7;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #efefe7;
+            background: #FFFFFF;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .search-box {
+            background: #F9F9FB;
+            border: 1px solid #e0e0d5;
+            border-radius: 40px;
+            padding: 0.6rem 1rem;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+        .search-box:focus {
+            outline: none;
+            border-color: #e67300;
+        }
+        .conversation-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid #efefe7;
+        }
+        .conversation-item:hover {
+            background-color: #fff4eb;
+        }
+        .conversation-item.active {
+            background-color: #fff4eb;
+            border-left: 3px solid #e67300;
+        }
+        .conversation-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e67300, #cc6600);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+        .conversation-avatar i {
+            font-size: 1.5rem;
+            color: white;
+        }
+        .conversation-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .conversation-name {
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        .conversation-last-msg {
+            font-size: 0.8rem;
+            color: #6c6c5a;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .conversation-time {
+            font-size: 0.7rem;
+            color: #6c6c5a;
+            margin-left: 0.5rem;
+        }
+        .unread-badge {
+            background-color: #e67300;
+            color: white;
+            border-radius: 40px;
+            padding: 0.2rem 0.5rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-left: 0.5rem;
+        }
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #F9F9FB;
+        }
+        .chat-header {
+            background: #FFFFFF;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #efefe7;
+            display: flex;
+            align-items: center;
+        }
+        .chat-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e67300, #cc6600);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+        }
+        .chat-avatar i {
+            font-size: 1.3rem;
+            color: white;
+        }
+        .chat-header-info h5 {
+            margin-bottom: 0;
+            font-weight: 700;
+        }
+        .chat-header-info p {
+            margin-bottom: 0;
+            font-size: 0.8rem;
+            color: #6c6c5a;
+        }
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+        .message {
+            max-width: 65%;
+            margin-bottom: 1rem;
+            display: flex;
+            animation: fadeInUp 0.3s ease-out;
+        }
+        .message-sent {
+            justify-content: flex-end;
+        }
+        .message-received {
+            justify-content: flex-start;
+        }
+        .message-bubble {
+            padding: 0.75rem 1rem;
+            border-radius: 20px;
+            word-wrap: break-word;
+        }
+        .message-sent .message-bubble {
+            background: #e67300;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .message-received .message-bubble {
+            background: #FFFFFF;
+            color: #111100;
+            border: 1px solid #efefe7;
+            border-bottom-left-radius: 4px;
+        }
+        .message-time {
+            font-size: 0.7rem;
+            margin-top: 0.25rem;
+            color: #6c6c5a;
+        }
+        .message-sent .message-time {
+            text-align: right;
+        }
+        .chat-input-area {
+            background: #FFFFFF;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #efefe7;
+            display: flex;
+            gap: 0.75rem;
+        }
+        .chat-input {
+            flex: 1;
+            border: 1px solid #e0e0d5;
+            border-radius: 40px;
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+            resize: none;
+        }
+        .chat-input:focus {
+            outline: none;
+            border-color: #e67300;
+        }
+        .btn-send {
+            background-color: #e67300;
+            border: none;
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        .btn-send:hover {
+            background-color: #cc6600;
+            transform: scale(1.02);
+        }
+        .empty-chat {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            color: #6c6c5a;
+        }
+        .empty-chat i {
+            font-size: 4rem;
+            color: #e0e0d5;
+            margin-bottom: 1rem;
+        }
+        .btn-logout {
+            background-color: #e67300;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 40px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-logout:hover {
+            background-color: #cc6600;
+            transform: scale(1.02);
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e0e0d5;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e67300;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand" href="index.html">Talent<span>Bridge</span></a>
+        <div>
+            <span class="me-3" style="color: #e67300; font-weight: 600;" id="patronName">Patron Name</span>
+            <button class="btn-logout" id="logoutBtn">Logout</button>
+        </div>
+    </div>
+</nav>
+
+<div class="chat-container">
+    <div class="conversations-sidebar">
+        <div class="sidebar-header">
+            <h5 class="fw-bold mb-3"><i class="bi bi-chat-dots"></i> Conversations</h5>
+            <input type="text" class="search-box" placeholder="Search conversations..." id="searchConversation">
+        </div>
+        <div id="conversationsList"></div>
+    </div>
+    
+    <div class="chat-area">
+        <div id="chatContent"></div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let currentUser = localStorage.getItem('tb_user_name');
+    let userType = localStorage.getItem('tb_user_type');
+
+    if(!currentUser || userType !== 'patron') {
+        window.location.href = 'register.html';
+    }
+
+    document.getElementById('patronName').innerText = currentUser;
+
+    let conversations = JSON.parse(localStorage.getItem('tb_patron_conversations')) || [
+        {
+            id: 1,
+            artistId: 101,
+            artistName: 'Sarah Chen',
+            artistAvatar: 'SC',
+            lastMessage: 'Thank you for your purchase! I will ship it tomorrow.',
+            lastMessageTime: '2024-06-14T10:30:00',
+            unreadCount: 1,
+            messages: [
+                { id: 1, sender: 'patron', text: 'Hello! I\'m very interested in your painting "Sunset Dreams". Is it still available?', time: '2024-06-13T09:15:00', read: true },
+                { id: 2, sender: 'artist', text: 'Hi! Yes, it\'s still available. Would you like to purchase it?', time: '2024-06-13T10:00:00', read: true },
+                { id: 3, sender: 'patron', text: 'Absolutely! I\'d love to buy it. Can you tell me about the shipping?', time: '2024-06-13T10:30:00', read: true },
+                { id: 4, sender: 'artist', text: 'Shipping takes 3-5 business days. I\'ll pack it carefully with tracking.', time: '2024-06-13T11:00:00', read: true },
+                { id: 5, sender: 'patron', text: 'Perfect! I just placed the order. So excited!', time: '2024-06-13T11:45:00', read: true },
+                { id: 6, sender: 'artist', text: 'Thank you for your purchase! I will ship it tomorrow.', time: '2024-06-14T10:30:00', read: false }
+            ]
+        },
+        {
+            id: 2,
+            artistId: 102,
+            artistName: 'David Okafor',
+            artistAvatar: 'DO',
+            lastMessage: 'Yes, I can do custom digital artwork for you.',
+            lastMessageTime: '2024-06-13T16:20:00',
+            unreadCount: 0,
+            messages: [
+                { id: 1, sender: 'patron', text: 'I saw your digital art collection. Do you do custom work?', time: '2024-06-12T14:00:00', read: true },
+                { id: 2, sender: 'artist', text: 'Yes, I do custom commissions. What do you have in mind?', time: '2024-06-12T15:30:00', read: true },
+                { id: 3, sender: 'patron', text: 'I need a digital portrait for my business website.', time: '2024-06-13T09:00:00', read: true },
+                { id: 4, sender: 'artist', text: 'Yes, I can do custom digital artwork for you.', time: '2024-06-13T16:20:00', read: true }
+            ]
+        },
+        {
+            id: 3,
+            artistId: 103,
+            artistName: 'Amara Okonkwo',
+            artistAvatar: 'AO',
+            lastMessage: 'Thank you for supporting traditional crafts!',
+            lastMessageTime: '2024-06-12T18:45:00',
+            unreadCount: 2,
+            messages: [
+                { id: 1, sender: 'patron', text: 'I received the beaded crown yesterday. It\'s beautiful!', time: '2024-06-11T16:30:00', read: true },
+                { id: 2, sender: 'artist', text: 'So glad you love it! The beads were handwoven by local artisans.', time: '2024-06-12T09:00:00', read: true },
+                { id: 3, sender: 'patron', text: 'That\'s amazing. I will definitely order again.', time: '2024-06-12T14:00:00', read: true },
+                { id: 4, sender: 'artist', text: 'Thank you for supporting traditional crafts!', time: '2024-06-12T18:45:00', read: false },
+                { id: 5, sender: 'artist', text: 'I have some new pieces coming next week. Would you like to see them?', time: '2024-06-12T18:46:00', read: false }
+            ]
+        },
+        {
+            id: 4,
+            artistId: 104,
+            artistName: 'James Wilson',
+            artistAvatar: 'JW',
+            lastMessage: 'I can arrange a photoshoot for custom work.',
+            lastMessageTime: '2024-06-11T11:30:00',
+            unreadCount: 0,
+            messages: [
+                { id: 1, sender: 'patron', text: 'I need some photography for my art collection.', time: '2024-06-10T10:00:00', read: true },
+                { id: 2, sender: 'artist', text: 'Sure! What kind of photography are you looking for?', time: '2024-06-10T11:30:00', read: true },
+                { id: 3, sender: 'patron', text: 'High-quality images of sculptures and paintings.', time: '2024-06-11T09:00:00', read: true },
+                { id: 4, sender: 'artist', text: 'I can arrange a photoshoot for custom work.', time: '2024-06-11T11:30:00', read: true }
+            ]
+        }
+    ];
+
+    let currentConversationId = null;
+    let searchTerm = '';
+
+    function saveConversations() {
+        localStorage.setItem('tb_patron_conversations', JSON.stringify(conversations));
+    }
+
+    function formatTime(timeString) {
+        let date = new Date(timeString);
+        let now = new Date();
+        let today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        let msgDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        
+        if(msgDate.getTime() === today.getTime()) {
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } else {
+            return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        }
+    }
+
+    function renderConversations() {
+        let filtered = conversations;
+        if(searchTerm) {
+            filtered = conversations.filter(function(c) {
+                return c.artistName.toLowerCase().includes(searchTerm.toLowerCase());
+            });
+        }
+        
+        let html = '';
+        for(let i = 0; i < filtered.length; i++) {
+            let conv = filtered[i];
+            let activeClass = (currentConversationId === conv.id) ? 'active' : '';
+            let unreadBadge = conv.unreadCount > 0 ? '<span class="unread-badge">' + conv.unreadCount + '</span>' : '';
+            
+            html += `
+                <div class="conversation-item ${activeClass}" data-conv-id="${conv.id}">
+                    <div class="conversation-avatar">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <div class="conversation-info">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="conversation-name">${conv.artistName}</span>
+                            <span class="conversation-time">${formatTime(conv.lastMessageTime)}</span>
+                        </div>
+                        <div class="conversation-last-msg">
+                            ${conv.lastMessage.substring(0, 50)}${conv.lastMessage.length > 50 ? '...' : ''}
+                            ${unreadBadge}
+                        </div>
+                    </div>
+                    ${unreadBadge}
+                </div>
+            `;
+        }
+        
+        if(filtered.length === 0) {
+            html = '<div class="text-center p-4 text-secondary">No conversations found</div>';
+        }
+        
+        $('#conversationsList').html(html);
+        
+        $('.conversation-item').click(function() {
+            let convId = parseInt($(this).data('conv-id'));
+            openConversation(convId);
+        });
+    }
+
+    function openConversation(convId) {
+        let conversation = conversations.find(function(c) { return c.id === convId; });
+        if(!conversation) return;
+        
+        currentConversationId = convId;
+        
+        if(conversation.unreadCount > 0) {
+            for(let i = 0; i < conversation.messages.length; i++) {
+                if(conversation.messages[i].sender === 'artist' && !conversation.messages[i].read) {
+                    conversation.messages[i].read = true;
+                }
+            }
+            conversation.unreadCount = 0;
+            saveConversations();
+            renderConversations();
+        }
+        
+        let messagesHtml = '';
+        for(let i = 0; i < conversation.messages.length; i++) {
+            let msg = conversation.messages[i];
+            let messageClass = msg.sender === 'patron' ? 'message-sent' : 'message-received';
+            messagesHtml += `
+                <div class="message ${messageClass}">
+                    <div>
+                        <div class="message-bubble">${msg.text}</div>
+                        <div class="message-time">${formatTime(msg.time)}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        let chatHtml = `
+            <div class="chat-header">
+                <div class="chat-avatar">
+                    <i class="bi bi-person-fill"></i>
+                </div>
+                <div class="chat-header-info">
+                    <h5>${conversation.artistName}</h5>
+                    <p><i class="bi bi-circle-fill" style="font-size: 0.5rem; color: #28a745;"></i> Online</p>
+                </div>
+            </div>
+            <div class="messages-container" id="messagesContainer">
+                ${messagesHtml}
+            </div>
+            <div class="chat-input-area">
+                <textarea class="chat-input" id="messageInput" placeholder="Type your message..." rows="1"></textarea>
+                <button class="btn-send" id="sendMessageBtn"><i class="bi bi-send"></i></button>
+            </div>
+        `;
+        
+        $('#chatContent').html(chatHtml);
+        
+        let msgContainer = document.getElementById('messagesContainer');
+        if(msgContainer) {
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+        }
+        
+        $('#messageInput').keypress(function(e) {
+            if(e.which === 13 && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        $('#sendMessageBtn').click(function() {
+            sendMessage();
+        });
+        
+        function sendMessage() {
+            let messageText = $('#messageInput').val().trim();
+            if(!messageText) return;
+            
+            let conversation = conversations.find(function(c) { return c.id === convId; });
+            if(conversation) {
+                let newMessage = {
+                    id: conversation.messages.length + 1,
+                    sender: 'patron',
+                    text: messageText,
+                    time: new Date().toISOString(),
+                    read: true
+                };
+                conversation.messages.push(newMessage);
+                conversation.lastMessage = messageText;
+                conversation.lastMessageTime = new Date().toISOString();
+                saveConversations();
+                
+                $('#messageInput').val('');
+                openConversation(convId);
+            }
+        }
+    }
+
+    function loadDefaultChat() {
+        if(conversations.length > 0 && !currentConversationId) {
+            openConversation(conversations[0].id);
+        } else if(conversations.length === 0) {
+            $('#chatContent').html(`
+                <div class="empty-chat">
+                    <div>
+                        <i class="bi bi-chat-square-text"></i>
+                        <h5>No conversations yet</h5>
+                        <p>When you message artists, they'll appear here</p>
+                    </div>
+                </div>
+            `);
+        }
+    }
+
+    $('#searchConversation').on('input', function() {
+        searchTerm = $(this).val();
+        renderConversations();
+    });
+
+    $('#logoutBtn').click(function() {
+        localStorage.removeItem('tb_user_type');
+        localStorage.removeItem('tb_user_name');
+        localStorage.removeItem('tb_user_email');
+        localStorage.removeItem('tb_patron_conversations');
+        window.location.href = 'index.html';
+    });
+
+    renderConversations();
+    loadDefaultChat();
+</script>
+</body>
+</html>
