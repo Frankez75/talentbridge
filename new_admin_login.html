@@ -16,18 +16,17 @@
         }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #F9F9FB;
+            background: linear-gradient(135deg, #F9F9FB 0%, #e8e8e0 100%);
             color: #111100;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #F9F9FB 0%, #e8e8e0 100%);
         }
         .login-container {
             width: 100%;
             max-width: 420px;
-            padding: 2rem;
+            padding: 1.5rem;
         }
         .login-card {
             background: #FFFFFF;
@@ -162,23 +161,6 @@
         .password-toggle:hover {
             color: #e67300;
         }
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20% { transform: translateX(-10px); }
-            40% { transform: translateX(10px); }
-            60% { transform: translateX(-10px); }
-            80% { transform: translateX(10px); }
-        }
         .divider {
             display: flex;
             align-items: center;
@@ -196,6 +178,31 @@
             color: #6c6c5a;
             font-size: 0.85rem;
         }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-10px); }
+            40% { transform: translateX(10px); }
+            60% { transform: translateX(-10px); }
+            80% { transform: translateX(10px); }
+        }
+        .security-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #28a745;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -207,6 +214,9 @@
                     <span class="admin-badge"><i class="bi bi-shield-lock"></i> Admin Portal</span>
                 </div>
                 <p>Secure access for administrators</p>
+                <div class="security-badge">
+                    <i class="bi bi-shield-lock-fill"></i> SSL Secure
+                </div>
             </div>
 
             <div class="error-message" id="errorMessage">
@@ -220,6 +230,7 @@
                         <i class="bi bi-person-circle"></i>
                         <input type="email" class="form-control" id="adminEmail" placeholder="admin@talentbridge.com" required value="admin@talentbridge.com">
                     </div>
+                    <div class="invalid-feedback" id="emailError">Please enter a valid email address.</div>
                 </div>
 
                 <div class="mb-4">
@@ -231,13 +242,12 @@
                             <i class="bi bi-eye"></i>
                         </button>
                     </div>
+                    <div class="invalid-feedback" id="passwordError">Please enter your password.</div>
                 </div>
 
-                <div class="mb-3">
-                    <button type="submit" class="btn-login" id="loginBtn">
-                        <i class="bi bi-box-arrow-in-right"></i> Sign In as Admin
-                    </button>
-                </div>
+                <button type="submit" class="btn-login" id="loginBtn">
+                    <i class="bi bi-box-arrow-in-right"></i> Sign In as Admin
+                </button>
             </form>
 
             <div class="divider">
@@ -260,37 +270,49 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            let errorMessage = document.getElementById('errorMessage');
-            let errorText = document.getElementById('errorText');
-            let loginBtn = document.getElementById('loginBtn');
+        $(document).ready(function() {
+            let adminLoggedIn = localStorage.getItem('tb_admin_logged_in');
+            let userType = localStorage.getItem('tb_user_type');
+            if(adminLoggedIn === 'true' && userType === 'admin') {
+                window.location.href = 'admin-dashboard.html';
+            }
 
-            let togglePassword = document.getElementById('togglePassword');
-            let passwordInput = document.getElementById('adminPassword');
-
-            togglePassword.addEventListener('click', function() {
-                let type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-                passwordInput.setAttribute('type', type);
-                let icon = this.querySelector('i');
-                icon.classList.toggle('bi-eye');
-                icon.classList.toggle('bi-eye-slash');
+            $('#togglePassword').click(function() {
+                let input = $('#adminPassword');
+                let type = input.attr('type') === 'password' ? 'text' : 'password';
+                input.attr('type', type);
+                $(this).find('i').toggleClass('bi-eye bi-eye-slash');
             });
 
-            let form = document.getElementById('adminLoginForm');
-            form.addEventListener('submit', function(e) {
+            $('#adminLoginForm').submit(function(e) {
                 e.preventDefault();
+                let isValid = true;
 
-                let email = document.getElementById('adminEmail').value.trim();
-                let password = document.getElementById('adminPassword').value.trim();
+                let email = $('#adminEmail').val().trim();
+                let password = $('#adminPassword').val();
 
-                if(!email || !password) {
-                    errorText.innerText = 'Please enter both email and password.';
-                    errorMessage.classList.add('show');
+                $('#emailError').hide();
+                $('#passwordError').hide();
+                $('#errorMessage').removeClass('show');
+
+                if(!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+                    $('#emailError').show();
+                    isValid = false;
+                }
+
+                if(password.length < 1) {
+                    $('#passwordError').show();
+                    isValid = false;
+                }
+
+                if(!isValid) {
+                    $('#errorText').text('Please fix the errors above.');
+                    $('#errorMessage').addClass('show');
                     return;
                 }
 
-                loginBtn.disabled = true;
-                loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Authenticating...';
+                $('#loginBtn').prop('disabled', true);
+                $('#loginBtn').html('<span class="spinner-border spinner-border-sm me-2"></span> Authenticating...');
 
                 setTimeout(function() {
                     let adminUsers = JSON.parse(localStorage.getItem('tb_admin_users')) || [
@@ -305,17 +327,20 @@
                         }
                     ];
 
-                    let user = adminUsers.find(function(u) {
-                        return u.email === email && u.password === password && u.role === 'admin';
-                    });
-
-                    loginBtn.disabled = false;
-                    loginBtn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Sign In as Admin';
+                    let user = null;
+                    for(let i = 0; i < adminUsers.length; i++) {
+                        if(adminUsers[i].email === email && adminUsers[i].password === password && adminUsers[i].role === 'admin') {
+                            user = adminUsers[i];
+                            break;
+                        }
+                    }
 
                     if(user) {
                         if(user.status === 'suspended') {
-                            errorText.innerText = 'Your admin account has been suspended. Please contact support.';
-                            errorMessage.classList.add('show');
+                            $('#loginBtn').prop('disabled', false);
+                            $('#loginBtn').html('<i class="bi bi-box-arrow-in-right"></i> Sign In as Admin');
+                            $('#errorText').text('Your admin account has been suspended. Please contact support.');
+                            $('#errorMessage').addClass('show');
                             return;
                         }
 
@@ -324,28 +349,24 @@
                         localStorage.setItem('tb_user_email', user.email);
                         localStorage.setItem('tb_admin_logged_in', 'true');
 
-                        errorMessage.classList.remove('show');
-                        window.location.href = 'admin-dashboard.html';
+                        $('#errorMessage').removeClass('show');
+                        $('#loginBtn').html('<i class="bi bi-check-circle"></i> Success! Redirecting...');
+
+                        setTimeout(function() {
+                            window.location.href = 'admin-dashboard.html';
+                        }, 500);
                     } else {
-                        errorText.innerText = 'Invalid admin credentials. Please check your email and password.';
-                        errorMessage.classList.add('show');
+                        $('#loginBtn').prop('disabled', false);
+                        $('#loginBtn').html('<i class="bi bi-box-arrow-in-right"></i> Sign In as Admin');
+                        $('#errorText').text('Invalid admin credentials. Please check your email and password.');
+                        $('#errorMessage').addClass('show');
                     }
                 }, 800);
             });
 
-            document.getElementById('adminEmail').addEventListener('input', function() {
-                errorMessage.classList.remove('show');
+            $('#adminEmail, #adminPassword').on('input', function() {
+                $('#errorMessage').removeClass('show');
             });
-
-            document.getElementById('adminPassword').addEventListener('input', function() {
-                errorMessage.classList.remove('show');
-            });
-
-            let adminLoggedIn = localStorage.getItem('tb_admin_logged_in');
-            let userType = localStorage.getItem('tb_user_type');
-            if(adminLoggedIn === 'true' && userType === 'admin') {
-                window.location.href = 'admin-dashboard.html';
-            }
         });
     </script>
 </body>

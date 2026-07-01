@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TalentBridge · Notifications</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F9F9FB;
+            color: #111100;
+            min-height: 100vh;
+        }
+        .navbar {
+            background-color: #FFFFFF;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(17, 17, 0, 0.05);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.02);
+        }
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.8rem;
+            letter-spacing: -0.02em;
+            color: #111100;
+            text-decoration: none;
+        }
+        .navbar-brand span {
+            color: #e67300;
+        }
+        .page-header {
+            background: linear-gradient(135deg, #111100 0%, #2a2a1a 100%);
+            color: white;
+            padding: 2.5rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 32px 32px;
+        }
+        .notification-card {
+            background: #FFFFFF;
+            border-radius: 20px;
+            padding: 1.25rem 1.5rem;
+            border: 1px solid #efefe7;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+            cursor: pointer;
+        }
+        .notification-card:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+            transform: translateX(4px);
+        }
+        .notification-card.unread {
+            border-left: 4px solid #e67300;
+            background: #fffcf8;
+        }
+        .notification-card.read {
+            border-left: 4px solid #e0e0d5;
+            opacity: 0.7;
+        }
+        .notification-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .notification-icon i {
+            font-size: 1.3rem;
+        }
+        .icon-order {
+            background: #fff4eb;
+            color: #e67300;
+        }
+        .icon-message {
+            background: #e3f2fd;
+            color: #0d6efd;
+        }
+        .icon-review {
+            background: #fff3e0;
+            color: #ffc107;
+        }
+        .icon-favorite {
+            background: #fce4ec;
+            color: #e91e63;
+        }
+        .icon-system {
+            background: #e8f5e9;
+            color: #28a745;
+        }
+        .icon-artwork {
+            background: #f3e5f5;
+            color: #6f42c1;
+        }
+        .notification-time {
+            font-size: 0.75rem;
+            color: #6c6c5a;
+        }
+        .btn-primary-custom {
+            background-color: #e67300;
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.6rem 2rem;
+            border-radius: 40px;
+            transition: all 0.3s ease;
+        }
+        .btn-primary-custom:hover {
+            background-color: #cc6600;
+            transform: scale(1.02);
+        }
+        .btn-outline-custom {
+            border: 1.5px solid #111100;
+            background: transparent;
+            color: #111100;
+            font-weight: 600;
+            padding: 0.5rem 1.5rem;
+            border-radius: 40px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .btn-outline-custom:hover {
+            background-color: #111100;
+            color: #FFFFFF;
+            transform: scale(1.02);
+        }
+        .btn-logout {
+            background-color: #e67300;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 40px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-logout:hover {
+            background-color: #cc6600;
+            transform: scale(1.02);
+        }
+        .breadcrumb-custom {
+            background: transparent;
+            padding: 0;
+            margin-bottom: 0;
+        }
+        .breadcrumb-custom .breadcrumb-item a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .breadcrumb-custom .breadcrumb-item a:hover {
+            color: white;
+        }
+        .breadcrumb-custom .breadcrumb-item.active {
+            color: white;
+        }
+        .section-tabs {
+            border-bottom: 2px solid #efefe7;
+            margin-bottom: 2rem;
+        }
+        .section-tab {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            color: #6c6c5a;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.3s ease;
+        }
+        .section-tab:hover {
+            color: #e67300;
+        }
+        .section-tab.active {
+            color: #e67300;
+            border-bottom-color: #e67300;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: #FFFFFF;
+            border-radius: 20px;
+            border: 2px dashed #e0e0d5;
+        }
+        .empty-state i {
+            font-size: 4rem;
+            color: #e67300;
+            margin-bottom: 1rem;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .notification-card {
+            animation: fadeInUp 0.3s ease-out;
+        }
+        footer {
+            background: #FFFFFF;
+            padding: 2rem 0;
+            border-top: 1px solid #efefe7;
+            margin-top: 3rem;
+        }
+        .notification-badge {
+            background: #e67300;
+            color: white;
+            border-radius: 40px;
+            padding: 0.2rem 0.6rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="container">
+        <a class="navbar-brand" href="index.html">Talent<span>Bridge</span></a>
+        <div>
+            <span class="me-3" style="color: #e67300; font-weight: 600;" id="userNameDisplay">Guest</span>
+            <a href="login.html" class="btn-outline-custom" style="border: 1.5px solid #111100; background: transparent; color: #111100; padding: 0.5rem 1.5rem; border-radius: 40px; text-decoration: none; font-weight: 600; margin-right: 0.75rem;">Sign In</a>
+            <a href="register.html" class="btn-primary-custom" style="background-color: #e67300; color: white; padding: 0.5rem 1.5rem; border-radius: 40px; text-decoration: none; font-weight: 600;">Join</a>
+        </div>
+    </div>
+</nav>
+
+<div class="page-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-custom">
+                <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Notifications</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <div>
+                <h1 class="display-5 fw-bold mb-2">Notifications</h1>
+                <p class="lead mb-0" style="opacity: 0.9;">Stay updated on your activity</p>
+            </div>
+            <div>
+                <span class="badge bg-light text-dark rounded-pill px-4 py-2" id="unreadCount">
+                    <span id="unreadNumber">0</span> unread
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="section-tabs">
+        <div class="section-tab active" data-tab="all">
+            <i class="bi bi-bell"></i> All
+        </div>
+        <div class="section-tab" data-tab="unread">
+            <i class="bi bi-envelope"></i> Unread
+            <span class="notification-badge" id="unreadBadge">0</span>
+        </div>
+        <div class="section-tab" data-tab="orders">
+            <i class="bi bi-cart-check"></i> Orders
+        </div>
+        <div class="section-tab" data-tab="messages">
+            <i class="bi bi-chat-dots"></i> Messages
+        </div>
+        <div class="section-tab" data-tab="reviews">
+            <i class="bi bi-star"></i> Reviews
+        </div>
+        <div class="section-tab" data-tab="favorites">
+            <i class="bi bi-heart"></i> Favorites
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <span class="text-secondary" id="notificationCount">0 notifications</span>
+        <div>
+            <button class="btn-outline-custom btn-sm" id="markAllReadBtn">
+                <i class="bi bi-check-all"></i> Mark All Read
+            </button>
+        </div>
+    </div>
+
+    <div id="notificationsContainer"></div>
+</div>
+
+<footer>
+    <div class="container text-center">
+        <p class="text-secondary">&copy; 2025 TalentBridge. Stay connected.</p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let currentUser = localStorage.getItem('tb_user_name');
+    let userType = localStorage.getItem('tb_user_type');
+    
+    if(currentUser) {
+        document.getElementById('userNameDisplay').innerText = currentUser;
+    }
+
+    let notifications = JSON.parse(localStorage.getItem('tb_notifications')) || [
+        {
+            id: 1,
+            type: 'order',
+            icon: 'bi-box-seam',
+            iconClass: 'icon-order',
+            title: 'New Order Received',
+            message: 'James Wilson purchased "Sunset Dreams" from you.',
+            time: '2024-06-15T10:30:00',
+            read: false,
+            link: 'my-orders-sales.html',
+            actionable: true
+        },
+        {
+            id: 2,
+            type: 'message',
+            icon: 'bi-chat-dots',
+            iconClass: 'icon-message',
+            title: 'New Message from Sarah Chen',
+            message: 'Sarah Chen sent you a message about "Bronze Warrior".',
+            time: '2024-06-15T09:15:00',
+            read: false,
+            link: 'artist-chat-messages.html',
+            actionable: true
+        },
+        {
+            id: 3,
+            type: 'review',
+            icon: 'bi-star-fill',
+            iconClass: 'icon-review',
+            title: 'New 5-Star Review',
+            message: 'Lisa Wong left a 5-star review on "Beaded Crown".',
+            time: '2024-06-14T18:45:00',
+            read: false,
+            link: 'ratings-reviews.html',
+            actionable: true
+        },
+        {
+            id: 4,
+            type: 'favorite',
+            icon: 'bi-heart-fill',
+            iconClass: 'icon-favorite',
+            title: 'Artwork Favorited',
+            message: 'Michael Brown added "Ethereal Forest" to their favorites.',
+            time: '2024-06-14T14:20:00',
+            read: true,
+            link: 'artwork-detail.html?id=3',
+            actionable: true
+        },
+        {
+            id: 5,
+            type: 'system',
+            icon: 'bi-gear',
+            iconClass: 'icon-system',
+            title: 'Profile Updated',
+            message: 'Your artist profile has been updated successfully.',
+            time: '2024-06-14T11:00:00',
+            read: true,
+            link: 'artist-profile.html',
+            actionable: false
+        },
+        {
+            id: 6,
+            type: 'order',
+            icon: 'bi-truck',
+            iconClass: 'icon-order',
+            title: 'Order Shipped',
+            message: 'Your order #ORD-1002 has been shipped. Tracking: TRK456789123',
+            time: '2024-06-13T16:30:00',
+            read: true,
+            link: 'my-orders-purchases.html',
+            actionable: true
+        },
+        {
+            id: 7,
+            type: 'artwork',
+            icon: 'bi-images',
+            iconClass: 'icon-artwork',
+            title: 'Artwork Approved',
+            message: 'Your artwork "Urban Rhythms" has been approved and is now live.',
+            time: '2024-06-13T10:00:00',
+            read: true,
+            link: 'upload-manage-artwork.html',
+            actionable: true
+        },
+        {
+            id: 8,
+            type: 'message',
+            icon: 'bi-chat-dots',
+            iconClass: 'icon-message',
+            title: 'New Message from David Okafor',
+            message: 'David Okafor replied to your inquiry about "Abstract No. 7".',
+            time: '2024-06-12T20:15:00',
+            read: true,
+            link: 'patron-chat-messages.html',
+            actionable: true
+        },
+        {
+            id: 9,
+            type: 'review',
+            icon: 'bi-star-fill',
+            iconClass: 'icon-review',
+            title: 'New Review on Your Artwork',
+            message: 'Emma Thompson left a 4-star review on "Bronze Warrior".',
+            time: '2024-06-12T15:30:00',
+            read: true,
+            link: 'ratings-reviews.html',
+            actionable: true
+        },
+        {
+            id: 10,
+            type: 'system',
+            icon: 'bi-shield-check',
+            iconClass: 'icon-system',
+            title: 'Account Security Update',
+            message: 'Your account security settings have been updated.',
+            time: '2024-06-11T09:00:00',
+            read: true,
+            link: 'patron-profile.html',
+            actionable: false
+        }
+    ];
+
+    let currentFilter = 'all';
+
+    function saveNotifications() {
+        localStorage.setItem('tb_notifications', JSON.stringify(notifications));
+    }
+
+    function getTimeAgo(timeString) {
+        let now = new Date();
+        let past = new Date(timeString);
+        let diff = Math.floor((now - past) / 1000);
+        
+        if(diff < 60) return 'Just now';
+        if(diff < 3600) return Math.floor(diff / 60) + 'm ago';
+        if(diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+        if(diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+        return past.toLocaleDateString();
+    }
+
+    function updateStats() {
+        let unread = notifications.filter(function(n) { return !n.read; }).length;
+        document.getElementById('unreadNumber').innerText = unread;
+        document.getElementById('unreadBadge').innerText = unread;
+    }
+
+    function renderNotifications() {
+        let filtered = notifications;
+        
+        if(currentFilter === 'unread') {
+            filtered = filtered.filter(function(n) { return !n.read; });
+        } else if(currentFilter !== 'all') {
+            filtered = filtered.filter(function(n) { return n.type === currentFilter; });
+        }
+
+        let container = document.getElementById('notificationsContainer');
+        document.getElementById('notificationCount').innerText = filtered.length + ' notifications';
+
+        if(filtered.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-bell-slash"></i>
+                    <h4 class="fw-bold">No notifications</h4>
+                    <p class="text-secondary">You're all caught up!</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        for(let i = 0; i < filtered.length; i++) {
+            let notif = filtered[i];
+            let cardClass = notif.read ? 'notification-card read' : 'notification-card unread';
+            let iconClass = notif.iconClass || 'icon-system';
+            let iconName = notif.icon || 'bi-bell';
+            
+            html += `
+                <div class="${cardClass}" data-id="${notif.id}">
+                    <div class="d-flex gap-3 align-items-start">
+                        <div class="notification-icon ${iconClass}">
+                            <i class="bi ${iconName}"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="fw-bold mb-1">${notif.title}</h6>
+                                    <p class="mb-0 text-secondary small">${notif.message}</p>
+                                </div>
+                                <span class="notification-time">${getTimeAgo(notif.time)}</span>
+                            </div>
+                            <div class="d-flex gap-2 mt-2">
+                                ${notif.actionable ? `<button class="btn btn-sm btn-outline-custom notification-action" data-id="${notif.id}" data-link="${notif.link}">View</button>` : ''}
+                                ${!notif.read ? `<button class="btn btn-sm btn-outline-secondary mark-read-btn" data-id="${notif.id}">Mark as read</button>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
+
+        $('.notification-action').click(function() {
+            let id = parseInt($(this).data('id'));
+            let link = $(this).data('link');
+            let notif = notifications.find(function(n) { return n.id === id; });
+            if(notif && !notif.read) {
+                notif.read = true;
+                saveNotifications();
+                updateStats();
+                renderNotifications();
+            }
+            if(link) {
+                window.location.href = link;
+            }
+        });
+
+        $('.mark-read-btn').click(function(e) {
+            e.stopPropagation();
+            let id = parseInt($(this).data('id'));
+            let notif = notifications.find(function(n) { return n.id === id; });
+            if(notif) {
+                notif.read = true;
+                saveNotifications();
+                updateStats();
+                renderNotifications();
+            }
+        });
+
+        $('.notification-card').click(function() {
+            let id = parseInt($(this).data('id'));
+            let notif = notifications.find(function(n) { return n.id === id; });
+            if(notif && !notif.read) {
+                notif.read = true;
+                saveNotifications();
+                updateStats();
+                renderNotifications();
+            }
+            if(notif && notif.actionable && notif.link) {
+                window.location.href = notif.link;
+            }
+        });
+    }
+
+    $('#markAllReadBtn').click(function() {
+        let hasUnread = notifications.some(function(n) { return !n.read; });
+        if(!hasUnread) {
+            alert('All notifications are already read.');
+            return;
+        }
+        for(let i = 0; i < notifications.length; i++) {
+            notifications[i].read = true;
+        }
+        saveNotifications();
+        updateStats();
+        renderNotifications();
+        alert('All notifications marked as read.');
+    });
+
+    $('.section-tab').click(function() {
+        $('.section-tab').removeClass('active');
+        $(this).addClass('active');
+        currentFilter = $(this).data('tab');
+        renderNotifications();
+    });
+
+    $('#logoutBtn').click(function() {
+        localStorage.removeItem('tb_user_type');
+        localStorage.removeItem('tb_user_name');
+        localStorage.removeItem('tb_user_email');
+        window.location.href = 'index.html';
+    });
+
+    updateStats();
+    renderNotifications();
+</script>
+</body>
+</html>
