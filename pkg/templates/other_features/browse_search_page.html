@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+
+{% block title %}TalentBridge · Browse Artists & Artworks{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { background: linear-gradient(135deg, #111100 0%, #2a2a1a 100%); color: white; padding: 2.5rem 0; margin-bottom: 2rem; border-radius: 0 0 32px 32px; }
+    .search-box { border-radius: 40px; padding: 0.75rem 1.5rem; border: none; font-size: 1rem; background: #FFFFFF; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .search-box:focus { outline: none; box-shadow: 0 4px 20px rgba(230,115,0,0.2); }
+    .filter-section { background: #FFFFFF; border-radius: 20px; padding: 1.5rem; border: 1px solid #efefe7; margin-bottom: 2rem; }
+    .filter-label { font-weight: 600; font-size: 0.85rem; color: #111100; margin-bottom: 0.5rem; }
+    .form-select, .form-control { border: 1.5px solid #e0e0d5; border-radius: 16px; padding: 0.6rem 1rem; font-size: 0.9rem; }
+    .form-select:focus, .form-control:focus { border-color: #e67300; outline: none; box-shadow: 0 0 0 3px rgba(230,115,0,0.1); }
+    .btn-primary-custom { background-color: #e67300; border: none; color: white; font-weight: 600; padding: 0.6rem 2rem; border-radius: 40px; transition: all 0.3s ease; }
+    .btn-primary-custom:hover { background-color: #cc6600; transform: scale(1.02); }
+    .btn-outline-custom { border: 1.5px solid #111100; background: transparent; color: #111100; font-weight: 600; padding: 0.5rem 1.5rem; border-radius: 40px; transition: all 0.3s ease; }
+    .btn-outline-custom:hover { background-color: #111100; color: #FFFFFF; transform: scale(1.02); }
+    .artwork-card { background: #FFFFFF; border-radius: 16px; overflow: hidden; border: 1px solid #efefe7; transition: all 0.3s ease; height: 100%; cursor: pointer; }
+    .artwork-card:hover { transform: translateY(-6px); box-shadow: 0 16px 32px rgba(0,0,0,0.1); }
+    .artwork-image { width: 100%; height: 220px; object-fit: cover; }
+    .artwork-info { padding: 1.25rem; }
+    .artwork-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 0.25rem; }
+    .artwork-artist { color: #e67300; font-weight: 500; font-size: 0.9rem; }
+    .artwork-price { color: #111100; font-weight: 700; font-size: 1.2rem; }
+    .btn-favorite { background: transparent; border: 1.5px solid #e67300; color: #e67300; padding: 0.25rem 0.75rem; border-radius: 40px; font-size: 0.75rem; transition: all 0.3s ease; }
+    .btn-favorite:hover { background: #e67300; color: white; }
+    .btn-favorite.active { background: #e67300; color: white; }
+    .badge-category { background: #fff4eb; color: #e67300; padding: 0.2rem 0.6rem; border-radius: 40px; font-size: 0.7rem; font-weight: 600; }
+    .toggle-view { display: flex; gap: 0.5rem; }
+    .toggle-view button { border: 1.5px solid #e0e0d5; background: transparent; padding: 0.4rem 0.8rem; border-radius: 40px; transition: all 0.3s ease; }
+    .toggle-view button.active { background: #e67300; color: white; border-color: #e67300; }
+    .toggle-view button:hover { background: #fff4eb; }
+    .empty-state { text-align: center; padding: 4rem 2rem; background: #FFFFFF; border-radius: 20px; border: 2px dashed #e0e0d5; }
+    .empty-state i { font-size: 4rem; color: #e67300; margin-bottom: 1rem; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .artwork-card { animation: fadeInUp 0.4s ease-out; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h1 class="display-5 fw-bold mb-2">Discover Art</h1>
+                <p class="lead mb-0" style="opacity: 0.9;">Browse talented artists and their unique creations</p>
+            </div>
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" class="form-control search-box" id="globalSearch" placeholder="Search by artist or artwork...">
+                    <button class="btn-primary-custom ms-2" id="searchBtn"><i class="bi bi-search"></i> Search</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="filter-section">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <div class="filter-label"><i class="bi bi-tag"></i> Category</div>
+                <select class="form-select" id="categoryFilter">
+                    <option value="all">All Categories</option>
+                    <option value="Painting">Painting</option>
+                    <option value="Sculpture">Sculpture</option>
+                    <option value="Craft">Craft</option>
+                    <option value="Digital Art">Digital Art</option>
+                    <option value="Photography">Photography</option>
+                    <option value="Jewelry">Jewelry</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <div class="filter-label"><i class="bi bi-currency-dollar"></i> Min Price</div>
+                <input type="number" class="form-control" id="minPrice" placeholder="0" min="0">
+            </div>
+            <div class="col-md-2">
+                <div class="filter-label"><i class="bi bi-currency-dollar"></i> Max Price</div>
+                <input type="number" class="form-control" id="maxPrice" placeholder="5000" min="0">
+            </div>
+            <div class="col-md-2">
+                <div class="filter-label"><i class="bi bi-star"></i> Rating</div>
+                <select class="form-select" id="ratingFilter">
+                    <option value="0">Any Rating</option>
+                    <option value="4">4+ Stars</option>
+                    <option value="3">3+ Stars</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex gap-2">
+                    <button class="btn-primary-custom" id="applyFilters"><i class="bi bi-funnel"></i> Apply Filters</button>
+                    <button class="btn-outline-custom" id="clearFilters"><i class="bi bi-x-circle"></i> Clear</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <span class="fw-bold" id="resultCount">0</span> <span class="text-secondary">artworks found</span>
+        </div>
+        <div class="toggle-view">
+            <button class="active" id="gridViewBtn" title="Grid View"><i class="bi bi-grid-3x3-gap-fill"></i></button>
+            <button id="listViewBtn" title="List View"><i class="bi bi-list-ul"></i></button>
+        </div>
+    </div>
+
+    <div class="row" id="artworksContainer"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        let currentUser = localStorage.getItem('tb_user_name');
+        let userType = localStorage.getItem('tb_user_type');
+        if(currentUser) {
+            document.getElementById('userNameDisplay').innerText = currentUser;
+        }
+
+        let favorites = JSON.parse(localStorage.getItem('tb_patron_favorites')) || [];
+        let currentView = 'grid';
+        let filteredArtworks = [];
+
+        function loadArtworks() {
+            $.ajax({
+                url: "{{ url_for('main.search_artworks') }}",
+                type: 'GET',
+                data: {
+                    q: $('#globalSearch').val(),
+                    category: $('#categoryFilter').val(),
+                    min_price: $('#minPrice').val(),
+                    max_price: $('#maxPrice').val()
+                },
+                dataType: 'json',
+                success: function(data) {
+                    filteredArtworks = data;
+                    renderArtworks();
+                },
+                error: function(err) {
+                    console.error('Error loading artworks:', err);
+                    filteredArtworks = [];
+                    renderArtworks();
+                }
+            });
+        }
+
+        function saveFavorites() {
+            localStorage.setItem('tb_patron_favorites', JSON.stringify(favorites));
+        }
+
+        function isFavorite(artworkId) {
+            return favorites.some(function(f) { return f.id === artworkId; });
+        }
+
+        function toggleFavorite(artworkId) {
+            let index = favorites.findIndex(function(f) { return f.id === artworkId; });
+            if(index !== -1) {
+                favorites.splice(index, 1);
+            } else {
+                let art = filteredArtworks.find(function(a) { return a.id === artworkId; });
+                if(art) {
+                    favorites.push({
+                        id: art.id,
+                        title: art.title,
+                        artist: art.artist,
+                        price: art.price,
+                        image: art.image,
+                        category: art.category
+                    });
+                }
+            }
+            saveFavorites();
+            renderArtworks();
+        }
+
+        function renderArtworks() {
+            let container = document.getElementById('artworksContainer');
+            
+            if(filteredArtworks.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12">
+                        <div class="empty-state">
+                            <i class="bi bi-search"></i>
+                            <h4 class="fw-bold">No artworks found</h4>
+                            <p class="text-secondary">Try adjusting your filters or search terms</p>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('resultCount').innerText = '0';
+                return;
+            }
+
+            document.getElementById('resultCount').innerText = filteredArtworks.length;
+
+            let html = '';
+            if(currentView === 'grid') {
+                for(let i = 0; i < filteredArtworks.length; i++) {
+                    let art = filteredArtworks[i];
+                    let isFav = isFavorite(art.id);
+                    let favClass = isFav ? 'active' : '';
+                    let ratingStars = '';
+                    let fullStars = Math.floor(art.rating || 4.5);
+                    for(let s = 0; s < 5; s++) {
+                        ratingStars += s < fullStars ? '<i class="bi bi-star-fill" style="color: #ffc107; font-size: 0.8rem;"></i>' : '<i class="bi bi-star" style="color: #e0e0d5; font-size: 0.8rem;"></i>';
+                    }
+                    
+                    html += `
+                        <div class="col-md-4 col-lg-3 mb-4">
+                            <div class="artwork-card" data-id="${art.id}">
+                                <img src="${art.image}" class="artwork-image" alt="${art.title}" onerror="this.src='https://placehold.co/400x300/e67300/white?text=Artwork'">
+                                <div class="artwork-info">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <div class="artwork-title">${art.title}</div>
+                                            <div class="artwork-artist"><i class="bi bi-person"></i> ${art.artist}</div>
+                                        </div>
+                                        <span class="badge-category">${art.category}</span>
+                                    </div>
+                                    <div class="mt-2">
+                                        ${ratingStars} <span class="text-secondary" style="font-size: 0.8rem;">(${art.reviews || 0})</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <span class="artwork-price">$${art.price}</span>
+                                        <button class="btn-favorite ${favClass} favorite-btn" data-id="${art.id}">
+                                            <i class="bi ${isFav ? 'bi-heart-fill' : 'bi-heart'}"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else {
+                for(let i = 0; i < filteredArtworks.length; i++) {
+                    let art = filteredArtworks[i];
+                    let isFav = isFavorite(art.id);
+                    let favClass = isFav ? 'active' : '';
+                    let ratingStars = '';
+                    let fullStars = Math.floor(art.rating || 4.5);
+                    for(let s = 0; s < 5; s++) {
+                        ratingStars += s < fullStars ? '<i class="bi bi-star-fill" style="color: #ffc107;"></i>' : '<i class="bi bi-star" style="color: #e0e0d5;"></i>';
+                    }
+                    
+                    html += `
+                        <div class="col-12 mb-3">
+                            <div class="artwork-card" data-id="${art.id}" style="display: flex; flex-direction: row; align-items: center;">
+                                <img src="${art.image}" style="width: 180px; height: 140px; object-fit: cover; flex-shrink: 0;" alt="${art.title}" onerror="this.src='https://placehold.co/400x300/e67300/white?text=Artwork'">
+                                <div class="artwork-info" style="flex: 1;">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <div class="artwork-title">${art.title}</div>
+                                            <div class="artwork-artist"><i class="bi bi-person"></i> ${art.artist}</div>
+                                            <div class="text-secondary small">${art.description ? art.description.substring(0, 80) + (art.description.length > 80 ? '...' : '') : ''}</div>
+                                        </div>
+                                        <span class="badge-category">${art.category}</span>
+                                    </div>
+                                    <div class="mt-2">
+                                        ${ratingStars} <span class="text-secondary" style="font-size: 0.8rem;">(${art.reviews || 0})</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <span class="artwork-price">$${art.price}</span>
+                                        <button class="btn-favorite ${favClass} favorite-btn" data-id="${art.id}">
+                                            <i class="bi ${isFav ? 'bi-heart-fill' : 'bi-heart'}"></i> ${isFav ? 'Saved' : 'Save'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            container.innerHTML = html;
+
+            $('.favorite-btn').click(function(e) {
+                e.stopPropagation();
+                let id = parseInt($(this).data('id'));
+                toggleFavorite(id);
+            });
+
+            $('.artwork-card').click(function() {
+                let id = parseInt($(this).data('id'));
+                window.location.href = "{{ url_for('main.art_detail', art_id=0) }}".replace('0', id);
+            });
+        }
+
+        function applyFilters() {
+            loadArtworks();
+        }
+
+        $('#searchBtn').click(applyFilters);
+        $('#globalSearch').keypress(function(e) {
+            if(e.which === 13) applyFilters();
+        });
+        $('#applyFilters').click(applyFilters);
+        $('#clearFilters').click(function() {
+            $('#categoryFilter').val('all');
+            $('#minPrice').val('');
+            $('#maxPrice').val('');
+            $('#ratingFilter').val('0');
+            $('#globalSearch').val('');
+            applyFilters();
+        });
+        $('#gridViewBtn').click(function() {
+            currentView = 'grid';
+            $('#gridViewBtn').addClass('active');
+            $('#listViewBtn').removeClass('active');
+            renderArtworks();
+        });
+        $('#listViewBtn').click(function() {
+            currentView = 'list';
+            $('#listViewBtn').addClass('active');
+            $('#gridViewBtn').removeClass('active');
+            renderArtworks();
+        });
+
+        applyFilters();
+    });
+</script>
+{% endblock %}

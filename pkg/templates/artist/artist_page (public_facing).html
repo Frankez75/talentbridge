@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+
+{% block title %}TalentBridge · Artist Profile{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cover-area { background: linear-gradient(135deg, #111100 0%, #2a2a1a 100%); height: 280px; position: relative; }
+    .profile-avatar { position: absolute; bottom: -60px; left: 50%; transform: translateX(-50%); width: 140px; height: 140px; border-radius: 50%; border: 5px solid white; background: #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+    .profile-avatar i { font-size: 4rem; color: #e67300; }
+    .profile-name { margin-top: 80px; text-align: center; margin-bottom: 1.5rem; }
+    .profile-name h1 { font-weight: 800; font-size: 2.5rem; margin-bottom: 0.5rem; }
+    .profile-badge { display: inline-block; background-color: rgba(230,115,0,0.15); color: #e67300; padding: 0.3rem 1rem; border-radius: 40px; font-size: 0.85rem; font-weight: 600; }
+    .stat-card { background: #FFFFFF; border-radius: 24px; padding: 1.5rem; text-align: center; border: 1px solid #efefe7; transition: all 0.3s ease; }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(0,0,0,0.08); }
+    .stat-number { font-size: 2rem; font-weight: 800; color: #e67300; }
+    .artwork-card { background: #FFFFFF; border-radius: 20px; overflow: hidden; border: 1px solid #efefe7; transition: all 0.3s ease; height: 100%; cursor: pointer; }
+    .artwork-card:hover { transform: translateY(-6px); box-shadow: 0 16px 32px rgba(0,0,0,0.1); }
+    .artwork-image { width: 100%; height: 260px; object-fit: cover; }
+    .artwork-info { padding: 1.25rem; }
+    .artwork-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 0.5rem; }
+    .artwork-price { color: #e67300; font-weight: 700; font-size: 1.2rem; }
+    .btn-contact { background-color: #e67300; border: none; color: white; font-weight: 600; padding: 0.75rem 2rem; border-radius: 40px; transition: all 0.3s ease; }
+    .btn-contact:hover { background-color: #cc6600; transform: scale(1.02); }
+    .btn-follow { border: 2px solid #e67300; background: transparent; color: #e67300; font-weight: 600; padding: 0.7rem 2rem; border-radius: 40px; transition: all 0.3s ease; }
+    .btn-follow:hover { background-color: #e67300; color: white; transform: scale(1.02); }
+    .btn-follow.active { background-color: #e67300; color: white; }
+    .section-title { font-size: 1.8rem; font-weight: 700; margin-bottom: 1.5rem; position: relative; display: inline-block; }
+    .section-title:after { content: ''; position: absolute; bottom: -8px; left: 0; width: 60px; height: 3px; background: #e67300; border-radius: 3px; }
+    .review-card { background: #FFFFFF; border-radius: 20px; padding: 1.25rem; border: 1px solid #efefe7; margin-bottom: 1rem; }
+    .rating-stars { color: #ffc107; letter-spacing: 2px; }
+    .social-link { width: 40px; height: 40px; border-radius: 50%; background: #F9F9FB; display: inline-flex; align-items: center; justify-content: center; color: #111100; transition: all 0.3s ease; margin-right: 0.5rem; }
+    .social-link:hover { background: #e67300; color: white; transform: translateY(-2px); }
+    .modal-content-custom { border-radius: 28px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cover-area">
+    <div class="profile-avatar">
+        <i class="bi bi-person-circle"></i>
+    </div>
+</div>
+
+<div class="container">
+    <div class="profile-name">
+        <h1 id="artistFullName">{{ artist.artist_fname }} {{ artist.artist_lname }}</h1>
+        <span class="profile-badge"><i class="bi bi-palette"></i> Artist</span>
+        <div class="mt-3">
+            <a href="#" class="social-link"><i class="bi bi-instagram"></i></a>
+            <a href="#" class="social-link"><i class="bi bi-twitter-x"></i></a>
+            <a href="#" class="social-link"><i class="bi bi-facebook"></i></a>
+            <a href="#" class="social-link"><i class="bi bi-linkedin"></i></a>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-8 mx-auto text-center">
+            <p class="lead text-secondary" id="artistBio">
+                {{ artist.artist_bio or "Passionate artist creating unique pieces." }}
+            </p>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number" id="artworkCount">{{ artworks|length }}</div>
+                <div class="text-secondary fw-semibold">Artworks</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number" id="followerCount">1,247</div>
+                <div class="text-secondary fw-semibold">Followers</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number" id="saleCount">{{ orders|length }}</div>
+                <div class="text-secondary fw-semibold">Pieces Sold</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number" id="ratingDisplay">{{ avg_rating|round(1) }}</div>
+                <div class="text-secondary fw-semibold">Rating (★)</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <button class="btn-contact me-3" id="contactBtn"><i class="bi bi-chat-dots"></i> Contact Artist</button>
+            <button class="btn-follow" id="followBtn"><i class="bi bi-heart"></i> Follow</button>
+        </div>
+    </div>
+
+    <div class="mb-5">
+        <h3 class="section-title">Featured Artworks</h3>
+        <div class="row g-4 mt-2" id="artworksGrid">
+            {% for art in artworks %}
+            <div class="col-md-6 col-lg-4">
+                <div class="artwork-card" onclick="window.location.href='{{ url_for('main.art_detail', art_id=art.art_id) }}'">
+                    <img src="{{ art.art_image or 'https://placehold.co/600x500/e67300/white?text=Artwork' }}" class="artwork-image" alt="{{ art.art_title }}">
+                    <div class="artwork-info">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="artwork-title">{{ art.art_title }}</div>
+                                <div class="text-secondary small">{{ art.art_type.art_type_name if art.art_type else 'General' }}</div>
+                            </div>
+                            <div class="artwork-price">${{ art.art_price }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div>
+        <h3 class="section-title">Artist Reviews</h3>
+        <div class="row mt-3" id="reviewsContainer">
+            {% for rating in ratings %}
+            <div class="col-md-6">
+                <div class="review-card">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong class="fw-bold">Patron #{{ rating.rated_by_id }}</strong>
+                        <div class="rating-stars">
+                            {% for i in range(5) %}
+                                {% if i < rating.rating_score %}
+                                    <i class="bi bi-star-fill"></i>
+                                {% else %}
+                                    <i class="bi bi-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <p class="text-secondary mb-2">Review content placeholder</p>
+                    <small class="text-secondary">{{ rating.rating_date.strftime('%Y-%m-%d') if rating.rating_date else 'N/A' }}</small>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <p class="text-secondary text-center">No reviews yet.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Contact Modal -->
+<div class="modal fade" id="contactModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-custom">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-envelope"></i> Contact Artist</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="contactForm">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Your Name</label>
+                        <input type="text" class="form-control" id="contactName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Your Email</label>
+                        <input type="email" class="form-control" id="contactEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Subject</label>
+                        <input type="text" class="form-control" id="contactSubject" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Message</label>
+                        <textarea class="form-control" id="contactMessage" rows="4" required></textarea>
+                    </div>
+                    <input type="hidden" id="contactArtistId" value="{{ artist.artist_id }}">
+                </form>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn-outline-custom" data-bs-dismiss="modal" style="border: 1.5px solid #111100; background: transparent; padding: 0.6rem 1.5rem; border-radius: 40px;">Cancel</button>
+                <button type="button" class="btn-primary-custom" id="sendMessageBtn" style="background-color: #e67300; padding: 0.6rem 1.5rem; border-radius: 40px;">Send Message</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        let currentUser = localStorage.getItem('tb_user_name');
+        let userType = localStorage.getItem('tb_user_type');
+        let artistId = {{ artist.artist_id }};
+        let isFollowing = false;
+
+        $('#contactBtn').click(function() {
+            if(!currentUser) {
+                if(confirm('Please sign in to contact artists. Go to login?')) window.location.href = "{{ url_for('auth.login') }}";
+                return;
+            }
+            $('#contactModal').modal('show');
+        });
+
+        $('#sendMessageBtn').click(function() {
+            let name = $('#contactName').val().trim();
+            let email = $('#contactEmail').val().trim();
+            let subject = $('#contactSubject').val().trim();
+            let message = $('#contactMessage').val().trim();
+            
+            if(name && email && subject && message) {
+                $.ajax({
+                    url: "{{ url_for('main.contact_artist') }}",
+                    type: 'POST',
+                    data: {
+                        artist_id: artistId,
+                        name: name,
+                        email: email,
+                        subject: subject,
+                        message: message
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if(response.status === 'success') {
+                            alert('Message sent to the artist! They will respond within 24-48 hours.');
+                            $('#contactModal').modal('hide');
+                            $('#contactForm')[0].reset();
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('An error occurred. Please try again.');
+                    }
+                });
+            } else {
+                alert('Please fill out all fields.');
+            }
+        });
+
+        $('#followBtn').click(function() {
+            isFollowing = !isFollowing;
+            if(isFollowing) {
+                $(this).addClass('active');
+                $(this).html('<i class="bi bi-heart-fill"></i> Following');
+                let count = parseInt($('#followerCount').text().replace(/,/g, ''));
+                $('#followerCount').text((count + 1).toLocaleString());
+            } else {
+                $(this).removeClass('active');
+                $(this).html('<i class="bi bi-heart"></i> Follow');
+                let count = parseInt($('#followerCount').text().replace(/,/g, ''));
+                $('#followerCount').text((count - 1).toLocaleString());
+            }
+        });
+    });
+</script>
+{% endblock %}

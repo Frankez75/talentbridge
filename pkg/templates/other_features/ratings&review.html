@@ -1,0 +1,407 @@
+{% extends 'base.html' %}
+
+{% block title %}TalentBridge · Ratings & Reviews{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { background: linear-gradient(135deg, #111100 0%, #2a2a1a 100%); color: white; padding: 2.5rem 0; margin-bottom: 2rem; border-radius: 0 0 32px 32px; }
+    .review-card { background: #FFFFFF; border-radius: 20px; padding: 1.5rem; border: 1px solid #efefe7; transition: all 0.3s ease; margin-bottom: 1.5rem; }
+    .review-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.04); }
+    .btn-primary-custom { background-color: #e67300; border: none; color: white; font-weight: 600; padding: 0.6rem 2rem; border-radius: 40px; transition: all 0.3s ease; }
+    .btn-primary-custom:hover { background-color: #cc6600; transform: scale(1.02); }
+    .btn-outline-custom { border: 1.5px solid #111100; background: transparent; color: #111100; font-weight: 600; padding: 0.5rem 1.5rem; border-radius: 40px; transition: all 0.3s ease; text-decoration: none; }
+    .btn-outline-custom:hover { background-color: #111100; color: #FFFFFF; transform: scale(1.02); }
+    .rating-stars { color: #ffc107; font-size: 1.2rem; letter-spacing: 2px; }
+    .rating-stars-large { color: #ffc107; font-size: 2rem; letter-spacing: 4px; }
+    .form-control, .form-select { border: 1.5px solid #e0e0d5; border-radius: 16px; padding: 0.75rem 1rem; font-size: 0.95rem; }
+    .form-control:focus, .form-select:focus { border-color: #e67300; outline: none; box-shadow: 0 0 0 3px rgba(230,115,0,0.1); }
+    .form-label { font-weight: 600; font-size: 0.9rem; color: #111100; }
+    .stat-card { background: #FFFFFF; border-radius: 20px; padding: 1.5rem; text-align: center; border: 1px solid #efefe7; transition: all 0.3s ease; height: 100%; }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(0,0,0,0.08); }
+    .stat-number { font-size: 2.5rem; font-weight: 800; color: #e67300; }
+    .stat-label { color: #6c6c5a; font-size: 0.9rem; }
+    .breadcrumb-custom { background: transparent; padding: 0; margin-bottom: 0; }
+    .breadcrumb-custom .breadcrumb-item a { color: rgba(255,255,255,0.7); text-decoration: none; transition: all 0.3s ease; }
+    .breadcrumb-custom .breadcrumb-item a:hover { color: white; }
+    .breadcrumb-custom .breadcrumb-item.active { color: white; }
+    .review-avatar { width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #e67300, #cc6600); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.2rem; flex-shrink: 0; }
+    .rating-bar { height: 8px; border-radius: 4px; background: #e0e0d5; overflow: hidden; flex: 1; }
+    .rating-bar-fill { height: 100%; border-radius: 4px; background: #e67300; transition: width 0.5s ease; }
+    .modal-content-custom { border-radius: 24px; }
+    .empty-state { text-align: center; padding: 4rem 2rem; background: #FFFFFF; border-radius: 20px; border: 2px dashed #e0e0d5; }
+    .empty-state i { font-size: 4rem; color: #e67300; margin-bottom: 1rem; }
+    .section-tabs { border-bottom: 2px solid #efefe7; margin-bottom: 2rem; }
+    .section-tab { display: inline-block; padding: 0.75rem 1.5rem; font-weight: 600; color: #6c6c5a; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.3s ease; }
+    .section-tab:hover { color: #e67300; }
+    .section-tab.active { color: #e67300; border-bottom-color: #e67300; }
+    .filter-select { border: 1.5px solid #e0e0d5; border-radius: 40px; padding: 0.5rem 1.2rem; font-size: 0.9rem; background: white; }
+    .filter-select:focus { outline: none; border-color: #e67300; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .review-card { animation: fadeInUp 0.4s ease-out; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-custom">
+                <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Ratings & Reviews</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <div>
+                <h1 class="display-5 fw-bold mb-2">Ratings & Reviews</h1>
+                <p class="lead mb-0" style="opacity: 0.9;">See what the community is saying</p>
+            </div>
+            <button class="btn-primary-custom" id="writeReviewBtn">
+                <i class="bi bi-pencil"></i> Write a Review
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number" id="totalReviews">{{ ratings|length }}</div>
+                <div class="stat-label">Total Reviews</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number" id="avgRating">
+                    {% if ratings %}
+                        {{ (ratings|sum(attribute='rating_score') / ratings|length)|round(1) }}
+                    {% else %}
+                        0.0
+                    {% endif %}
+                </div>
+                <div class="stat-label">Average Rating</div>
+                <div class="rating-stars" id="avgRatingStars">
+                    {% set avg = (ratings|sum(attribute='rating_score') / ratings|length)|round(0, 'floor') if ratings else 0 %}
+                    {% for i in range(5) %}
+                        {% if i < avg %}
+                            <i class="bi bi-star-fill"></i>
+                        {% else %}
+                            <i class="bi bi-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number" id="fiveStarCount">
+                    {{ ratings|selectattr('rating_score', 'equalto', 5)|list|length }}
+                </div>
+                <div class="stat-label">5-Star Reviews</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number" id="fourStarCount">
+                    {{ ratings|selectattr('rating_score', 'equalto', 4)|list|length }}
+                </div>
+                <div class="stat-label">4-Star Reviews</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-4">
+            <div class="review-card">
+                <h5 class="fw-bold mb-3">Rating Distribution</h5>
+                <div id="ratingDistribution">
+                    {% set distribution = {
+                        5: ratings|selectattr('rating_score', 'equalto', 5)|list|length,
+                        4: ratings|selectattr('rating_score', 'equalto', 4)|list|length,
+                        3: ratings|selectattr('rating_score', 'equalto', 3)|list|length,
+                        2: ratings|selectattr('rating_score', 'equalto', 2)|list|length,
+                        1: ratings|selectattr('rating_score', 'equalto', 1)|list|length
+                    } %}
+                    {% for star in [5,4,3,2,1] %}
+                        {% set count = distribution[star] %}
+                        {% set percentage = (count / ratings|length * 100) if ratings else 0 %}
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span style="width: 60px; font-weight: 600;">{{ star }} ★</span>
+                            <div class="rating-bar">
+                                <div class="rating-bar-fill" style="width: {{ percentage }}%;"></div>
+                            </div>
+                            <span style="width: 40px; text-align: right; font-weight: 500;">{{ count }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div class="review-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0">All Reviews</h5>
+                    <div class="d-flex gap-2">
+                        <select class="filter-select" id="ratingFilter">
+                            <option value="all">All Ratings</option>
+                            <option value="5">5 Stars</option>
+                            <option value="4">4 Stars</option>
+                            <option value="3">3 Stars</option>
+                            <option value="2">2 Stars</option>
+                            <option value="1">1 Star</option>
+                        </select>
+                        <select class="filter-select" id="sortFilter">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="highest">Highest Rated</option>
+                            <option value="lowest">Lowest Rated</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="reviewsContainer">
+                    {% for rating in ratings %}
+                    <div class="review-card">
+                        <div class="d-flex gap-3">
+                            <div class="review-avatar">P{{ rating.rated_by_id }}</div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="fw-bold mb-0">Patron #{{ rating.rated_by_id }}</h6>
+                                        <span class="text-secondary small">
+                                            {% if rating.rated_art %}
+                                                {{ rating.rated_art.art_title }}
+                                            {% else %}
+                                                Artist Profile
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    <span class="text-secondary small">{{ rating.rating_date.strftime('%Y-%m-%d') if rating.rating_date else 'N/A' }}</span>
+                                </div>
+                                <div class="mt-1 rating-stars">
+                                    {% for i in range(5) %}
+                                        {% if i < rating.rating_score %}
+                                            <i class="bi bi-star-fill"></i>
+                                        {% else %}
+                                            <i class="bi bi-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <p class="mt-2 mb-0">Review content placeholder</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-chat-square-text"></i>
+                        <h4 class="fw-bold">No reviews yet</h4>
+                        <p class="text-secondary">Be the first to leave a review!</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Review Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-custom">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-star"></i> Write a Review</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reviewForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label">Your Name</label>
+                        <input type="text" class="form-control" id="reviewerName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Artwork / Artist</label>
+                        <select class="form-select" id="reviewTarget" required>
+                            <option value="">Select an artwork or artist</option>
+                            {% for art in all_artworks %}
+                            <option value="art_{{ art.art_id }}">{{ art.art_title }} by {{ art.artist.artist_fname }} {{ art.artist.artist_lname }}</option>
+                            {% endfor %}
+                            {% for artist in all_artists %}
+                            <option value="artist_{{ artist.artist_id }}">{{ artist.artist_fname }} {{ artist.artist_lname }} (Artist)</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Rating</label>
+                        <div class="rating-stars-large" id="modalRatingStars">
+                            <i class="bi bi-star" data-rating="1"></i>
+                            <i class="bi bi-star" data-rating="2"></i>
+                            <i class="bi bi-star" data-rating="3"></i>
+                            <i class="bi bi-star" data-rating="4"></i>
+                            <i class="bi bi-star" data-rating="5"></i>
+                        </div>
+                        <input type="hidden" id="selectedRating" value="0">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Review</label>
+                        <textarea class="form-control" id="reviewText" rows="4" placeholder="Share your experience..." required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-primary-custom" id="submitReviewBtn">Submit Review</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        let currentUser = localStorage.getItem('tb_user_name');
+        let userType = localStorage.getItem('tb_user_type');
+        if(currentUser) {
+            document.getElementById('reviewerName').value = currentUser;
+        }
+
+        // Filter and sort functionality
+        let currentRatingFilter = 'all';
+        let currentSortFilter = 'newest';
+        let allReviews = {{ ratings|tojson }};
+
+        function filterAndSortReviews() {
+            let filtered = allReviews;
+            if(currentRatingFilter !== 'all') {
+                filtered = filtered.filter(function(r) { return r.rating_score === parseInt(currentRatingFilter); });
+            }
+            if(currentSortFilter === 'newest') {
+                filtered.sort(function(a, b) { return new Date(b.rating_date) - new Date(a.rating_date); });
+            } else if(currentSortFilter === 'oldest') {
+                filtered.sort(function(a, b) { return new Date(a.rating_date) - new Date(b.rating_date); });
+            } else if(currentSortFilter === 'highest') {
+                filtered.sort(function(a, b) { return b.rating_score - a.rating_score; });
+            } else if(currentSortFilter === 'lowest') {
+                filtered.sort(function(a, b) { return a.rating_score - b.rating_score; });
+            }
+            return filtered;
+        }
+
+        $('#ratingFilter').change(function() {
+            currentRatingFilter = $(this).val();
+            let filtered = filterAndSortReviews();
+            // Re-render reviews would go here
+        });
+
+        $('#sortFilter').change(function() {
+            currentSortFilter = $(this).val();
+            let filtered = filterAndSortReviews();
+            // Re-render reviews would go here
+        });
+
+        // Modal rating stars
+        let modalStars = document.querySelectorAll('#modalRatingStars i');
+        modalStars.forEach(function(star) {
+            star.addEventListener('click', function() {
+                let rating = parseInt(this.getAttribute('data-rating'));
+                document.getElementById('selectedRating').value = rating;
+                modalStars.forEach(function(s) {
+                    let starRating = parseInt(s.getAttribute('data-rating'));
+                    if(starRating <= rating) {
+                        s.classList.remove('bi-star');
+                        s.classList.add('bi-star-fill');
+                    } else {
+                        s.classList.remove('bi-star-fill');
+                        s.classList.add('bi-star');
+                    }
+                });
+            });
+            star.addEventListener('mouseenter', function() {
+                let rating = parseInt(this.getAttribute('data-rating'));
+                modalStars.forEach(function(s) {
+                    let starRating = parseInt(s.getAttribute('data-rating'));
+                    if(starRating <= rating) {
+                        s.classList.remove('bi-star');
+                        s.classList.add('bi-star-fill');
+                    } else {
+                        s.classList.remove('bi-star-fill');
+                        s.classList.add('bi-star');
+                    }
+                });
+            });
+            star.addEventListener('mouseleave', function() {
+                let selected = parseInt(document.getElementById('selectedRating').value);
+                modalStars.forEach(function(s) {
+                    let starRating = parseInt(s.getAttribute('data-rating'));
+                    if(starRating <= selected) {
+                        s.classList.remove('bi-star');
+                        s.classList.add('bi-star-fill');
+                    } else {
+                        s.classList.remove('bi-star-fill');
+                        s.classList.add('bi-star');
+                    }
+                });
+            });
+        });
+
+        $('#writeReviewBtn').click(function() {
+            if(!currentUser) {
+                if(confirm('Please sign in to write a review. Go to login?')) {
+                    window.location.href = "{{ url_for('auth.login') }}";
+                }
+                return;
+            }
+            document.getElementById('selectedRating').value = 0;
+            document.getElementById('reviewText').value = '';
+            modalStars.forEach(function(s) {
+                s.classList.remove('bi-star-fill');
+                s.classList.add('bi-star');
+            });
+            $('#reviewModal').modal('show');
+        });
+
+        $('#submitReviewBtn').click(function() {
+            let name = document.getElementById('reviewerName').value.trim();
+            let target = document.getElementById('reviewTarget').value;
+            let rating = parseInt(document.getElementById('selectedRating').value);
+            let text = document.getElementById('reviewText').value.trim();
+
+            if(!name) { alert('Please enter your name.'); return; }
+            if(!target) { alert('Please select an artwork or artist to review.'); return; }
+            if(rating === 0) { alert('Please select a rating.'); return; }
+            if(!text || text.length < 10) { alert('Please write a review with at least 10 characters.'); return; }
+
+            // Parse target to get artist_id and art_id
+            let artistId = null, artId = null;
+            if(target.startsWith('art_')) {
+                artId = parseInt(target.replace('art_', ''));
+            } else if(target.startsWith('artist_')) {
+                artistId = parseInt(target.replace('artist_', ''));
+            }
+
+            $.ajax({
+                url: "{{ url_for('user.submit_rating') }}",
+                type: 'POST',
+                data: {
+                    artist_id: artistId,
+                    art_id: artId,
+                    score: rating,
+                    csrf_token: $('input[name="csrf_token"]').val()
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if(response.status === 'success') {
+                        alert('Thank you for your review! It has been published.');
+                        $('#reviewModal').modal('hide');
+                        location.reload();
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function() {
+                    alert('An error occurred. Please try again.');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

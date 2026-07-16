@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block title %}TalentBridge · Login{% endblock %}
+
+{% block extra_css %}
+<style>
+    body { background: linear-gradient(135deg, #F9F9FB 0%, #e8e8e0 100%); min-height: 100vh; }
+    .login-card { background: #FFFFFF; border-radius: 32px; padding: 2.5rem; border: 1px solid #efefe7; box-shadow: 0 20px 48px rgba(0,0,0,0.06); animation: fadeInUp 0.5s ease-out; margin: 2rem auto; }
+    .btn-login { background-color: #e67300; border: none; color: white; font-weight: 700; padding: 0.85rem; border-radius: 40px; font-size: 1rem; width: 100%; transition: all 0.3s ease; }
+    .btn-login:hover { background-color: #cc6600; transform: scale(1.01); }
+    .btn-login:disabled { opacity: 0.6; cursor: not-allowed; }
+    .password-toggle { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #6c6c5a; cursor: pointer; font-size: 1.1rem; padding: 0; }
+    .password-toggle:hover { color: #e67300; }
+    .input-group-icon { position: relative; }
+    .input-group-icon i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #6c6c5a; font-size: 1.1rem; }
+    .input-group-icon .form-control { padding-left: 2.8rem; }
+    .error-message { background-color: #f8d7da; color: #721c24; padding: 0.75rem 1rem; border-radius: 16px; font-size: 0.9rem; display: none; }
+    .error-message.show { display: block; animation: shake 0.4s ease-out; }
+    .success-message { background-color: #d4edda; color: #155724; padding: 0.75rem 1rem; border-radius: 16px; font-size: 0.9rem; display: none; }
+    .success-message.show { display: block; }
+    .divider { display: flex; align-items: center; text-align: center; margin: 1.5rem 0; }
+    .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #e0e0d5; }
+    .divider span { padding: 0 1rem; color: #6c6c5a; font-size: 0.85rem; }
+    .btn-back { border: 1.5px solid #111100; background: transparent; color: #111100; font-weight: 600; padding: 0.5rem 1.25rem; border-radius: 40px; transition: all 0.3s ease; text-decoration: none; display: inline-block; }
+    .btn-back:hover { background-color: #111100; color: #FFFFFF; transform: scale(1.02); }
+    .social-btn { width: 48px; height: 48px; border-radius: 50%; border: 1.5px solid #e0e0d5; background: transparent; transition: all 0.3s ease; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem; color: #6c6c5a; }
+    .social-btn:hover { border-color: #e67300; color: #e67300; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+    .remember-me { display: flex; align-items: center; gap: 0.5rem; }
+    .remember-me input[type="checkbox"] { width: 18px; height: 18px; accent-color: #e67300; border-radius: 4px; }
+    .forgot-link { color: #6c6c5a; text-decoration: none; font-size: 0.9rem; transition: all 0.3s ease; }
+    .forgot-link:hover { color: #e67300; }
+    .admin-link { display: inline-block; padding: 0.3rem 1rem; background: #f0f0ea; color: #6c6c5a; border-radius: 40px; font-size: 0.75rem; font-weight: 600; text-decoration: none; transition: all 0.3s ease; }
+    .admin-link:hover { background: #e67300; color: white; }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-10px); } 40% { transform: translateX(10px); } 60% { transform: translateX(-10px); } 80% { transform: translateX(10px); } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container d-flex align-items-center justify-content-center" style="min-height: calc(100vh - 80px); padding: 2rem 0;">
+    <div class="col-lg-5 col-md-7">
+        <div class="login-card">
+            <div class="text-center mb-4">
+                <h2 class="fw-bold" style="color: #111100;">Welcome Back</h2>
+                <p class="text-secondary">Sign in to continue your creative journey</p>
+                <a href="{{ url_for('admin.admin_login') }}" class="admin-link"><i class="bi bi-shield-lock"></i> Admin Login</a>
+            </div>
+
+            <div class="error-message" id="errorMessage">
+                <i class="bi bi-exclamation-circle"></i> <span id="errorText">Invalid credentials. Please try again.</span>
+            </div>
+
+            <div class="success-message" id="successMessage">
+                <i class="bi bi-check-circle"></i> <span id="successText">Login successful! Redirecting...</span>
+            </div>
+
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label class="form-label"><i class="bi bi-envelope"></i> Email Address</label>
+                    <div class="input-group-icon">
+                        <i class="bi bi-envelope"></i>
+                        <input type="email" class="form-control" id="loginEmail" placeholder="you@example.com" required>
+                    </div>
+                    <div class="invalid-feedback" id="emailError">Please enter a valid email address.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><i class="bi bi-lock"></i> Password</label>
+                    <div class="input-group-icon">
+                        <i class="bi bi-key"></i>
+                        <input type="password" class="form-control" id="loginPassword" placeholder="••••••••" required>
+                        <button type="button" class="password-toggle" id="togglePassword">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <div class="invalid-feedback" id="passwordError">Please enter your password.</div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="remember-me">
+                        <input type="checkbox" id="rememberMe">
+                        <label for="rememberMe" style="font-size: 0.9rem; cursor: pointer;">Remember me</label>
+                    </div>
+                    <a href="#" class="forgot-link">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="btn-login" id="loginBtn">
+                    <i class="bi bi-box-arrow-in-right"></i> Sign In
+                </button>
+            </form>
+
+            <div class="divider">
+                <span>or continue with</span>
+            </div>
+
+            <div class="text-center mb-3">
+                <button class="social-btn"><i class="bi bi-google"></i></button>
+                <button class="social-btn"><i class="bi bi-facebook"></i></button>
+                <button class="social-btn"><i class="bi bi-apple"></i></button>
+            </div>
+
+            <div class="text-center">
+                <span class="text-secondary">Don't have an account? </span>
+                <a href="{{ url_for('auth.register') }}" class="text-accent fw-bold text-decoration-none">Create account</a>
+            </div>
+
+            <div class="text-center mt-3">
+                <a href="{{ url_for('main.index') }}" class="btn-back" style="font-size: 0.85rem; padding: 0.4rem 1.2rem;">
+                    <i class="bi bi-arrow-left"></i> Back to home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        let userType = localStorage.getItem('tb_user_type');
+        let userName = localStorage.getItem('tb_user_name');
+        if(userType && userName) {
+            if(userType === 'artist') window.location.href = "{{ url_for('user.artist_dashboard') }}";
+            else if(userType === 'patron') window.location.href = "{{ url_for('user.patron_dashboard') }}";
+            else if(userType === 'admin') window.location.href = "{{ url_for('admin.admin_dashboard') }}";
+        }
+
+        $('#togglePassword').click(function() {
+            let input = $('#loginPassword');
+            let type = input.attr('type') === 'password' ? 'text' : 'password';
+            input.attr('type', type);
+            $(this).find('i').toggleClass('bi-eye bi-eye-slash');
+        });
+
+        $('#loginForm').submit(function(e) {
+            e.preventDefault();
+            let isValid = true;
+            let email = $('#loginEmail').val().trim();
+            let password = $('#loginPassword').val();
+
+            $('#emailError').hide();
+            $('#passwordError').hide();
+            $('#errorMessage').removeClass('show');
+
+            if(!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+                $('#emailError').show();
+                isValid = false;
+            }
+            if(password.length < 1) {
+                $('#passwordError').show();
+                isValid = false;
+            }
+            if(!isValid) {
+                $('#errorText').text('Please fix the errors above.');
+                $('#errorMessage').addClass('show');
+                return;
+            }
+
+            $('#loginBtn').prop('disabled', true);
+            $('#loginBtn').html('<span class="spinner-border spinner-border-sm me-2"></span> Signing in...');
+
+            $.ajax({
+                url: "{{ url_for('auth.login_post') }}",
+                type: 'POST',
+                data: { email: email, password: password },
+                dataType: 'json',
+                success: function(response) {
+                    if(response.status === 'success') {
+                        window.location.href = response.redirect;
+                    } else {
+                        $('#loginBtn').prop('disabled', false);
+                        $('#loginBtn').html('<i class="bi bi-box-arrow-in-right"></i> Sign In');
+                        $('#errorText').text(response.message);
+                        $('#errorMessage').addClass('show');
+                    }
+                },
+                error: function() {
+                    $('#loginBtn').prop('disabled', false);
+                    $('#loginBtn').html('<i class="bi bi-box-arrow-in-right"></i> Sign In');
+                    $('#errorText').text('An error occurred. Please try again.');
+                    $('#errorMessage').addClass('show');
+                }
+            });
+        });
+
+        $('#loginEmail, #loginPassword').on('input', function() {
+            $('#errorMessage').removeClass('show');
+        });
+
+        let rememberMe = localStorage.getItem('tb_remember_email');
+        if(rememberMe) {
+            $('#loginEmail').val(rememberMe);
+            $('#rememberMe').prop('checked', true);
+        }
+        $('#rememberMe').change(function() {
+            if($(this).is(':checked')) localStorage.setItem('tb_remember_email', $('#loginEmail').val());
+            else localStorage.removeItem('tb_remember_email');
+        });
+    });
+</script>
+{% endblock %}

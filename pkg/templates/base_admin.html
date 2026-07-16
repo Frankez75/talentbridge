@@ -1,0 +1,19 @@
+{% extends 'base_dashboard.html' %}
+
+{% block sidebar %}
+<a href="{{ url_for('admin.admin_dashboard') }}" class="nav-item-custom {% if request.endpoint == 'admin.admin_dashboard' %}active{% endif %}">
+    <i class="bi bi-speedometer2"></i> Dashboard
+</a>
+<a href="{{ url_for('admin.admin_users') }}" class="nav-item-custom {% if request.endpoint == 'admin.admin_users' %}active{% endif %}">
+    <i class="bi bi-people"></i> Manage Users
+</a>
+<a href="{{ url_for('admin.admin_artworks') }}" class="nav-item-custom {% if request.endpoint == 'admin.admin_artworks' %}active{% endif %}">
+    <i class="bi bi-grid-3x3-gap-fill"></i> Manage Artworks & Orders
+</a>
+<a href="#" class="nav-item-custom">
+    <i class="bi bi-flag"></i> Reports
+</a>
+<a href="#" class="nav-item-custom">
+    <i class="bi bi-gear"></i> Settings
+</a>
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}TalentBridge · Admin Manage Users{% endblock %}
+
+{% block dashboard_content %}
+<div class="dashboard-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-0"><i class="bi bi-people"></i> Manage Users</h3>
+            <p class="text-secondary mb-0">View and manage all registered users</p>
+        </div>
+        <button class="btn-primary-custom" id="addUserBtn">
+            <i class="bi bi-person-plus"></i> Add New User
+        </button>
+    </div>
+    
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="dashboard-card text-center">
+                <div class="stat-number">{{ users|length }}</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="dashboard-card text-center">
+                <div class="stat-number">{{ users|selectattr('role', 'equalto', 'artist')|list|length }}</div>
+                <div class="stat-label">Artists</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="dashboard-card text-center">
+                <div class="stat-number">{{ users|selectattr('role', 'equalto', 'patron')|list|length }}</div>
+                <div class="stat-label">Patrons</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="dashboard-card text-center">
+                <div class="stat-number">0</div>
+                <div class="stat-label">Suspended</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-3 mb-4">
+        <input type="text" class="search-box" id="searchUser" placeholder="Search by name or email...">
+        <select class="filter-select" id="filterRole">
+            <option value="all">All Roles</option>
+            <option value="artist">Artists</option>
+            <option value="patron">Patrons</option>
+            <option value="admin">Admins</option>
+        </select>
+        <select class="filter-select" id="filterStatus">
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="suspended">Suspended</option>
+            <option value="pending">Pending</option>
+        </select>
+        <button class="btn-outline-custom" id="clearFiltersBtn">
+            <i class="bi bi-x-circle"></i> Clear Filters
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table-custom" id="usersTable">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Joined</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="usersTableBody">
+                {% for user in users %}
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-circle me-2">{{ user.name[:2]|upper }}</div>
+                            <div>
+                                <div class="fw-semibold">{{ user.name }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ user.email }}</td>
+                    <td>
+                        {% if user.role == 'artist' %}<span class="badge-artist"><i class="bi bi-brush"></i> Artist</span>
+                        {% elif user.role == 'patron' %}<span class="badge-patron"><i class="bi bi-gem"></i> Patron</span>
+                        {% else %}<span class="badge-admin"><i class="bi bi-shield"></i> Admin</span>{% endif %}
+                    </td>
+                    <td><span class="badge-active"><i class="bi bi-check-circle"></i> Active</span></td>
+                    <td>{{ user.joined }}</td>
+                    <td>
+                        <div class="d-flex gap-1 flex-wrap">
+                            <button class="btn-sm-view edit-user" data-id="{{ user.id }}">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn-sm-suspend suspend-user" data-id="{{ user.id }}">
+                                <i class="bi bi-pause-circle"></i>
+                            </button>
+                            <button class="btn-sm-delete delete-user" data-id="{{ user.id }}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

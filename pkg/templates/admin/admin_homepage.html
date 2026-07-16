@@ -1,0 +1,43 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}TalentBridge · Admin Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<div id="usersPanel">
+    <div class="dashboard-card">
+        <h3 class="fw-bold mb-4">Manage Users</h3>
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.name }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            {% if user.role == 'artist' %}<span class="badge-artist">Artist</span>
+                            {% elif user.role == 'patron' %}<span class="badge-patron">Patron</span>
+                            {% else %}<span class="badge-admin">Admin</span>{% endif %}
+                        </td>
+                        <td><span class="badge-active">Active</span></td>
+                        <td>
+                            <a href="#" class="btn-sm-danger" data-action="suspend" data-user="{{ user.id }}">Suspend</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="dashboard-card">
+        <h4 class="fw-bold mb-3">User Statistics</h4>
+        <div class="row">
+            <div class="col-4"><div class="stat-number">{{ total_artists }}</div><div class="stat-label">Total Artists</div></div>
+            <div class="col-4"><div class="stat-number">{{ total_patrons }}</div><div class="stat-label">Total Patrons</div></div>
+            <div class="col-4"><div class="stat-number">{{ total_artists + total_patrons }}</div><div class="stat-label">Total Users</div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}

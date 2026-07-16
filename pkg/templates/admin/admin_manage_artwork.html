@@ -1,0 +1,183 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}TalentBridge · Admin Manage Artworks & Orders{% endblock %}
+
+{% block dashboard_content %}
+<div class="dashboard-card">
+    <h3 class="fw-bold mb-4"><i class="bi bi-grid-3x3-gap-fill"></i> Manage Artworks & Orders</h3>
+    
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="dashboard-card text-center">
+                <div class="stat-number" id="totalArtworks">{{ artworks|length }}</div>
+                <div class="stat-label">Total Artworks</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="dashboard-card text-center">
+                <div class="stat-number" id="pendingArtworks">{{ artworks|selectattr('artwork_status', 'equalto', 'pending')|list|length }}</div>
+                <div class="stat-label">Pending Review</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="dashboard-card text-center">
+                <div class="stat-number" id="totalOrders">{{ orders|length }}</div>
+                <div class="stat-label">Total Orders</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="dashboard-card text-center">
+                <div class="stat-number" id="pendingOrders">{{ orders|selectattr('order_status', 'equalto', 'pending')|list|length }}</div>
+                <div class="stat-label">Pending Orders</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-tabs">
+        <div class="section-tab active" data-tab="artworks">
+            <i class="bi bi-grid-3x3-gap-fill"></i> Artworks
+        </div>
+        <div class="section-tab" data-tab="orders">
+            <i class="bi bi-cart-check"></i> Orders
+        </div>
+    </div>
+
+    <div id="artworksSection">
+        <div class="d-flex flex-wrap gap-3 mb-4">
+            <input type="text" class="search-box" id="searchArtwork" placeholder="Search artworks...">
+            <select class="filter-select" id="filterArtworkStatus">
+                <option value="all">All Status</option>
+                <option value="available">Available</option>
+                <option value="sold">Sold</option>
+                <option value="reserved">Reserved</option>
+            </select>
+            <button class="btn-outline-custom" id="clearArtworkFiltersBtn">
+                <i class="bi bi-x-circle"></i> Clear Filters
+            </button>
+        </div>
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>Artwork</th>
+                        <th>Artist</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="artworksTableBody">
+                    {% for art in artworks %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="{{ art.art_image or 'https://placehold.co/100x100/e67300/white?text=Art' }}" class="artwork-image-thumb me-2" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">
+                                <div>
+                                    <div class="fw-semibold">{{ art.art_title }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ art.artist.artist_fname }} {{ art.artist.artist_lname }}</td>
+                        <td>{{ art.art_type.art_type_name if art.art_type else 'General' }}</td>
+                        <td><strong>${{ art.art_price }}</strong></td>
+                        <td>
+                            {% if art.artwork_status == 'available' %}
+                                <span class="badge-active"><i class="bi bi-check-circle"></i> Available</span>
+                            {% elif art.artwork_status == 'sold' %}
+                                <span class="badge-completed"><i class="bi bi-check-circle"></i> Sold</span>
+                            {% else %}
+                                <span class="badge-pending"><i class="bi bi-clock"></i> Reserved</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1 flex-wrap">
+                                <button class="btn-sm-view edit-artwork" data-id="{{ art.art_id }}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn-sm-remove delete-artwork" data-id="{{ art.art_id }}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="ordersSection" style="display: none;">
+        <div class="d-flex flex-wrap gap-3 mb-4">
+            <input type="text" class="search-box" id="searchOrder" placeholder="Search orders...">
+            <select class="filter-select" id="filterOrderStatus">
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+            </select>
+            <button class="btn-outline-custom" id="clearOrderFiltersBtn">
+                <i class="bi bi-x-circle"></i> Clear Filters
+            </button>
+        </div>
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Artwork</th>
+                        <th>Buyer</th>
+                        <th>Artist</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTableBody">
+                    {% for order in orders %}
+                    <tr>
+                        <td><span class="fw-semibold">#{{ order.order_id }}</span></td>
+                        <td>
+                            {% for detail in order.details %}
+                                {{ detail.art_item.art_title }}
+                            {% endfor %}
+                        </td>
+                        <td>
+                            {% if order.patron_ord_id %}
+                                {{ order.patron_buyer.patron_fname }} {{ order.patron_buyer.patron_lname }}
+                            {% else %}
+                                Unknown
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if order.artist_ord_id %}
+                                {{ order.artist_buyer.artist_fname }} {{ order.artist_buyer.artist_lname }}
+                            {% else %}
+                                Unknown
+                            {% endif %}
+                        </td>
+                        <td><strong style="color: #e67300;">${{ order.total_amount }}</strong></td>
+                        <td>
+                            {% if order.order_status == 'pending' %}
+                                <span class="badge-pending"><i class="bi bi-clock"></i> Pending</span>
+                            {% elif order.order_status == 'completed' %}
+                                <span class="badge-completed"><i class="bi bi-check-circle"></i> Completed</span>
+                            {% else %}
+                                <span class="badge-cancelled"><i class="bi bi-x-circle"></i> Cancelled</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1 flex-wrap">
+                                <button class="btn-sm-view edit-order" data-id="{{ order.order_id }}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

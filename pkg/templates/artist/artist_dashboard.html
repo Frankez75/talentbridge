@@ -1,0 +1,492 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}TalentBridge · Artist Dashboard{% endblock %}
+
+{% block sidebar %}
+<div class="nav-item-custom active" data-tab="overview">
+    <i class="bi bi-speedometer2"></i> Overview
+</div>
+<div class="nav-item-custom" data-tab="artworks">
+    <i class="bi bi-grid-3x3-gap-fill"></i> My Artworks
+</div>
+<div class="nav-item-custom" data-tab="upload">
+    <i class="bi bi-cloud-upload"></i> Upload Artwork
+</div>
+<div class="nav-item-custom" data-tab="orders">
+    <i class="bi bi-cart-check"></i> My Sales
+</div>
+<div class="nav-item-custom" data-tab="messages">
+    <i class="bi bi-chat-dots"></i> Messages
+</div>
+<div class="nav-item-custom" data-tab="profile">
+    <i class="bi bi-person-circle"></i> My Profile
+</div>
+{% endblock %}
+
+{% block dashboard_content %}
+<div id="mainContent"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        let currentUser = localStorage.getItem('tb_user_name');
+        let userType = localStorage.getItem('tb_user_type');
+
+        if(!currentUser || userType !== 'artist') {
+            window.location.href = "{{ url_for('auth.register') }}";
+        }
+
+        let artworks = [];
+        let orders = [];
+        let messages = [];
+
+        function loadDashboardData() {
+            $.ajax({
+                url: "{{ url_for('user.artist_dashboard_data') }}",
+                type: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    artworks = data.artworks || [];
+                    orders = data.orders || [];
+                    messages = data.messages || [];
+                    loadTab('overview');
+                },
+                error: function(err) {
+                    console.error('Error loading dashboard data:', err);
+                    artworks = [];
+                    orders = [];
+                    messages = [];
+                    loadTab('overview');
+                }
+            });
+        }
+
+        function renderOverview() {
+            let totalArtworks = artworks.length;
+            let totalSales = 0;
+            let pendingOrders = 0;
+            
+            for(let i = 0; i < orders.length; i++) {
+                if(orders[i].status === 'completed' || orders[i].status === 'delivered') {
+                    totalSales += orders[i].amount;
+                }
+                if(orders[i].status === 'pending' || orders[i].status === 'processing') {
+                    pendingOrders++;
+                }
+            }
+
+            let recentOrdersHtml = '';
+            for(let i = 0; i < Math.min(orders.length, 3); i++) {
+                let order = orders[i];
+                let statusClass = order.status === 'completed' ? 'badge-completed' : 
+                                 order.status === 'shipped' ? 'badge-shipped' : 'badge-pending';
+                recentOrdersHtml += `
+                    <div class="order-item">
+                        <div class="flex-grow-1">
+                            <div class="fw-bold">${order.artworkTitle}</div>
+                            <div class="text-secondary small">${order.buyerName}</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold" style="color: #e67300;">$${order.amount}</div>
+                            <span class="${statusClass}">${order.status}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="dashboard-card">
+                    <h3 class="fw-bold mb-4">Welcome back, ${currentUser}!</h3>
+                    <p class="text-secondary mb-4">Your creative journey at a glance</p>
+                    <div class="row g-4">
+                        <div class="col-md-3">
+                            <div class="dashboard-card text-center">
+                                <div class="stat-number">${totalArtworks}</div>
+                                <div class="stat-label">Total Artworks</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="dashboard-card text-center">
+                                <div class="stat-number">$${totalSales}</div>
+                                <div class="stat-label">Total Revenue</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="dashboard-card text-center">
+                                <div class="stat-number">${pendingOrders}</div>
+                                <div class="stat-label">Pending Orders</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="dashboard-card text-center">
+                                <div class="stat-number">${orders.length}</div>
+                                <div class="stat-label">Total Orders</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dashboard-card">
+                    <h4 class="fw-bold mb-3">Recent Activity</h4>
+                    ${recentOrdersHtml || '<p class="text-secondary">No recent orders</p>'}
+                    ${orders.length > 3 ? '<div class="text-center mt-2"><a href="#" class="btn-outline-custom btn-sm" onclick="loadTab(\'orders\')">View All Orders</a></div>' : ''}
+                </div>
+            `;
+        }
+
+        function renderArtworks() {
+            if(artworks.length === 0) {
+                return `
+                    <div class="dashboard-card">
+                        <h3 class="fw-bold mb-4">My Artworks</h3>
+                        <div class="empty-state">
+                            <i class="bi bi-image"></i>
+                            <h5 class="fw-bold">No artworks yet</h5>
+                            <p class="text-secondary">Upload your first artwork to get started</p>
+                            <button class="btn-primary-custom" onclick="loadTab('upload')">Upload Artwork</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            let tableRows = '';
+            for(let i = 0; i < artworks.length; i++) {
+                let art = artworks[i];
+                tableRows += `
+                    <tr>
+                        <td><img src="${art.art_image || 'https://placehold.co/60x60/e67300/white?text=Art'}" width="60" height="60" style="object-fit:cover; border-radius:8px;"></td>
+                        <td class="fw-bold">${art.art_title}</td>
+                        <td>${art.art_type_name || 'General'}</td>
+                        <td><strong>$${art.art_price}</strong></td>
+                        <td><span class="badge-active">${art.artwork_status|title}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-danger rounded-pill delete-artwork" data-id="${art.art_id}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            return `
+                <div class="dashboard-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3 class="fw-bold mb-0">My Artworks</h3>
+                        <button class="btn-primary-custom" onclick="loadTab('upload')">
+                            <i class="bi bi-plus-lg"></i> Upload New
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table-custom">
+                            <thead>
+                                <tr>
+                                    <th>Image</th>
+                                    <th>Title</th>
+                                    <th>Category</th>
+                                    <th>Price</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>${tableRows}</tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderUpload() {
+            return `
+                <div class="dashboard-card">
+                    <h3 class="fw-bold mb-4"><i class="bi bi-cloud-upload"></i> Upload New Artwork</h3>
+                    <form id="uploadArtworkForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Artwork Title *</label>
+                            <input type="text" class="form-control" id="artTitle" required placeholder="e.g., Sunset Dreams">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Category *</label>
+                            <select class="form-select" id="artCategory" required>
+                                <option value="">Select category</option>
+                                <option value="Painting">Painting</option>
+                                <option value="Sculpture">Sculpture</option>
+                                <option value="Craft">Craft</option>
+                                <option value="Digital Art">Digital Art</option>
+                                <option value="Photography">Photography</option>
+                                <option value="Jewelry">Jewelry</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Price ($) *</label>
+                            <input type="number" class="form-control" id="artPrice" required placeholder="0.00" step="0.01">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Description *</label>
+                            <textarea class="form-control" id="artDescription" rows="3" required placeholder="Describe your artwork..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Image URL *</label>
+                            <input type="text" class="form-control" id="artImage" required placeholder="https://example.com/image.jpg">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Stock Quantity</label>
+                            <input type="number" class="form-control" id="artStock" value="1" min="1">
+                        </div>
+                        <button type="submit" class="btn-primary-custom w-100">
+                            <i class="bi bi-check-lg"></i> Upload Artwork
+                        </button>
+                    </form>
+                </div>
+            `;
+        }
+
+        function renderOrders() {
+            if(orders.length === 0) {
+                return `
+                    <div class="dashboard-card">
+                        <h3 class="fw-bold mb-4">My Sales</h3>
+                        <div class="empty-state">
+                            <i class="bi bi-inbox"></i>
+                            <h4 class="fw-bold">No orders yet</h4>
+                            <p class="text-secondary">When patrons purchase your artwork, orders will appear here</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            let tableRows = '';
+            for(let i = 0; i < orders.length; i++) {
+                let order = orders[i];
+                let statusClass = order.status === 'completed' ? 'badge-completed' : 
+                                 order.status === 'shipped' ? 'badge-shipped' : 'badge-pending';
+                tableRows += `
+                    <tr>
+                        <td>${order.id}</td>
+                        <td>${order.artworkTitle}</td>
+                        <td>${order.buyerName}</td>
+                        <td><strong>$${order.amount}</strong></td>
+                        <td>${order.orderDate}</td>
+                        <td><span class="${statusClass}">${order.status}</span></td>
+                        <td>
+                            ${order.status === 'pending' ? 
+                                `<button class="btn btn-sm btn-warning rounded-pill update-order" data-order="${order.id}">
+                                    <i class="bi bi-pencil"></i> Update
+                                </button>` : 
+                                `<button class="btn btn-sm btn-outline-secondary rounded-pill">
+                                    <i class="bi bi-check"></i> Done
+                                </button>`
+                            }
+                        </td>
+                    </tr>
+                `;
+            }
+
+            return `
+                <div class="dashboard-card">
+                    <h3 class="fw-bold mb-4">My Sales</h3>
+                    <div class="table-responsive">
+                        <table class="table-custom">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Artwork</th>
+                                    <th>Buyer</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>${tableRows}</tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderMessages() {
+            let messageHtml = `
+                <div class="dashboard-card">
+                    <h3 class="fw-bold mb-4"><i class="bi bi-chat-dots"></i> Messages</h3>
+            `;
+
+            if(messages.length === 0) {
+                messageHtml += `
+                    <div class="empty-state">
+                        <i class="bi bi-chat-square-text"></i>
+                        <h5 class="fw-bold">No messages</h5>
+                        <p class="text-secondary">Messages from patrons will appear here</p>
+                    </div>
+                `;
+            } else {
+                for(let i = 0; i < messages.length; i++) {
+                    let msg = messages[i];
+                    let unreadClass = !msg.read ? 'border-left: 3px solid #e67300;' : '';
+                    messageHtml += `
+                        <div class="dashboard-card" style="margin-bottom: 0.75rem; ${unreadClass} cursor: pointer;" onclick="window.location.href='{{ url_for('user.artist_messages') }}'">
+                            <div class="d-flex justify-content-between">
+                                <strong style="color: #e67300;">${msg.from}</strong>
+                                <small class="text-secondary">${msg.date}</small>
+                            </div>
+                            <p class="mt-2 mb-1">${msg.message}</p>
+                            ${!msg.read ? '<span class="badge-active" style="font-size: 0.7rem;">New</span>' : ''}
+                        </div>
+                    `;
+                }
+            }
+
+            messageHtml += '</div>';
+            return messageHtml;
+        }
+
+        function renderProfile() {
+            return `
+                <div class="dashboard-card">
+                    <h3 class="fw-bold mb-4"><i class="bi bi-person-circle"></i> My Profile</h3>
+                    <form id="profileForm">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Display Name</label>
+                            <input type="text" class="form-control" id="profileName" value="${currentUser}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Email</label>
+                            <input type="email" class="form-control" id="profileEmail" value="${localStorage.getItem('tb_user_email') || 'artist@example.com'}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Bio</label>
+                            <textarea class="form-control" id="profileBio" rows="3">Passionate artist creating unique pieces.</textarea>
+                        </div>
+                        <button type="submit" class="btn-primary-custom">Save Changes</button>
+                    </form>
+                </div>
+            `;
+        }
+
+        window.loadTab = function(tabName) {
+            let content = '';
+            switch(tabName) {
+                case 'overview': content = renderOverview(); break;
+                case 'artworks': content = renderArtworks(); break;
+                case 'upload': content = renderUpload(); break;
+                case 'orders': content = renderOrders(); break;
+                case 'messages': content = renderMessages(); break;
+                case 'profile': content = renderProfile(); break;
+                default: content = renderOverview();
+            }
+            $('#mainContent').html(content);
+
+            $('.nav-item-custom').removeClass('active');
+            $(`.nav-item-custom[data-tab="${tabName}"]`).addClass('active');
+
+            if(tabName === 'artworks') {
+                $('.delete-artwork').click(function() {
+                    let artId = $(this).data('id');
+                    if(confirm('Delete this artwork?')) {
+                        $.ajax({
+                            url: "{{ url_for('user.delete_artwork', art_id=0) }}".replace('0', artId),
+                            type: 'POST',
+                            data: { csrf_token: $('input[name="csrf_token"]').val() },
+                            dataType: 'json',
+                            success: function(response) {
+                                if(response.status === 'success') {
+                                    loadTab('artworks');
+                                } else {
+                                    alert(response.message);
+                                }
+                            },
+                            error: function() {
+                                alert('An error occurred. Please try again.');
+                            }
+                        });
+                    }
+                });
+            }
+
+            if(tabName === 'upload') {
+                $('#uploadArtworkForm').submit(function(e) {
+                    e.preventDefault();
+                    let title = $('#artTitle').val().trim();
+                    let category = $('#artCategory').val();
+                    let price = parseFloat($('#artPrice').val());
+                    let description = $('#artDescription').val().trim();
+                    let image = $('#artImage').val().trim();
+                    let stock = parseInt($('#artStock').val()) || 1;
+
+                    if(title && category && price && description && image) {
+                        $.ajax({
+                            url: "{{ url_for('user.upload_art_post') }}",
+                            type: 'POST',
+                            data: {
+                                title: title,
+                                description: description,
+                                price: price,
+                                image: image,
+                                art_type_id: category,
+                                stock_qty: stock,
+                                csrf_token: $('input[name="csrf_token"]').val()
+                            },
+                            dataType: 'json',
+                            success: function(response) {
+                                if(response.status === 'success') {
+                                    alert('Artwork uploaded successfully!');
+                                    $('#uploadArtworkForm')[0].reset();
+                                    loadTab('artworks');
+                                } else {
+                                    alert(response.message);
+                                }
+                            },
+                            error: function() {
+                                alert('An error occurred. Please try again.');
+                            }
+                        });
+                    } else {
+                        alert('Please fill all fields');
+                    }
+                });
+            }
+
+            if(tabName === 'orders') {
+                $('.update-order').click(function() {
+                    let orderId = $(this).data('order');
+                    let order = orders.find(function(o) { return o.id === orderId; });
+                    if(order) {
+                        let statuses = ['pending', 'processing', 'shipped', 'delivered', 'completed'];
+                        let currentIndex = statuses.indexOf(order.status);
+                        let nextStatus = statuses[currentIndex + 1];
+                        if(nextStatus) {
+                            order.status = nextStatus;
+                            if(nextStatus === 'shipped') {
+                                alert('Order marked as shipped!');
+                            } else if(nextStatus === 'delivered') {
+                                alert('Order marked as delivered!');
+                            } else if(nextStatus === 'completed') {
+                                alert('Order completed!');
+                            }
+                            loadTab('orders');
+                        }
+                    }
+                });
+            }
+
+            if(tabName === 'profile') {
+                $('#profileForm').submit(function(e) {
+                    e.preventDefault();
+                    let newName = $('#profileName').val();
+                    localStorage.setItem('tb_user_name', newName);
+                    currentUser = newName;
+                    alert('Profile updated successfully!');
+                    loadTab('profile');
+                });
+            }
+        };
+
+        $('.nav-item-custom').click(function() {
+            let tab = $(this).data('tab');
+            loadTab(tab);
+        });
+
+        loadDashboardData();
+    });
+</script>
+{% endblock %}

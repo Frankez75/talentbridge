@@ -1,0 +1,396 @@
+{% extends 'base.html' %}
+
+{% block title %}TalentBridge · {{ art.art_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .breadcrumb-custom { background: transparent; padding: 1rem 0; margin-bottom: 0; }
+    .breadcrumb-custom .breadcrumb-item a { color: #6c6c5a; text-decoration: none; transition: all 0.3s ease; }
+    .breadcrumb-custom .breadcrumb-item a:hover { color: #e67300; }
+    .breadcrumb-custom .breadcrumb-item.active { color: #e67300; }
+    .artwork-detail-card { background: #FFFFFF; border-radius: 28px; border: 1px solid #efefe7; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.04); }
+    .artwork-main-image { width: 100%; height: 500px; object-fit: cover; }
+    .artwork-thumbnails { display: flex; gap: 0.75rem; margin-top: 1rem; overflow-x: auto; padding-bottom: 0.5rem; }
+    .artwork-thumbnail { width: 80px; height: 80px; object-fit: cover; border-radius: 12px; cursor: pointer; border: 2px solid transparent; transition: all 0.3s ease; flex-shrink: 0; }
+    .artwork-thumbnail:hover { border-color: #e67300; transform: scale(1.05); }
+    .artwork-thumbnail.active { border-color: #e67300; }
+    .btn-primary-custom { background-color: #e67300; border: none; color: white; font-weight: 600; padding: 0.75rem 2rem; border-radius: 40px; transition: all 0.3s ease; }
+    .btn-primary-custom:hover { background-color: #cc6600; transform: scale(1.02); }
+    .btn-outline-custom { border: 1.5px solid #111100; background: transparent; color: #111100; font-weight: 600; padding: 0.7rem 1.5rem; border-radius: 40px; transition: all 0.3s ease; }
+    .btn-outline-custom:hover { background-color: #111100; color: #FFFFFF; transform: scale(1.02); }
+    .btn-favorite { background: transparent; border: 2px solid #e67300; color: #e67300; padding: 0.7rem 1.5rem; border-radius: 40px; font-weight: 600; transition: all 0.3s ease; }
+    .btn-favorite:hover { background: #e67300; color: white; transform: scale(1.02); }
+    .btn-favorite.active { background: #e67300; color: white; }
+    .badge-category { background: #fff4eb; color: #e67300; padding: 0.4rem 1rem; border-radius: 40px; font-size: 0.85rem; font-weight: 600; }
+    .rating-stars { color: #ffc107; font-size: 1.2rem; letter-spacing: 2px; }
+    .artist-card { background: #F9F9FB; border-radius: 20px; padding: 1.5rem; border: 1px solid #efefe7; transition: all 0.3s ease; }
+    .artist-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
+    .artist-avatar { width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg, #e67300, #cc6600); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.5rem; }
+    .review-card { background: #F9F9FB; border-radius: 16px; padding: 1.25rem; border: 1px solid #efefe7; margin-bottom: 1rem; transition: all 0.3s ease; }
+    .review-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
+    .similar-artwork-card { background: #FFFFFF; border-radius: 16px; overflow: hidden; border: 1px solid #efefe7; transition: all 0.3s ease; height: 100%; cursor: pointer; }
+    .similar-artwork-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(0,0,0,0.08); }
+    .similar-artwork-image { width: 100%; height: 180px; object-fit: cover; }
+    .similar-artwork-info { padding: 1rem; }
+    .quantity-selector { display: flex; align-items: center; gap: 0.5rem; }
+    .quantity-selector button { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid #e0e0d5; background: transparent; font-weight: 700; font-size: 1.2rem; transition: all 0.3s ease; }
+    .quantity-selector button:hover { border-color: #e67300; color: #e67300; }
+    .quantity-selector input { width: 60px; text-align: center; border: 1.5px solid #e0e0d5; border-radius: 12px; padding: 0.3rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-custom">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('main.artwork_listing') }}">Gallery</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ art.art_title }}</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="container mb-5">
+    <div class="row g-4" id="artworkDetailContainer">
+        <div class="col-lg-7">
+            <div class="artwork-detail-card">
+                <img src="{{ art.art_image or 'https://placehold.co/800x600/e67300/white?text=Artwork' }}" class="artwork-main-image" id="mainImage" alt="{{ art.art_title }}">
+                <div class="p-4">
+                    <div class="artwork-thumbnails" id="thumbnailContainer">
+                        <img src="{{ art.art_image or 'https://placehold.co/80x80/e67300/white?text=Artwork' }}" class="artwork-thumbnail active">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="artwork-detail-card p-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <span class="badge-category">{{ art.art_type.art_type_name if art.art_type else 'General' }}</span>
+                    <span class="badge bg-light text-dark rounded-pill px-3 py-2">{{ art.artwork_status|title }}</span>
+                </div>
+                <h1 class="display-6 fw-bold">{{ art.art_title }}</h1>
+                <p class="text-secondary"><i class="bi bi-person"></i> {{ artist.artist_fname }} {{ artist.artist_lname }}</p>
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="rating-stars">
+                        {% for i in range(5) %}
+                            {% if i < (ratings|sum(attribute='rating_score') / (ratings|length) if ratings else 4.5)|round(0, 'floor') %}
+                                <i class="bi bi-star-fill"></i>
+                            {% else %}
+                                <i class="bi bi-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <span class="text-secondary">({{ ratings|length }} reviews)</span>
+                </div>
+                <h2 class="display-5 fw-bold" style="color: #e67300;">${{ art.art_price }}</h2>
+                <p class="text-secondary mt-3">{{ art.art_desc or "No description available." }}</p>
+                <hr>
+                <div class="d-flex gap-3 mb-3">
+                    <button class="btn-favorite" id="favoriteBtn"><i class="bi bi-heart"></i> Add to Favorites</button>
+                </div>
+                <div class="d-flex gap-3 flex-wrap">
+                    <button class="btn-primary-custom" id="buyNowBtn" onclick="window.location.href='{{ url_for('transaction.checkout', art_id=art.art_id) }}'">
+                        <i class="bi bi-cart-plus"></i> Buy Now
+                    </button>
+                    <button class="btn-outline-custom" id="contactArtistBtn" data-artist-id="{{ artist.artist_id }}">
+                        <i class="bi bi-chat-dots"></i> Contact Artist
+                    </button>
+                </div>
+                <hr>
+                <div class="row g-3 mt-2">
+                    <div class="col-6">
+                        <div class="text-center p-2 bg-light rounded-4">
+                            <div class="fw-bold">124</div>
+                            <small class="text-secondary">Views</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-2 bg-light rounded-4">
+                            <div class="fw-bold">89</div>
+                            <small class="text-secondary">Favorites</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-lg-8">
+            <div class="artwork-detail-card p-4">
+                <h4 class="fw-bold mb-3"><i class="bi bi-person-circle"></i> About the Artist</h4>
+                <div class="artist-card">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="artist-avatar">{{ artist.artist_fname[0] }}{{ artist.artist_lname[0] }}</div>
+                        <div>
+                            <h5 class="fw-bold mb-1">{{ artist.artist_fname }} {{ artist.artist_lname }}</h5>
+                            <p class="text-secondary mb-0"><i class="bi bi-geo-alt"></i> 
+                                {% if artist.state_id %}{{ artist.state.state_name }}{% else %}Nigeria{% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <p class="mt-3 mb-0">{{ artist.artist_bio or "Passionate artist creating unique pieces." }}</p>
+                    <div class="mt-3">
+                        <a href="{{ url_for('main.artist_public_profile', artist_id=artist.artist_id) }}" class="btn-outline-custom btn-sm">View Full Profile</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="artwork-detail-card p-4 mt-4">
+                <h4 class="fw-bold mb-3"><i class="bi bi-star"></i> Reviews</h4>
+                <div id="reviewsContainer">
+                    {% for rating in ratings %}
+                    <div class="review-card">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>Patron #{{ rating.rated_by_id }}</strong>
+                            <span class="rating-stars">
+                                {% for i in range(5) %}
+                                    {% if i < rating.rating_score %}
+                                        <i class="bi bi-star-fill"></i>
+                                    {% else %}
+                                        <i class="bi bi-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </span>
+                        </div>
+                        <p class="mb-1 mt-1">Review content placeholder</p>
+                        <small class="text-secondary">{{ rating.rating_date.strftime('%Y-%m-%d') if rating.rating_date else 'N/A' }}</small>
+                    </div>
+                    {% else %}
+                    <p class="text-secondary">No reviews yet.</p>
+                    {% endfor %}
+                </div>
+                <button class="btn-outline-custom mt-3" id="writeReviewBtn"><i class="bi bi-pencil"></i> Write a Review</button>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="artwork-detail-card p-4">
+                <h5 class="fw-bold mb-3"><i class="bi bi-info-circle"></i> Artwork Details</h5>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><strong>Category:</strong> {{ art.art_type.art_type_name if art.art_type else 'General' }}</li>
+                    <li class="mb-2"><strong>Price:</strong> ${{ art.art_price }}</li>
+                    <li class="mb-2"><strong>Created:</strong> {{ art.art_date.strftime('%Y-%m-%d') if art.art_date else 'N/A' }}</li>
+                    <li class="mb-2"><strong>Stock:</strong> {{ art.stock_qty }} available</li>
+                    <li class="mb-2"><strong>Status:</strong> {{ art.artwork_status|title }}</li>
+                </ul>
+            </div>
+
+            <div class="artwork-detail-card p-4 mt-4">
+                <h5 class="fw-bold mb-3"><i class="bi bi-share"></i> Share</h5>
+                <div class="d-flex gap-2">
+                    <button class="btn-outline-custom btn-sm"><i class="bi bi-facebook"></i></button>
+                    <button class="btn-outline-custom btn-sm"><i class="bi bi-twitter-x"></i></button>
+                    <button class="btn-outline-custom btn-sm"><i class="bi bi-instagram"></i></button>
+                    <button class="btn-outline-custom btn-sm"><i class="bi bi-pinterest"></i></button>
+                    <button class="btn-outline-custom btn-sm"><i class="bi bi-link-45deg"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-5">
+        <h3 class="fw-bold mb-4">Similar Artworks You Might Like</h3>
+        <div class="row g-4" id="similarArtworksContainer">
+            {% for sim in similar %}
+            <div class="col-md-4">
+                <div class="similar-artwork-card" onclick="window.location.href='{{ url_for('main.art_detail', art_id=sim.art_id) }}'">
+                    <img src="{{ sim.art_image or 'https://placehold.co/400x300/e67300/white?text=Artwork' }}" class="similar-artwork-image" alt="{{ sim.art_title }}">
+                    <div class="similar-artwork-info">
+                        <div class="fw-bold">{{ sim.art_title }}</div>
+                        <div class="text-secondary small">{{ sim.artist.artist_fname }} {{ sim.artist.artist_lname }}</div>
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            <span style="color: #e67300; font-weight: 700;">${{ sim.art_price }}</span>
+                            <span class="badge-category" style="font-size: 0.6rem;">{{ sim.art_type.art_type_name if sim.art_type else 'General' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Contact Modal -->
+<div class="modal fade" id="contactModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-custom">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-envelope"></i> Contact Artist</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="contactForm">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Your Name</label>
+                        <input type="text" class="form-control" id="contactName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Your Email</label>
+                        <input type="email" class="form-control" id="contactEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Subject</label>
+                        <input type="text" class="form-control" id="contactSubject" value="Inquiry about {{ art.art_title }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Message</label>
+                        <textarea class="form-control" id="contactMessage" rows="4" required>I'm interested in this artwork. Is it still available?</textarea>
+                    </div>
+                    <input type="hidden" id="contactArtistId" value="{{ artist.artist_id }}">
+                </form>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-primary-custom" id="sendMessageBtn">Send Message</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Review Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-custom">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-star"></i> Write a Review</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Artwork:</strong> {{ art.art_title }}</p>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Rating</label>
+                    <div class="rating-stars" id="reviewRatingStars" style="font-size: 2rem; cursor: pointer;">
+                        <i class="bi bi-star" data-rating="1"></i>
+                        <i class="bi bi-star" data-rating="2"></i>
+                        <i class="bi bi-star" data-rating="3"></i>
+                        <i class="bi bi-star" data-rating="4"></i>
+                        <i class="bi bi-star" data-rating="5"></i>
+                    </div>
+                    <input type="hidden" id="reviewSelectedRating" value="0">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Comment</label>
+                    <textarea class="form-control" id="reviewComment" rows="3" placeholder="Share your experience..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-primary-custom" id="submitReviewBtn">Submit Review</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        let currentUser = localStorage.getItem('tb_user_name');
+        let userType = localStorage.getItem('tb_user_type');
+        let artId = {{ art.art_id }};
+        let artistId = {{ artist.artist_id }};
+        let favorites = JSON.parse(localStorage.getItem('tb_patron_favorites')) || [];
+        let isFav = favorites.some(function(f) { return f.id === artId; });
+        if(isFav) {
+            $('#favoriteBtn').addClass('active');
+            $('#favoriteBtn').html('<i class="bi bi-heart-fill"></i> Favorited');
+        }
+
+        $('#favoriteBtn').click(function() {
+            if(!currentUser || userType !== 'patron') {
+                if(confirm('Please sign in to save favorites. Go to login?')) window.location.href = "{{ url_for('auth.login') }}";
+                return;
+            }
+            let index = favorites.findIndex(function(f) { return f.id === artId; });
+            if(index !== -1) {
+                favorites.splice(index, 1);
+                $(this).removeClass('active');
+                $(this).html('<i class="bi bi-heart"></i> Add to Favorites');
+            } else {
+                favorites.push({ id: artId, title: '{{ art.art_title }}', artist: '{{ artist.artist_fname }} {{ artist.artist_lname }}', price: {{ art.art_price }}, image: '{{ art.art_image }}', category: '{{ art.art_type.art_type_name if art.art_type else "General" }}' });
+                $(this).addClass('active');
+                $(this).html('<i class="bi bi-heart-fill"></i> Favorited');
+            }
+            localStorage.setItem('tb_patron_favorites', JSON.stringify(favorites));
+        });
+
+        $('#contactArtistBtn').click(function() {
+            if(!currentUser) {
+                if(confirm('Please sign in to contact artists. Go to login?')) window.location.href = "{{ url_for('auth.login') }}";
+                return;
+            }
+            $('#contactModal').modal('show');
+        });
+
+        $('#sendMessageBtn').click(function() {
+            let name = $('#contactName').val().trim();
+            let email = $('#contactEmail').val().trim();
+            let message = $('#contactMessage').val().trim();
+            if(name && email && message) {
+                $.ajax({
+                    url: "{{ url_for('main.contact_artist') }}",
+                    type: 'POST',
+                    data: { artist_id: artistId, name: name, email: email, subject: $('#contactSubject').val(), message: message },
+                    dataType: 'json',
+                    success: function(response) {
+                        if(response.status === 'success') {
+                            alert('Message sent to the artist! They will respond within 24-48 hours.');
+                            $('#contactModal').modal('hide');
+                            $('#contactForm')[0].reset();
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function() { alert('An error occurred. Please try again.'); }
+                });
+            } else {
+                alert('Please fill out all required fields.');
+            }
+        });
+
+        $('#writeReviewBtn').click(function() {
+            if(!currentUser || userType !== 'patron') {
+                if(confirm('Please sign in to write reviews. Go to login?')) window.location.href = "{{ url_for('auth.login') }}";
+                return;
+            }
+            $('#reviewSelectedRating').val(0);
+            $('#reviewComment').val('');
+            $('#reviewRatingStars i').each(function() { $(this).removeClass('bi-star-fill').addClass('bi-star'); });
+            $('#reviewModal').modal('show');
+        });
+
+        $('#reviewRatingStars i').click(function() {
+            let rating = parseInt($(this).data('rating'));
+            $('#reviewSelectedRating').val(rating);
+            $('#reviewRatingStars i').each(function() {
+                let starRating = parseInt($(this).data('rating'));
+                if(starRating <= rating) $(this).removeClass('bi-star').addClass('bi-star-fill');
+                else $(this).removeClass('bi-star-fill').addClass('bi-star');
+            });
+        });
+
+        $('#submitReviewBtn').click(function() {
+            let rating = parseInt($('#reviewSelectedRating').val());
+            let comment = $('#reviewComment').val().trim();
+            if(rating === 0) { alert('Please select a rating.'); return; }
+            if(!comment) { alert('Please write a review comment.'); return; }
+            alert('Thank you for your review! Rating: ' + rating + ' stars');
+            $('#reviewModal').modal('hide');
+        });
+
+        $('.artwork-thumbnail').click(function() {
+            let src = $(this).attr('src');
+            $('#mainImage').attr('src', src);
+            $('.artwork-thumbnail').removeClass('active');
+            $(this).addClass('active');
+        });
+
+        $('#buyNowBtn').click(function() {
+            if(!currentUser || userType !== 'patron') {
+                if(confirm('Please sign in to purchase. Go to login?')) window.location.href = "{{ url_for('auth.login') }}";
+                return;
+            }
+        });
+    });
+</script>
+{% endblock %}

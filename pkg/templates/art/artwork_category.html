@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+
+{% block title %}TalentBridge · Artwork Categories{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { background: linear-gradient(135deg, #111100 0%, #2a2a1a 100%); color: white; padding: 3rem 0; margin-bottom: 2rem; border-radius: 0 0 32px 32px; }
+    .category-card { background: #FFFFFF; border-radius: 24px; padding: 2rem; border: 1px solid #efefe7; transition: all 0.4s ease; cursor: pointer; height: 100%; text-align: center; }
+    .category-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
+    .category-icon { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #fff4eb, #fce4d6); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; }
+    .category-icon i { font-size: 2.5rem; color: #e67300; }
+    .category-count { background: #e67300; color: white; padding: 0.2rem 0.8rem; border-radius: 40px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
+    .filter-section { background: #FFFFFF; border-radius: 20px; padding: 1.5rem; border: 1px solid #efefe7; margin-bottom: 2rem; }
+    .form-control, .form-select { border: 1.5px solid #e0e0d5; border-radius: 16px; padding: 0.6rem 1rem; font-size: 0.9rem; }
+    .form-control:focus, .form-select:focus { border-color: #e67300; outline: none; box-shadow: 0 0 0 3px rgba(230,115,0,0.1); }
+    .btn-primary-custom { background-color: #e67300; border: none; color: white; font-weight: 600; padding: 0.6rem 2rem; border-radius: 40px; transition: all 0.3s ease; }
+    .btn-primary-custom:hover { background-color: #cc6600; transform: scale(1.02); }
+    .btn-outline-custom { border: 1.5px solid #111100; background: transparent; color: #111100; font-weight: 600; padding: 0.5rem 1.5rem; border-radius: 40px; transition: all 0.3s ease; }
+    .btn-outline-custom:hover { background-color: #111100; color: #FFFFFF; transform: scale(1.02); }
+    .artwork-card { background: #FFFFFF; border-radius: 20px; overflow: hidden; border: 1px solid #efefe7; transition: all 0.4s ease; height: 100%; cursor: pointer; }
+    .artwork-card:hover { transform: translateY(-6px); box-shadow: 0 16px 32px rgba(0,0,0,0.08); }
+    .artwork-image { width: 100%; height: 220px; object-fit: cover; }
+    .artwork-info { padding: 1.25rem; }
+    .artwork-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 0.25rem; }
+    .artwork-artist { color: #e67300; font-weight: 500; font-size: 0.9rem; }
+    .artwork-price { color: #111100; font-weight: 700; font-size: 1.2rem; }
+    .badge-category { background: #fff4eb; color: #e67300; padding: 0.2rem 0.6rem; border-radius: 40px; font-size: 0.7rem; font-weight: 600; }
+    .active-category { background: #e67300; color: white; border-color: #e67300; }
+    .active-category .category-icon { background: rgba(255,255,255,0.2); }
+    .active-category .category-icon i { color: white; }
+    .active-category .category-count { background: white; color: #e67300; }
+    .empty-state { text-align: center; padding: 4rem 2rem; background: #FFFFFF; border-radius: 20px; border: 2px dashed #e0e0d5; }
+    .empty-state i { font-size: 4rem; color: #e67300; margin-bottom: 1rem; }
+    .breadcrumb-custom { background: transparent; padding: 0; margin-bottom: 0; }
+    .breadcrumb-custom .breadcrumb-item a { color: rgba(255,255,255,0.7); text-decoration: none; transition: all 0.3s ease; }
+    .breadcrumb-custom .breadcrumb-item a:hover { color: white; }
+    .breadcrumb-custom .breadcrumb-item.active { color: white; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-custom">
+                <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('main.artwork_listing') }}">Gallery</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Categories</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <div>
+                <h1 class="display-4 fw-bold mb-2">Browse by Category</h1>
+                <p class="lead mb-0" style="opacity: 0.9;">Explore artworks by medium, style, and more</p>
+            </div>
+            <div>
+                <span class="badge bg-light text-dark rounded-pill px-4 py-2" id="resultCount">0 categories</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <!-- Categories will be loaded via AJAX -->
+    <div class="row g-4" id="categoriesContainer"></div>
+
+    <div class="filter-section mt-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-funnel"></i> Filter Artworks</h5>
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label fw-semibold"><i class="bi bi-search"></i> Search</label>
+                <input type="text" class="form-control" id="searchInput" placeholder="Search artworks...">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold"><i class="bi bi-tag"></i> Category</label>
+                <select class="form-select" id="categoryFilter">
+                    <option value="all">All Categories</option>
+                    <option value="Painting">Painting</option>
+                    <option value="Sculpture">Sculpture</option>
+                    <option value="Craft">Craft</option>
+                    <option value="Digital Art">Digital Art</option>
+                    <option value="Photography">Photography</option>
+                    <option value="Jewelry">Jewelry</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold"><i class="bi bi-currency-dollar"></i> Min Price</label>
+                <input type="number" class="form-control" id="minPrice" placeholder="0" min="0">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold"><i class="bi bi-currency-dollar"></i> Max Price</label>
+                <input type="number" class="form-control" id="maxPrice" placeholder="5000" min="0">
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex gap-2">
+                    <button class="btn-primary-custom" id="applyFiltersBtn"><i class="bi bi-funnel"></i> Apply Filters</button>
+                    <button class="btn-outline-custom" id="clearFiltersBtn"><i class="bi bi-x-circle"></i> Clear</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="fw-bold mt-4 mb-3" id="categoryTitle">All Artworks</h3>
+    <div class="row" id="artworksContainer"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentUser = localStorage.getItem('tb_user_name');
+    let userType = localStorage.getItem('tb_user_type');
+    let selectedCategory = 'all';
+    let filteredArtworks = [];
+    let categories = [
+        { name: 'Painting', icon: 'bi-brush', count: 0 },
+        { name: 'Sculpture', icon: 'bi-gem', count: 0 },
+        { name: 'Craft', icon: 'bi-scissors', count: 0 },
+        { name: 'Digital Art', icon: 'bi-laptop', count: 0 },
+        { name: 'Photography', icon: 'bi-camera', count: 0 },
+        { name: 'Jewelry', icon: 'bi-diamond', count: 0 }
+    ];
+
+    function loadArtworks() {
+        $.ajax({
+            url: "{{ url_for('main.search_artworks') }}",
+            type: 'GET',
+            data: {
+                q: $('#searchInput').val(),
+                category: $('#categoryFilter').val(),
+                min_price: $('#minPrice').val(),
+                max_price: $('#maxPrice').val()
+            },
+            dataType: 'json',
+            success: function(data) {
+                filteredArtworks = data;
+                updateCategoryCounts();
+                renderCategories();
+                renderArtworks();
+                document.getElementById('resultCount').innerHTML = data.length + ' artworks';
+            },
+            error: function(err) {
+                console.error('Error loading artworks:', err);
+            }
+        });
+    }
+
+    function updateCategoryCounts() {
+        for(let i = 0; i < categories.length; i++) {
+            let count = filteredArtworks.filter(function(a) { return a.category === categories[i].name; }).length;
+            categories[i].count = count;
+        }
+    }
+
+    function renderCategories() {
+        let container = document.getElementById('categoriesContainer');
+        let html = '';
+        html += `
+            <div class="col-md-4 col-lg-3">
+                <div class="category-card ${selectedCategory === 'all' ? 'active-category' : ''}" data-category="all">
+                    <div class="category-icon">
+                        <i class="bi bi-grid-3x3-gap-fill"></i>
+                    </div>
+                    <h5 class="fw-bold">All Artworks</h5>
+                    <p class="text-secondary">${filteredArtworks.length} pieces</p>
+                </div>
+            </div>
+        `;
+        for(let i = 0; i < categories.length; i++) {
+            let cat = categories[i];
+            let isActive = selectedCategory === cat.name;
+            html += `
+                <div class="col-md-4 col-lg-3">
+                    <div class="category-card ${isActive ? 'active-category' : ''}" data-category="${cat.name}">
+                        <div class="category-icon">
+                            <i class="bi ${cat.icon}"></i>
+                        </div>
+                        <h5 class="fw-bold">${cat.name}</h5>
+                        <span class="category-count">${cat.count} pieces</span>
+                    </div>
+                </div>
+            `;
+        }
+        container.innerHTML = html;
+
+        $('.category-card').click(function() {
+            let category = $(this).data('category');
+            selectedCategory = category;
+            $('#categoryFilter').val(category === 'all' ? 'all' : category);
+            document.getElementById('categoryTitle').innerText = category === 'all' ? 'All Artworks' : category + ' Artworks';
+            renderCategories();
+            applyFilters();
+        });
+    }
+
+    function applyFilters() {
+        let search = $('#searchInput').val().toLowerCase();
+        let category = $('#categoryFilter').val();
+        let minPrice = parseFloat($('#minPrice').val()) || 0;
+        let maxPrice = parseFloat($('#maxPrice').val()) || Infinity;
+
+        if(category !== 'all') {
+            selectedCategory = category;
+            renderCategories();
+        }
+
+        filteredArtworks = filteredArtworks.filter(function(art) {
+            let matchSearch = !search || art.title.toLowerCase().includes(search) || art.artist.toLowerCase().includes(search);
+            let matchCategory = category === 'all' || art.category === category;
+            let matchPrice = art.price >= minPrice && art.price <= maxPrice;
+            return matchSearch && matchCategory && matchPrice;
+        });
+
+        renderArtworks();
+        document.getElementById('resultCount').innerHTML = filteredArtworks.length + ' artworks';
+    }
+
+    function renderArtworks() {
+        let container = document.getElementById('artworksContainer');
+        if(filteredArtworks.length === 0) {
+            container.innerHTML = `
+                <div class="col-12">
+                    <div class="empty-state">
+                        <i class="bi bi-image"></i>
+                        <h4 class="fw-bold">No artworks found</h4>
+                        <p class="text-secondary">Try adjusting your filters or selecting a different category</p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        for(let i = 0; i < filteredArtworks.length; i++) {
+            let art = filteredArtworks[i];
+            html += `
+                <div class="col-md-4 col-lg-3 mb-4">
+                    <div class="artwork-card" onclick="window.location.href='{{ url_for('main.art_detail', art_id=0) }}'.replace('0', ${art.id})">
+                        <img src="${art.image}" class="artwork-image" alt="${art.title}" onerror="this.src='https://placehold.co/400x300/e67300/white?text=Artwork'">
+                        <div class="artwork-info">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="artwork-title">${art.title}</div>
+                                    <div class="artwork-artist"><i class="bi bi-person"></i> ${art.artist}</div>
+                                </div>
+                                <span class="badge-category">${art.category}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <span class="artwork-price">$${art.price}</span>
+                                <span class="text-secondary" style="font-size: 0.8rem;">
+                                    <i class="bi bi-star-fill" style="color: #ffc107;"></i> ${art.rating || 4.5}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        container.innerHTML = html;
+    }
+
+    $('#searchInput').on('input', applyFilters);
+    $('#categoryFilter').change(function() {
+        let category = $(this).val();
+        selectedCategory = category;
+        document.getElementById('categoryTitle').innerText = category === 'all' ? 'All Artworks' : category + ' Artworks';
+        renderCategories();
+        applyFilters();
+    });
+    $('#minPrice').on('input', applyFilters);
+    $('#maxPrice').on('input', applyFilters);
+    $('#applyFiltersBtn').click(applyFilters);
+    $('#clearFiltersBtn').click(function() {
+        $('#searchInput').val('');
+        $('#categoryFilter').val('all');
+        $('#minPrice').val('');
+        $('#maxPrice').val('');
+        selectedCategory = 'all';
+        document.getElementById('categoryTitle').innerText = 'All Artworks';
+        loadArtworks();
+    });
+
+    loadArtworks();
+</script>
+{% endblock %}

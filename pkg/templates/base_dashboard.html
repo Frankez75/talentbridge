@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<style>
+    .sidebar { background-color: #FFFFFF; border-right: 1px solid #efefe7; min-height: calc(100vh - 80px); padding: 2rem 0; }
+    .nav-item-custom { display: block; padding: 0.75rem 1.5rem; color: #111100; text-decoration: none; font-weight: 500; margin: 0.25rem 0; cursor: pointer; transition: all 0.3s ease; border-right: 3px solid transparent; }
+    .nav-item-custom i { margin-right: 0.75rem; color: #e67300; }
+    .nav-item-custom:hover { background-color: #fff4eb; color: #e67300; }
+    .nav-item-custom.active { background-color: #fff4eb; color: #e67300; border-right-color: #e67300; }
+    .content-pane { padding: 2rem; }
+    .dashboard-card { background: #FFFFFF; border-radius: 24px; padding: 1.5rem; border: 1px solid #efefe7; transition: all 0.3s ease; margin-bottom: 1.5rem; }
+    .dashboard-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.04); }
+    .stat-number { font-size: 2.5rem; font-weight: 800; color: #111100; }
+    .stat-label { color: #6c6c5a; font-size: 0.9rem; }
+    .badge-active { background-color: #e67300; color: white; padding: 0.25rem 0.75rem; border-radius: 40px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
+    .badge-pending { background-color: #ffc107; color: #111100; padding: 0.25rem 0.75rem; border-radius: 40px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
+    .badge-shipped { background-color: #6f42c1; color: white; padding: 0.25rem 0.75rem; border-radius: 40px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
+    .badge-delivered { background-color: #28a745; color: white; padding: 0.25rem 0.75rem; border-radius: 40px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
+    .badge-completed { background-color: #e67300; color: white; padding: 0.25rem 0.75rem; border-radius: 40px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
+    .badge-cancelled { background-color: #dc3545; color: white; padding: 0.25rem 0.75rem; border-radius: 40px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
+    .table-custom { width: 100%; }
+    .table-custom th { padding: 1rem 0.75rem; border-bottom: 1px solid #efefe7; color: #111100; font-weight: 600; text-align: left; }
+    .table-custom td { padding: 1rem 0.75rem; border-bottom: 1px solid #efefe7; color: #4a4a38; vertical-align: middle; }
+    .order-item { display: flex; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #efefe7; }
+    .order-item:last-child { border-bottom: none; }
+    .order-avatar { width: 50px; height: 50px; border-radius: 12px; object-fit: cover; margin-right: 1rem; }
+    .favorite-item { display: flex; align-items: center; padding: 0.75rem; border-radius: 16px; background: #F9F9FB; transition: all 0.3s ease; }
+    .favorite-item:hover { background: #fff4eb; }
+    .artwork-card { background: #FFFFFF; border-radius: 16px; overflow: hidden; border: 1px solid #efefe7; transition: all 0.3s ease; height: 100%; cursor: pointer; }
+    .artwork-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(0,0,0,0.08); }
+    .artwork-image { width: 100%; height: 200px; object-fit: cover; }
+    .artwork-info { padding: 1rem; }
+    .artwork-title { font-weight: 700; margin-bottom: 0.25rem; }
+    .artwork-price { color: #e67300; font-weight: 700; font-size: 1.1rem; }
+    .badge-artist { background-color: #e67300; color: white; padding: 0.25rem 0.75rem; border-radius: 40px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
+    .badge-patron { background-color: #6f42c1; color: white; padding: 0.25rem 0.75rem; border-radius: 40px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
+    .badge-admin { background-color: #111100; color: white; padding: 0.25rem 0.75rem; border-radius: 40px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-3 col-lg-2 sidebar">
+            {% block sidebar %}{% endblock %}
+        </div>
+        <div class="col-md-9 col-lg-10">
+            <div class="content-pane">
+                {% block dashboard_content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,484 @@
+{% extends 'base.html' %}
+
+{% block title %}TalentBridge · My Orders & Purchases{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { background: linear-gradient(135deg, #111100 0%, #2a2a1a 100%); color: white; padding: 2.5rem 0; margin-bottom: 2rem; border-radius: 0 0 32px 32px; }
+    .stat-card { background: #FFFFFF; border-radius: 20px; padding: 1.5rem; text-align: center; border: 1px solid #efefe7; transition: all 0.3s ease; height: 100%; }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(0,0,0,0.08); }
+    .stat-number { font-size: 2rem; font-weight: 800; color: #e67300; }
+    .stat-label { color: #6c6c5a; font-size: 0.85rem; }
+    .order-card { background: #FFFFFF; border-radius: 20px; padding: 1.5rem; border: 1px solid #efefe7; margin-bottom: 1.5rem; transition: all 0.3s ease; }
+    .order-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
+    .order-image { width: 100px; height: 100px; object-fit: cover; border-radius: 12px; }
+    .badge-pending { background-color: #ffc107; color: #111100; padding: 0.3rem 0.8rem; border-radius: 40px; font-size: 0.75rem; font-weight: 700; }
+    .badge-processing { background-color: #17a2b8; color: white; padding: 0.3rem 0.8rem; border-radius: 40px; font-size: 0.75rem; font-weight: 700; }
+    .badge-shipped { background-color: #6f42c1; color: white; padding: 0.3rem 0.8rem; border-radius: 40px; font-size: 0.75rem; font-weight: 700; }
+    .badge-delivered { background-color: #28a745; color: white; padding: 0.3rem 0.8rem; border-radius: 40px; font-size: 0.75rem; font-weight: 700; }
+    .badge-completed { background-color: #e67300; color: white; padding: 0.3rem 0.8rem; border-radius: 40px; font-size: 0.75rem; font-weight: 700; }
+    .badge-cancelled { background-color: #dc3545; color: white; padding: 0.3rem 0.8rem; border-radius: 40px; font-size: 0.75rem; font-weight: 700; }
+    .btn-primary-custom { background-color: #e67300; border: none; color: white; font-weight: 600; padding: 0.6rem 1.5rem; border-radius: 40px; transition: all 0.3s ease; }
+    .btn-primary-custom:hover { background-color: #cc6600; transform: scale(1.02); }
+    .btn-outline-custom { border: 1.5px solid #111100; background: transparent; color: #111100; font-weight: 600; padding: 0.5rem 1.25rem; border-radius: 40px; transition: all 0.3s ease; }
+    .btn-outline-custom:hover { background-color: #111100; color: #FFFFFF; transform: scale(1.02); }
+    .btn-sm-track { background-color: transparent; border: 1.5px solid #e67300; color: #e67300; padding: 0.3rem 1rem; border-radius: 40px; font-size: 0.8rem; font-weight: 600; transition: all 0.3s ease; }
+    .btn-sm-track:hover { background-color: #e67300; color: white; transform: scale(1.02); }
+    .btn-sm-review { background-color: #111100; color: white; border: none; padding: 0.3rem 1rem; border-radius: 40px; font-size: 0.8rem; font-weight: 600; transition: all 0.3s ease; }
+    .btn-sm-review:hover { background-color: #2a2a1a; transform: scale(1.02); }
+    .section-tabs { border-bottom: 2px solid #efefe7; margin-bottom: 2rem; }
+    .section-tab { display: inline-block; padding: 0.75rem 1.5rem; font-weight: 600; color: #6c6c5a; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.3s ease; }
+    .section-tab:hover { color: #e67300; }
+    .section-tab.active { color: #e67300; border-bottom-color: #e67300; }
+    .empty-state { text-align: center; padding: 4rem 2rem; background: #FFFFFF; border-radius: 20px; border: 2px dashed #e0e0d5; }
+    .empty-state i { font-size: 4rem; color: #e67300; margin-bottom: 1rem; }
+    .modal-content-custom { border-radius: 24px; }
+    .rating-stars { color: #ffc107; font-size: 1.5rem; letter-spacing: 4px; cursor: pointer; }
+    .rating-stars i { transition: all 0.3s ease; }
+    .rating-stars i:hover { transform: scale(1.2); }
+    .timeline { position: relative; padding-left: 2rem; }
+    .timeline::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: #e0e0d5; }
+    .timeline-item { position: relative; margin-bottom: 1.5rem; padding-left: 0.5rem; }
+    .timeline-item::before { content: ''; position: absolute; left: -2rem; top: 0.3rem; width: 12px; height: 12px; border-radius: 50%; background: #e67300; border: 2px solid white; }
+    .timeline-item.completed::before { background: #28a745; }
+    .timeline-item.pending::before { background: #e0e0d5; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .order-card { animation: fadeInUp 0.4s ease-out; }
+</style>
+{% endblock %}
+
+{% block content %}
+<nav class="navbar">
+    <div class="container">
+        <a class="navbar-brand" href="{{ url_for('main.index') }}">Talent<span>Bridge</span></a>
+        <div>
+            <span class="me-3" style="color: #e67300; font-weight: 600;" id="userNameDisplay">Patron</span>
+            <button class="btn-logout" id="logoutBtn" onclick="window.location.href='{{ url_for('auth.logout') }}'">Logout</button>
+        </div>
+    </div>
+</nav>
+
+<div class="page-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="display-5 fw-bold mb-2">My Orders & Purchases</h1>
+                <p class="lead mb-0" style="opacity: 0.9;">Track and manage all your art purchases</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number" id="totalOrdersCount">0</div>
+                <div class="stat-label">Total Orders</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number" id="pendingCount">0</div>
+                <div class="stat-label">Pending</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number" id="deliveredCount">0</div>
+                <div class="stat-label">Delivered</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-number" id="totalSpent">$0</div>
+                <div class="stat-label">Total Spent</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-tabs">
+        <div class="section-tab active" data-tab="active">
+            <i class="bi bi-clock-history"></i> Active Orders
+        </div>
+        <div class="section-tab" data-tab="completed">
+            <i class="bi bi-check-circle"></i> Completed
+        </div>
+        <div class="section-tab" data-tab="all">
+            <i class="bi bi-list-ul"></i> All Orders
+        </div>
+    </div>
+
+    <div id="ordersContainer"></div>
+</div>
+
+<!-- Track Modal -->
+<div class="modal fade" id="trackModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-custom">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-geo-alt"></i> Track Order</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Order ID:</strong> <span id="trackOrderId"></span></p>
+                <p><strong>Artwork:</strong> <span id="trackArtworkTitle"></span></p>
+                <p><strong>Artist:</strong> <span id="trackArtistName"></span></p>
+                <hr>
+                <div class="timeline" id="trackTimeline"></div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn-primary-custom" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Review Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-custom">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-star"></i> Write a Review</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Artwork:</strong> <span id="reviewArtworkTitle"></span></p>
+                <p><strong>Artist:</strong> <span id="reviewArtistName"></span></p>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Rating</label>
+                    <div class="rating-stars" id="ratingStars">
+                        <i class="bi bi-star" data-rating="1"></i>
+                        <i class="bi bi-star" data-rating="2"></i>
+                        <i class="bi bi-star" data-rating="3"></i>
+                        <i class="bi bi-star" data-rating="4"></i>
+                        <i class="bi bi-star" data-rating="5"></i>
+                    </div>
+                    <input type="hidden" id="selectedRating" value="0">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Comment</label>
+                    <textarea class="form-control" id="reviewComment" rows="3" placeholder="Share your experience..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-primary-custom" id="submitReviewBtn">Submit Review</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        let currentUser = localStorage.getItem('tb_user_name');
+        let userType = localStorage.getItem('tb_user_type');
+
+        if(!currentUser || userType !== 'patron') {
+            window.location.href = "{{ url_for('auth.register') }}";
+        }
+
+        document.getElementById('userNameDisplay').innerText = currentUser;
+
+        let orders = [];
+        let currentTab = 'active';
+
+        function loadOrders() {
+            $.ajax({
+                url: "{{ url_for('transaction.patron_orders_data') }}",
+                type: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    orders = data.orders || [];
+                    updateStatistics();
+                    renderOrders();
+                },
+                error: function(err) {
+                    console.error('Error loading orders:', err);
+                    orders = [];
+                    updateStatistics();
+                    renderOrders();
+                }
+            });
+        }
+
+        function updateStatistics() {
+            let totalOrders = orders.length;
+            let pending = orders.filter(function(o) { return o.status === 'Pending' || o.status === 'Processing'; }).length;
+            let delivered = orders.filter(function(o) { return o.status === 'Delivered' || o.status === 'Completed'; }).length;
+            let totalSpent = 0;
+            for(let i = 0; i < orders.length; i++) {
+                if(orders[i].status !== 'Cancelled') {
+                    totalSpent += orders[i].amount;
+                }
+            }
+            
+            document.getElementById('totalOrdersCount').innerText = totalOrders;
+            document.getElementById('pendingCount').innerText = pending;
+            document.getElementById('deliveredCount').innerText = delivered;
+            document.getElementById('totalSpent').innerText = '$' + totalSpent.toLocaleString();
+        }
+
+        function getStatusBadge(status) {
+            let badgeClass = '';
+            if(status === 'Pending') badgeClass = 'badge-pending';
+            else if(status === 'Processing') badgeClass = 'badge-processing';
+            else if(status === 'Shipped') badgeClass = 'badge-shipped';
+            else if(status === 'Delivered') badgeClass = 'badge-delivered';
+            else if(status === 'Completed') badgeClass = 'badge-completed';
+            else if(status === 'Cancelled') badgeClass = 'badge-cancelled';
+            else badgeClass = 'badge-pending';
+            
+            return '<span class="' + badgeClass + '"><i class="bi bi-info-circle"></i> ' + status + '</span>';
+        }
+
+        function renderOrders() {
+            let filteredOrders = [];
+            if(currentTab === 'active') {
+                filteredOrders = orders.filter(function(o) { return o.status === 'Pending' || o.status === 'Processing' || o.status === 'Shipped'; });
+            } else if(currentTab === 'completed') {
+                filteredOrders = orders.filter(function(o) { return o.status === 'Delivered' || o.status === 'Completed'; });
+            } else {
+                filteredOrders = orders;
+            }
+
+            filteredOrders.sort(function(a, b) {
+                return new Date(b.orderDate) - new Date(a.orderDate);
+            });
+            
+            if(filteredOrders.length === 0) {
+                document.getElementById('ordersContainer').innerHTML = `
+                    <div class="empty-state">
+                        <i class="bi bi-box"></i>
+                        <h4 class="fw-bold">No orders found</h4>
+                        <p class="text-secondary">Start exploring and purchase your favorite artworks</p>
+                        <a href="{{ url_for('main.artwork_listing') }}" class="btn-primary-custom">Browse Artworks</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            for(let i = 0; i < filteredOrders.length; i++) {
+                let order = filteredOrders[i];
+                let showReview = (order.status === 'Delivered' || order.status === 'Completed') && !order.reviewed;
+                
+                html += `
+                    <div class="order-card">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                <img src="${order.image || 'https://placehold.co/200x200/e67300/white?text=Art'}" class="order-image" alt="${order.artworkTitle}">
+                            </div>
+                            <div class="col-md-3">
+                                <h6 class="fw-bold mb-1">${order.artworkTitle}</h6>
+                                <div class="text-secondary small"><i class="bi bi-person"></i> ${order.artistName}</div>
+                                <div class="text-secondary small">Order #${order.id}</div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="fw-bold" style="color: #e67300;">$${order.amount}</div>
+                                <small class="text-secondary">${order.orderDate}</small>
+                            </div>
+                            <div class="col-md-2">
+                                ${getStatusBadge(order.status)}
+                            </div>
+                            <div class="col-md-3">
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <button class="btn-sm-track track-order" data-order-id="${order.id}">
+                                        <i class="bi bi-geo-alt"></i> Track
+                                    </button>
+                                    ${showReview ? 
+                                        `<button class="btn-sm-review review-order" data-order-id="${order.id}">
+                                            <i class="bi bi-star"></i> Review
+                                        </button>` : ''
+                                    }
+                                    ${order.status === 'Pending' ? 
+                                        `<button class="btn-sm-track cancel-order" data-order-id="${order.id}" style="border-color: #dc3545; color: #dc3545;">
+                                            <i class="bi bi-x-circle"></i> Cancel
+                                        </button>` : ''
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('ordersContainer').innerHTML = html;
+
+            $('.track-order').click(function() {
+                let orderId = $(this).data('order-id');
+                $.ajax({
+                    url: "{{ url_for('transaction.track_order', order_id=0) }}".replace('0', orderId),
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(response) {
+                        if(response.status === 'success') {
+                            let order = orders.find(function(o) { return o.id === orderId; });
+                            if(order) {
+                                document.getElementById('trackOrderId').innerText = order.id;
+                                document.getElementById('trackArtworkTitle').innerText = order.artworkTitle;
+                                document.getElementById('trackArtistName').innerText = order.artistName;
+                                
+                                let timelineHtml = '';
+                                let steps = response.timeline || [
+                                    { label: 'Order Placed', date: order.orderDate, completed: true },
+                                    { label: 'Processing', date: order.processingDate, completed: !!order.processingDate },
+                                    { label: 'Shipped', date: order.shippedDate, completed: !!order.shippedDate },
+                                    { label: 'Delivered', date: order.deliveredDate, completed: !!order.deliveredDate }
+                                ];
+                                
+                                for(let s = 0; s < steps.length; s++) {
+                                    let step = steps[s];
+                                    let className = step.completed ? 'timeline-item completed' : 'timeline-item pending';
+                                    timelineHtml += `
+                                        <div class="${className}">
+                                            <div class="fw-bold">${step.label}</div>
+                                            <small class="text-secondary">${step.date || 'Not yet'}</small>
+                                        </div>
+                                    `;
+                                }
+                                
+                                document.getElementById('trackTimeline').innerHTML = timelineHtml;
+                                $('#trackModal').modal('show');
+                            }
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('An error occurred while tracking the order.');
+                    }
+                });
+            });
+
+            $('.review-order').click(function() {
+                let orderId = $(this).data('order-id');
+                let order = orders.find(function(o) { return o.id === orderId; });
+                if(order) {
+                    document.getElementById('reviewArtworkTitle').innerText = order.artworkTitle;
+                    document.getElementById('reviewArtistName').innerText = order.artistName;
+                    document.getElementById('selectedRating').value = 0;
+                    document.getElementById('reviewComment').value = '';
+                    
+                    let stars = document.querySelectorAll('#ratingStars i');
+                    stars.forEach(function(star) {
+                        star.classList.remove('bi-star-fill');
+                        star.classList.add('bi-star');
+                    });
+                    
+                    $('#reviewModal').modal('show');
+                    
+                    $('#submitReviewBtn').off('click').on('click', function() {
+                        let rating = parseInt(document.getElementById('selectedRating').value);
+                        let comment = document.getElementById('reviewComment').value.trim();
+                        
+                        if(rating === 0) {
+                            alert('Please select a rating.');
+                            return;
+                        }
+                        if(!comment) {
+                            alert('Please write a review comment.');
+                            return;
+                        }
+                        
+                        $.ajax({
+                            url: "{{ url_for('user.submit_rating') }}",
+                            type: 'POST',
+                            data: {
+                                artist_id: order.artistId,
+                                art_id: order.artworkId,
+                                score: rating
+                            },
+                            dataType: 'json',
+                            success: function(response) {
+                                if(response.status === 'success') {
+                                    order.reviewed = true;
+                                    $('#reviewModal').modal('hide');
+                                    renderOrders();
+                                    alert('Thank you for your review! Rating: ' + rating + ' stars');
+                                } else {
+                                    alert(response.message);
+                                }
+                            },
+                            error: function() {
+                                alert('An error occurred. Please try again.');
+                            }
+                        });
+                    });
+                }
+            });
+
+            $('.cancel-order').click(function() {
+                let orderId = $(this).data('order-id');
+                if(confirm('Are you sure you want to cancel this order?')) {
+                    let order = orders.find(function(o) { return o.id === orderId; });
+                    if(order) {
+                        order.status = 'Cancelled';
+                        updateStatistics();
+                        renderOrders();
+                        alert('Order cancelled successfully.');
+                    }
+                }
+            });
+        }
+
+        $('.section-tab').click(function() {
+            $('.section-tab').removeClass('active');
+            $(this).addClass('active');
+            currentTab = $(this).data('tab');
+            renderOrders();
+        });
+
+        let stars = document.querySelectorAll('#ratingStars i');
+        stars.forEach(function(star) {
+            star.addEventListener('click', function() {
+                let rating = parseInt(this.getAttribute('data-rating'));
+                document.getElementById('selectedRating').value = rating;
+                
+                stars.forEach(function(s) {
+                    let starRating = parseInt(s.getAttribute('data-rating'));
+                    if(starRating <= rating) {
+                        s.classList.remove('bi-star');
+                        s.classList.add('bi-star-fill');
+                    } else {
+                        s.classList.remove('bi-star-fill');
+                        s.classList.add('bi-star');
+                    }
+                });
+            });
+            
+            star.addEventListener('mouseenter', function() {
+                let rating = parseInt(this.getAttribute('data-rating'));
+                stars.forEach(function(s) {
+                    let starRating = parseInt(s.getAttribute('data-rating'));
+                    if(starRating <= rating) {
+                        s.classList.remove('bi-star');
+                        s.classList.add('bi-star-fill');
+                    } else {
+                        s.classList.remove('bi-star-fill');
+                        s.classList.add('bi-star');
+                    }
+                });
+            });
+            
+            star.addEventListener('mouseleave', function() {
+                let selected = parseInt(document.getElementById('selectedRating').value);
+                stars.forEach(function(s) {
+                    let starRating = parseInt(s.getAttribute('data-rating'));
+                    if(starRating <= selected) {
+                        s.classList.remove('bi-star');
+                        s.classList.add('bi-star-fill');
+                    } else {
+                        s.classList.remove('bi-star-fill');
+                        s.classList.add('bi-star');
+                    }
+                });
+            });
+        });
+
+        loadOrders();
+    });
+</script>
+{% endblock %}

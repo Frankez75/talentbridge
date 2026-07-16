@@ -1,0 +1,377 @@
+{% extends 'base.html' %}
+
+{% block title %}TalentBridge · Checkout{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { background: linear-gradient(135deg, #111100 0%, #2a2a1a 100%); color: white; padding: 2.5rem 0; margin-bottom: 2rem; border-radius: 0 0 32px 32px; }
+    .checkout-card { background: #FFFFFF; border-radius: 24px; padding: 2rem; border: 1px solid #efefe7; transition: all 0.3s ease; margin-bottom: 1.5rem; }
+    .checkout-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.04); }
+    .form-control, .form-select { border: 1.5px solid #e0e0d5; border-radius: 16px; padding: 0.75rem 1rem; font-size: 0.95rem; }
+    .form-control:focus, .form-select:focus { border-color: #e67300; outline: none; box-shadow: 0 0 0 3px rgba(230,115,0,0.1); }
+    .form-label { font-weight: 600; font-size: 0.9rem; color: #111100; }
+    .btn-primary-custom { background-color: #e67300; border: none; color: white; font-weight: 700; padding: 0.85rem 2rem; border-radius: 40px; transition: all 0.3s ease; width: 100%; }
+    .btn-primary-custom:hover { background-color: #cc6600; transform: scale(1.01); }
+    .btn-outline-custom { border: 1.5px solid #111100; background: transparent; color: #111100; font-weight: 600; padding: 0.6rem 1.5rem; border-radius: 40px; transition: all 0.3s ease; text-decoration: none; }
+    .btn-outline-custom:hover { background-color: #111100; color: #FFFFFF; transform: scale(1.02); }
+    .order-item { display: flex; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #efefe7; }
+    .order-item:last-child { border-bottom: none; }
+    .order-item-image { width: 80px; height: 80px; object-fit: cover; border-radius: 12px; margin-right: 1rem; }
+    .order-item-details { flex: 1; }
+    .order-item-title { font-weight: 700; margin-bottom: 0.25rem; }
+    .order-item-artist { color: #6c6c5a; font-size: 0.9rem; }
+    .order-item-price { font-weight: 700; color: #e67300; font-size: 1.1rem; }
+    .summary-row { display: flex; justify-content: space-between; padding: 0.5rem 0; }
+    .summary-total { border-top: 2px solid #e67300; padding-top: 1rem; margin-top: 0.5rem; font-weight: 700; font-size: 1.3rem; }
+    .breadcrumb-custom { background: transparent; padding: 0; margin-bottom: 0; }
+    .breadcrumb-custom .breadcrumb-item a { color: rgba(255,255,255,0.7); text-decoration: none; transition: all 0.3s ease; }
+    .breadcrumb-custom .breadcrumb-item a:hover { color: white; }
+    .breadcrumb-custom .breadcrumb-item.active { color: white; }
+    .payment-method { border: 2px solid #e0e0d5; border-radius: 16px; padding: 1rem; cursor: pointer; transition: all 0.3s ease; }
+    .payment-method:hover { border-color: #e67300; }
+    .payment-method.selected { border-color: #e67300; background-color: #fff4eb; }
+    .payment-method input { display: none; }
+    .payment-method i { font-size: 1.5rem; color: #e67300; margin-right: 0.75rem; }
+    .empty-state { text-align: center; padding: 4rem 2rem; background: #FFFFFF; border-radius: 20px; border: 2px dashed #e0e0d5; }
+    .empty-state i { font-size: 4rem; color: #e67300; margin-bottom: 1rem; }
+    .secure-badge { display: inline-flex; align-items: center; gap: 0.5rem; color: #28a745; font-weight: 600; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .checkout-card { animation: fadeInUp 0.4s ease-out; }
+</style>
+{% endblock %}
+
+{% block content %}
+<nav class="navbar">
+    <div class="container">
+        <a class="navbar-brand" href="{{ url_for('main.index') }}">Talent<span>Bridge</span></a>
+        <div>
+            <span class="me-3" style="color: #e67300; font-weight: 600;" id="userNameDisplay">Patron</span>
+            <button class="btn-logout" id="logoutBtn" onclick="window.location.href='{{ url_for('auth.logout') }}'">Logout</button>
+        </div>
+    </div>
+</nav>
+
+<div class="page-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-custom">
+                <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('main.artwork_listing') }}">Gallery</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('main.art_detail', art_id=art.art_id) if art else '#' }}">Artwork</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Checkout</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <div>
+                <h1 class="display-5 fw-bold mb-2">Checkout</h1>
+                <p class="lead mb-0" style="opacity: 0.9;">Complete your purchase securely</p>
+            </div>
+            <div class="secure-badge">
+                <i class="bi bi-shield-lock-fill"></i> Secure Checkout
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="checkout-card">
+                <h4 class="fw-bold mb-3"><i class="bi bi-box"></i> Order Summary</h4>
+                <div id="orderItemsContainer">
+                    {% if art %}
+                    <div class="order-item">
+                        <img src="{{ art.art_image or 'https://placehold.co/80x80/e67300/white?text=Art' }}" class="order-item-image" alt="{{ art.art_title }}">
+                        <div class="order-item-details">
+                            <div class="order-item-title">{{ art.art_title }}</div>
+                            <div class="order-item-artist"><i class="bi bi-person"></i> {{ art.artist.artist_fname }} {{ art.artist.artist_lname }}</div>
+                            <div class="order-item-price">${{ art.art_price }}</div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-cart"></i>
+                        <h4 class="fw-bold">Your cart is empty</h4>
+                        <p class="text-secondary">Browse artworks and add items to your cart</p>
+                        <a href="{{ url_for('main.artwork_listing') }}" class="btn-primary-custom">Browse Artworks</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="checkout-card">
+                <h4 class="fw-bold mb-3"><i class="bi bi-person"></i> Shipping Information</h4>
+                <form id="shippingForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Full Name *</label>
+                            <input type="text" class="form-control" id="shippingName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email Address *</label>
+                            <input type="email" class="form-control" id="shippingEmail" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Address *</label>
+                            <input type="text" class="form-control" id="shippingAddress" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">City *</label>
+                            <input type="text" class="form-control" id="shippingCity" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">State/Province *</label>
+                            <input type="text" class="form-control" id="shippingState" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Zip Code *</label>
+                            <input type="text" class="form-control" id="shippingZip" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Country *</label>
+                            <select class="form-select" id="shippingCountry" required>
+                                <option value="">Select Country</option>
+                                <option value="United States">United States</option>
+                                <option value="Canada">Canada</option>
+                                <option value="United Kingdom">United Kingdom</option>
+                                <option value="Australia">Australia</option>
+                                <option value="Germany">Germany</option>
+                                <option value="France">France</option>
+                                <option value="Nigeria">Nigeria</option>
+                                <option value="South Africa">South Africa</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="shippingPhone">
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="checkout-card">
+                <h4 class="fw-bold mb-3"><i class="bi bi-credit-card"></i> Payment Method</h4>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="payment-method selected" id="paymentCard">
+                            <input type="radio" name="payment" value="card" checked>
+                            <i class="bi bi-credit-card"></i> Credit / Debit Card
+                            <div class="mt-2 small text-secondary">Visa, Mastercard, Amex</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="payment-method" id="paymentPayPal">
+                            <input type="radio" name="payment" value="paypal">
+                            <i class="bi bi-paypal"></i> PayPal
+                            <div class="mt-2 small text-secondary">Secure & fast checkout</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="payment-method" id="paymentApple">
+                            <input type="radio" name="payment" value="apple">
+                            <i class="bi bi-apple"></i> Apple Pay
+                            <div class="mt-2 small text-secondary">Pay with Touch ID / Face ID</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="payment-method" id="paymentBank">
+                            <input type="radio" name="payment" value="bank">
+                            <i class="bi bi-building"></i> Bank Transfer
+                            <div class="mt-2 small text-secondary">Direct bank transfer</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="cardDetails" class="mt-3">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Card Number *</label>
+                            <input type="text" class="form-control" id="cardNumber" placeholder="1234 5678 9012 3456">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Expiry Date *</label>
+                            <input type="text" class="form-control" id="cardExpiry" placeholder="MM/YY">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">CVV *</label>
+                            <input type="password" class="form-control" id="cardCvv" placeholder="123">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Cardholder Name *</label>
+                            <input type="text" class="form-control" id="cardName" placeholder="John Doe">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="checkout-card" style="position: sticky; top: 2rem;">
+                <h4 class="fw-bold mb-3"><i class="bi bi-receipt"></i> Order Summary</h4>
+                <div id="summaryItems">
+                    {% if art %}
+                    <div class="summary-row">
+                        <span>{{ art.art_title }} × 1</span>
+                        <span>${{ art.art_price }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                <hr>
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span id="subtotal">{% if art %}${{ art.art_price }}{% else %}$0.00{% endif %}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Shipping</span>
+                    <span id="shippingCost">$25.00</span>
+                </div>
+                <div class="summary-row">
+                    <span>Tax (5%)</span>
+                    <span id="taxAmount">{% if art %}${{ (art.art_price * 0.05)|round(2) }}{% else %}$0.00{% endif %}</span>
+                </div>
+                <div class="summary-row summary-total">
+                    <span>Total</span>
+                    <span id="totalAmount">{% if art %}${{ (art.art_price + 25 + (art.art_price * 0.05))|round(2) }}{% else %}$0.00{% endif %}</span>
+                </div>
+                <button class="btn-primary-custom mt-3" id="placeOrderBtn">
+                    <i class="bi bi-lock"></i> Place Order
+                </button>
+                <p class="text-secondary small text-center mt-2">
+                    <i class="bi bi-shield-check"></i> Your payment is secure
+                </p>
+                <div class="text-center mt-2">
+                    <a href="{{ url_for('main.art_detail', art_id=art.art_id) if art else '#' }}" class="btn-outline-custom btn-sm">← Back to Artwork</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        let currentUser = localStorage.getItem('tb_user_name');
+        let userType = localStorage.getItem('tb_user_type');
+
+        if(!currentUser || userType !== 'patron') {
+            window.location.href = "{{ url_for('auth.register') }}";
+        }
+        document.getElementById('userNameDisplay').innerText = currentUser;
+
+        let artId = {{ art.art_id if art else 'null' }};
+        let artPrice = {{ art.art_price if art else 0 }};
+
+        $('#shippingName').val(currentUser);
+        $('#shippingEmail').val(localStorage.getItem('tb_user_email') || '');
+
+        $('.payment-method').click(function() {
+            $('.payment-method').removeClass('selected');
+            $(this).addClass('selected');
+            $(this).find('input[type="radio"]').prop('checked', true);
+
+            if($(this).attr('id') === 'paymentCard') {
+                $('#cardDetails').show();
+            } else {
+                $('#cardDetails').hide();
+            }
+        });
+
+        $('#placeOrderBtn').click(function() {
+            let name = $('#shippingName').val().trim();
+            let email = $('#shippingEmail').val().trim();
+            let address = $('#shippingAddress').val().trim();
+            let city = $('#shippingCity').val().trim();
+            let state = $('#shippingState').val().trim();
+            let zip = $('#shippingZip').val().trim();
+            let country = $('#shippingCountry').val();
+
+            if(!name || !email || !address || !city || !state || !zip || !country) {
+                alert('Please fill in all required shipping fields.');
+                return;
+            }
+
+            let paymentMethod = $('input[name="payment"]:checked').val();
+            if(paymentMethod === 'card') {
+                let cardNumber = $('#cardNumber').val().replace(/\s/g, '');
+                let cardExpiry = $('#cardExpiry').val();
+                let cardCvv = $('#cardCvv').val();
+                let cardName = $('#cardName').val().trim();
+
+                if(cardNumber.length < 16) {
+                    alert('Please enter a valid 16-digit card number.');
+                    return;
+                }
+                if(!cardExpiry.match(/^\d{2}\/\d{2}$/)) {
+                    alert('Please enter a valid expiry date (MM/YY).');
+                    return;
+                }
+                if(cardCvv.length < 3) {
+                    alert('Please enter a valid CVV code.');
+                    return;
+                }
+                if(!cardName) {
+                    alert('Please enter the cardholder name.');
+                    return;
+                }
+            }
+
+            // Create order via AJAX
+            $.ajax({
+                url: "{{ url_for('transaction.create_order') }}",
+                type: 'POST',
+                data: {
+                    art_id: artId,
+                    shipping_name: name,
+                    shipping_email: email,
+                    shipping_address: address,
+                    shipping_city: city,
+                    shipping_state: state,
+                    shipping_zip: zip,
+                    shipping_country: country,
+                    payment_method: paymentMethod
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if(response.status === 'success') {
+                        window.location.href = "{{ url_for('transaction.order_confirmation') }}?order_id=" + response.order_id;
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function() {
+                    alert('An error occurred. Please try again.');
+                }
+            });
+        });
+
+        function formatCardNumber(value) {
+            let v = value.replace(/\s/g, '').replace(/\D/g, '');
+            let parts = [];
+            for(let i = 0; i < v.length && i < 16; i += 4) {
+                parts.push(v.substring(i, i + 4));
+            }
+            return parts.join(' ');
+        }
+
+        $('#cardNumber').on('input', function() {
+            let raw = $(this).val().replace(/\s/g, '');
+            $(this).val(formatCardNumber(raw));
+        });
+
+        $('#cardExpiry').on('input', function() {
+            let value = $(this).val().replace(/\D/g, '');
+            if(value.length >= 2) {
+                $(this).val(value.substring(0, 2) + '/' + value.substring(2, 4));
+            } else {
+                $(this).val(value);
+            }
+        });
+
+        $('#cardCvv').on('input', function() {
+            $(this).val($(this).val().replace(/\D/g, ''));
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,483 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}TalentBridge · Patron Dashboard{% endblock %}
+
+{% block sidebar %}
+<div class="nav-item-custom active" data-tab="overview">
+    <i class="bi bi-speedometer2"></i> Overview
+</div>
+<div class="nav-item-custom" data-tab="browse">
+    <i class="bi bi-compass"></i> Browse
+</div>
+<div class="nav-item-custom" data-tab="favorites">
+    <i class="bi bi-heart"></i> Favorites
+</div>
+<div class="nav-item-custom" data-tab="orders">
+    <i class="bi bi-cart-check"></i> My Orders
+</div>
+<div class="nav-item-custom" data-tab="messages">
+    <i class="bi bi-chat-dots"></i> Messages
+</div>
+<div class="nav-item-custom" data-tab="profile">
+    <i class="bi bi-person-circle"></i> My Profile
+</div>
+{% endblock %}
+
+{% block dashboard_content %}
+<div id="mainContent"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        let patronName = localStorage.getItem('tb_user_name') || 'Guest Patron';
+        let patronEmail = localStorage.getItem('tb_user_email') || 'patron@example.com';
+        let userType = localStorage.getItem('tb_user_type');
+
+        if(userType !== 'patron') {
+            window.location.href = "{{ url_for('auth.register') }}";
+        }
+
+        // Load initial data via AJAX
+        let favorites = [];
+        let orders = [];
+        let messages = [];
+        let recommendedArtworks = [];
+
+        function loadDashboardData() {
+            $.ajax({
+                url: "{{ url_for('user.patron_dashboard_data') }}",
+                type: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    favorites = data.favorites || [];
+                    orders = data.orders || [];
+                    messages = data.messages || [];
+                    recommendedArtworks = data.recommended || [];
+                    loadTab('overview');
+                },
+                error: function(err) {
+                    console.error('Error loading dashboard data:', err);
+                    // Fallback to empty data
+                    favorites = [];
+                    orders = [];
+                    messages = [];
+                    recommendedArtworks = [];
+                    loadTab('overview');
+                }
+            });
+        }
+
+        function renderOverview() {
+            let totalOrders = orders.length;
+            let pendingOrders = orders.filter(function(o) { return o.status === 'Pending' || o.status === 'Processing'; }).length;
+            let totalSpent = 0;
+            for(let i = 0; i < orders.length; i++) {
+                if(orders[i].status !== 'Cancelled') {
+                    totalSpent += orders[i].amount;
+                }
+            }
+            let favoriteCount = favorites.length;
+
+            let recentOrdersHtml = '';
+            for(let i = 0; i < Math.min(orders.length, 3); i++) {
+                let order = orders[i];
+                let statusClass = order.status === 'Pending' ? 'badge-pending' : 
+                                 (order.status === 'Shipped' ? 'badge-shipped' : 
+                                 (order.status === 'Delivered' ? 'badge-delivered' : 'badge-completed'));
+                recentOrdersHtml += `
+                    <div class="order-item">
+                        <img src="${order.image || 'https://placehold.co/100x100/e67300/white?text=Art'}" class="order-avatar" alt="${order.artworkTitle}">
+                        <div class="flex-grow-1">
+                            <div class="fw-bold">${order.artworkTitle}</div>
+                            <div class="text-secondary small">${order.artistName}</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold" style="color: #e67300;">$${order.amount}</div>
+                            <span class="${statusClass}">${order.status}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            let favoritesHtml = '';
+            for(let i = 0; i < Math.min(favorites.length, 3); i++) {
+                let fav = favorites[i];
+                favoritesHtml += `
+                    <div class="col-4 mb-3">
+                        <div class="favorite-item">
+                            <img src="${fav.image || 'https://placehold.co/60x60/e67300/white?text=Art'}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 12px; margin-right: 0.75rem;">
+                            <div>
+                                <div class="fw-bold small">${fav.title}</div>
+                                <div class="text-secondary small">$${fav.price}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="dashboard-card">
+                    <h3 class="fw-bold mb-4">Welcome back, ${patronName}!</h3>
+                    <p class="text-secondary mb-4">Your art journey at a glance</p>
+                    <div class="row g-4">
+                        <div class="col-md-3">
+                            <div class="dashboard-card text-center">
+                                <div class="stat-number">${favoriteCount}</div>
+                                <div class="stat-label">Favorites</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="dashboard-card text-center">
+                                <div class="stat-number">${totalOrders}</div>
+                                <div class="stat-label">Total Orders</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="dashboard-card text-center">
+                                <div class="stat-number">${pendingOrders}</div>
+                                <div class="stat-label">Pending Orders</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="dashboard-card text-center">
+                                <div class="stat-number">$${totalSpent}</div>
+                                <div class="stat-label">Total Spent</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-7">
+                        <div class="dashboard-card">
+                            <h5 class="fw-bold mb-3">Recent Orders</h5>
+                            ${recentOrdersHtml || '<p class="text-secondary">No orders yet</p>'}
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="dashboard-card">
+                            <h5 class="fw-bold mb-3">Favorite Artworks</h5>
+                            ${favorites.length > 0 ? 
+                                `<div class="row">${favoritesHtml}</div>` : 
+                                '<p class="text-secondary">No favorites yet</p>'
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <h5 class="fw-bold mb-3">Recommended For You</h5>
+                    <div class="row">
+                        ${recommendedArtworks.map(function(art) {
+                            return `
+                                <div class="col-md-4">
+                                    <div class="artwork-card">
+                                        <img src="${art.image || 'https://placehold.co/400x300/e67300/white?text=Artwork'}" class="artwork-image" alt="${art.title}">
+                                        <div class="artwork-info">
+                                            <div class="artwork-title">${art.title}</div>
+                                            <div class="text-secondary small">${art.artist}</div>
+                                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                                <span class="artwork-price">$${art.price}</span>
+                                                <button class="btn-primary-custom btn-sm view-art" data-id="${art.id}">View</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderBrowse() {
+            return `
+                <div class="dashboard-card">
+                    <h3 class="fw-bold mb-4"><i class="bi bi-compass"></i> Browse Artworks</h3>
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="artwork-card" style="cursor: pointer;" onclick="window.location.href='{{ url_for('main.artwork_listing') }}'">
+                                <div style="padding: 3rem; text-align: center; background: linear-gradient(135deg, #e67300, #cc6600); color: white; border-radius: 16px;">
+                                    <i class="bi bi-grid-3x3-gap-fill" style="font-size: 3rem;"></i>
+                                    <h5 class="fw-bold mt-3">Explore All Artworks</h5>
+                                    <p class="small">Discover new pieces from talented artists</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="artwork-card" style="cursor: pointer;" onclick="window.location.href='{{ url_for('main.art_category') }}'">
+                                <div style="padding: 3rem; text-align: center; background: #FFFFFF; border: 2px solid #e67300; border-radius: 16px;">
+                                    <i class="bi bi-tags" style="font-size: 3rem; color: #e67300;"></i>
+                                    <h5 class="fw-bold mt-3">Browse by Category</h5>
+                                    <p class="small text-secondary">Filter by medium, style, and more</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="artwork-card" style="cursor: pointer;" onclick="window.location.href='{{ url_for('main.artist_public_profile', artist_id=1) }}'">
+                                <div style="padding: 3rem; text-align: center; background: #F9F9FB; border: 2px solid #e0e0d5; border-radius: 16px;">
+                                    <i class="bi bi-search" style="font-size: 3rem; color: #111100;"></i>
+                                    <h5 class="fw-bold mt-3">Search Artists</h5>
+                                    <p class="small text-secondary">Find specific artists by name</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="my-4">
+                    <h5 class="fw-bold mb-3">Top Categories</h5>
+                    <div class="row g-3">
+                        <div class="col-6 col-md-3">
+                            <div style="background: #fff4eb; padding: 1rem; border-radius: 16px; text-align: center;">
+                                <i class="bi bi-brush" style="font-size: 1.5rem; color: #e67300;"></i>
+                                <div class="fw-bold">Painting</div>
+                                <small class="text-secondary">124 pieces</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div style="background: #fff4eb; padding: 1rem; border-radius: 16px; text-align: center;">
+                                <i class="bi bi-gem" style="font-size: 1.5rem; color: #e67300;"></i>
+                                <div class="fw-bold">Sculpture</div>
+                                <small class="text-secondary">56 pieces</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div style="background: #fff4eb; padding: 1rem; border-radius: 16px; text-align: center;">
+                                <i class="bi bi-camera" style="font-size: 1.5rem; color: #e67300;"></i>
+                                <div class="fw-bold">Photography</div>
+                                <small class="text-secondary">89 pieces</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div style="background: #fff4eb; padding: 1rem; border-radius: 16px; text-align: center;">
+                                <i class="bi bi-laptop" style="font-size: 1.5rem; color: #e67300;"></i>
+                                <div class="fw-bold">Digital Art</div>
+                                <small class="text-secondary">67 pieces</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderFavorites() {
+            if(favorites.length === 0) {
+                return `
+                    <div class="dashboard-card">
+                        <h3 class="fw-bold mb-4"><i class="bi bi-heart"></i> My Favorites</h3>
+                        <div class="empty-state">
+                            <i class="bi bi-heart"></i>
+                            <h4 class="fw-bold">No favorites yet</h4>
+                            <p class="text-secondary">Start saving artworks you love</p>
+                            <button class="btn-primary-custom" onclick="loadTab('browse')">Browse Artworks</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            let html = `
+                <div class="dashboard-card">
+                    <h3 class="fw-bold mb-4"><i class="bi bi-heart-fill" style="color: #e67300;"></i> My Favorites (${favorites.length})</h3>
+                    <div class="row">
+            `;
+            
+            for(let i = 0; i < favorites.length; i++) {
+                let fav = favorites[i];
+                html += `
+                    <div class="col-md-4 mb-4">
+                        <div class="artwork-card">
+                            <img src="${fav.image || 'https://placehold.co/400x300/e67300/white?text=Artwork'}" class="artwork-image" alt="${fav.title}">
+                            <div class="artwork-info">
+                                <div class="artwork-title">${fav.title}</div>
+                                <div class="text-secondary small">${fav.artist} · ${fav.category}</div>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <span class="artwork-price">$${fav.price}</span>
+                                    <button class="btn-sm-danger remove-favorite" data-id="${fav.id}" style="background-color: transparent; border: 1px solid #dc3545; color: #dc3545; padding: 0.25rem 0.75rem; border-radius: 40px;">
+                                        <i class="bi bi-heart-break"></i> Remove
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            html += '</div></div>';
+            return html;
+        }
+
+        function renderOrders() {
+            if(orders.length === 0) {
+                return `
+                    <div class="dashboard-card">
+                        <h3 class="fw-bold mb-4"><i class="bi bi-cart-check"></i> My Orders</h3>
+                        <div class="empty-state">
+                            <i class="bi bi-box"></i>
+                            <h4 class="fw-bold">No orders yet</h4>
+                            <p class="text-secondary">Start exploring and purchase your favorite artworks</p>
+                            <button class="btn-primary-custom" onclick="loadTab('browse')">Browse Artworks</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            let html = `
+                <div class="dashboard-card">
+                    <h3 class="fw-bold mb-4"><i class="bi bi-cart-check"></i> My Orders (${orders.length})</h3>
+                    <div class="table-responsive">
+                        <table class="table-custom" style="width: 100%;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #efefe7;">
+                                    <th style="padding: 0.75rem 0.5rem; text-align: left;">Artwork</th>
+                                    <th style="padding: 0.75rem 0.5rem; text-align: left;">Artist</th>
+                                    <th style="padding: 0.75rem 0.5rem; text-align: left;">Amount</th>
+                                    <th style="padding: 0.75rem 0.5rem; text-align: left;">Date</th>
+                                    <th style="padding: 0.75rem 0.5rem; text-align: left;">Status</th>
+                                    <th style="padding: 0.75rem 0.5rem; text-align: left;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+            `;
+
+            for(let i = 0; i < orders.length; i++) {
+                let order = orders[i];
+                let statusClass = order.status === 'Pending' ? 'badge-pending' : 
+                                 (order.status === 'Shipped' ? 'badge-shipped' : 
+                                 (order.status === 'Delivered' ? 'badge-delivered' : 'badge-completed'));
+                html += `
+                    <tr style="border-bottom: 1px solid #efefe7;">
+                        <td style="padding: 0.75rem 0.5rem;">
+                            <div class="d-flex align-items-center">
+                                <img src="${order.image || 'https://placehold.co/50x50/e67300/white?text=Art'}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px; margin-right: 0.75rem;">
+                                <span class="fw-bold">${order.artworkTitle}</span>
+                            </div>
+                        </td>
+                        <td style="padding: 0.75rem 0.5rem;">${order.artistName}</td>
+                        <td style="padding: 0.75rem 0.5rem; font-weight: 700; color: #e67300;">$${order.amount}</td>
+                        <td style="padding: 0.75rem 0.5rem;">${order.orderDate}</td>
+                        <td style="padding: 0.75rem 0.5rem;"><span class="${statusClass}">${order.status}</span></td>
+                        <td style="padding: 0.75rem 0.5rem;">
+                            <button class="btn-sm-track" style="background-color: transparent; border: 1.5px solid #e67300; color: #e67300; padding: 0.25rem 0.75rem; border-radius: 40px; font-size: 0.75rem; cursor: pointer; transition: all 0.3s ease;" onclick="alert('Tracking details for ${order.id}')">
+                                <i class="bi bi-geo-alt"></i> Track
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            html += '</tbody></table></div></div>';
+            return html;
+        }
+
+        function renderMessages() {
+            let html = `
+                <div class="dashboard-card">
+                    <h3 class="fw-bold mb-4"><i class="bi bi-chat-dots"></i> Messages</h3>
+            `;
+
+            if(messages.length === 0) {
+                html += `
+                    <div class="empty-state">
+                        <i class="bi bi-chat-square-text"></i>
+                        <h4 class="fw-bold">No messages</h4>
+                        <p class="text-secondary">Messages from artists will appear here</p>
+                    </div>
+                `;
+            } else {
+                for(let i = 0; i < messages.length; i++) {
+                    let msg = messages[i];
+                    let unreadClass = !msg.read ? 'border-left: 3px solid #e67300;' : '';
+                    html += `
+                        <div class="dashboard-card" style="margin-bottom: 0.75rem; ${unreadClass} cursor: pointer;" onclick="window.location.href='{{ url_for('user.patron_messages') }}'">
+                            <div class="d-flex justify-content-between">
+                                <strong style="color: #e67300;">${msg.from}</strong>
+                                <small class="text-secondary">${msg.date}</small>
+                            </div>
+                            <p class="mt-2 mb-1">${msg.message}</p>
+                            ${!msg.read ? '<span class="badge-pending" style="font-size: 0.7rem;">New</span>' : ''}
+                        </div>
+                    `;
+                }
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function renderProfile() {
+            return `
+                <div class="dashboard-card">
+                    <h3 class="fw-bold mb-4"><i class="bi bi-person-circle"></i> My Profile</h3>
+                    <form id="profileForm">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Display Name</label>
+                            <input type="text" class="form-control" id="profileName" value="${patronName}" style="border-radius: 12px; border: 1.5px solid #e0e0d5; padding: 0.75rem;">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Email</label>
+                            <input type="email" class="form-control" id="profileEmail" value="${patronEmail}" style="border-radius: 12px; border: 1.5px solid #e0e0d5; padding: 0.75rem;">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Bio</label>
+                            <textarea class="form-control" id="profileBio" rows="3" style="border-radius: 12px; border: 1.5px solid #e0e0d5; padding: 0.75rem;">Art enthusiast and collector. Love discovering new talent and unique pieces.</textarea>
+                        </div>
+                        <button type="submit" class="btn-primary-custom">Save Changes</button>
+                    </form>
+                </div>
+            `;
+        }
+
+        window.loadTab = function(tabName) {
+            let content = '';
+            switch(tabName) {
+                case 'overview': content = renderOverview(); break;
+                case 'browse': content = renderBrowse(); break;
+                case 'favorites': content = renderFavorites(); break;
+                case 'orders': content = renderOrders(); break;
+                case 'messages': content = renderMessages(); break;
+                case 'profile': content = renderProfile(); break;
+                default: content = renderOverview();
+            }
+            $('#mainContent').html(content);
+
+            $('.nav-item-custom').removeClass('active');
+            $(`.nav-item-custom[data-tab="${tabName}"]`).addClass('active');
+
+            if(tabName === 'favorites') {
+                $('.remove-favorite').click(function() {
+                    let id = parseInt($(this).data('id'));
+                    if(confirm('Remove this artwork from favorites?')) {
+                        let index = favorites.findIndex(function(f) { return f.id === id; });
+                        if(index !== -1) {
+                            favorites.splice(index, 1);
+                            localStorage.setItem('tb_patron_favorites', JSON.stringify(favorites));
+                            loadTab('favorites');
+                        }
+                    }
+                });
+            }
+
+            if(tabName === 'profile') {
+                $('#profileForm').submit(function(e) {
+                    e.preventDefault();
+                    let newName = $('#profileName').val();
+                    let newEmail = $('#profileEmail').val();
+                    localStorage.setItem('tb_user_name', newName);
+                    localStorage.setItem('tb_user_email', newEmail);
+                    patronName = newName;
+                    patronEmail = newEmail;
+                    alert('Profile updated successfully!');
+                    loadTab('profile');
+                });
+            }
+        };
+
+        $('.nav-item-custom').click(function() {
+            let tab = $(this).data('tab');
+            loadTab(tab);
+        });
+
+        loadDashboardData();
+    });
+</script>
+{% endblock %}

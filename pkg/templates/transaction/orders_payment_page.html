@@ -1,0 +1,319 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}TalentBridge · My Orders & Sales{% endblock %}
+
+{% block sidebar %}
+<div class="nav-item-custom active" data-tab="incoming">
+    <i class="bi bi-arrow-down-circle"></i> Incoming Orders
+</div>
+<div class="nav-item-custom" data-tab="completed">
+    <i class="bi bi-check-circle"></i> Completed Orders
+</div>
+<div class="nav-item-custom" data-tab="all">
+    <i class="bi bi-list-ul"></i> All Orders
+</div>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="dashboard-card">
+    <h3 class="fw-bold mb-4">My Orders & Sales</h3>
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="dashboard-card text-center">
+                <div class="stat-number" id="totalOrdersCount">0</div>
+                <div class="stat-label">Total Orders</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="dashboard-card text-center">
+                <div class="stat-number" id="pendingCount">0</div>
+                <div class="stat-label">Pending</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="dashboard-card text-center">
+                <div class="stat-number" id="shippedCount">0</div>
+                <div class="stat-label">Shipped</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="dashboard-card text-center">
+                <div class="stat-number" id="totalRevenue">$0</div>
+                <div class="stat-label">Total Revenue</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="ordersContainer"></div>
+</div>
+
+<!-- Update Status Modal -->
+<div class="modal fade" id="updateStatusModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-custom">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-truck"></i> Update Order Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Order ID:</strong> <span id="updateOrderId"></span></p>
+                <p><strong>Artwork:</strong> <span id="updateArtworkTitle"></span></p>
+                <p><strong>Buyer:</strong> <span id="updateBuyerName"></span></p>
+                <div class="mb-3 mt-3">
+                    <label class="form-label fw-semibold">Change Status To:</label>
+                    <select class="form-control" id="newStatusSelect">
+                        <option value="Processing">Processing</option>
+                        <option value="Shipped">Shipped</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-primary-custom" id="confirmUpdateBtn">Update Status</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Track Modal -->
+<div class="modal fade" id="trackModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-custom">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-geo-alt"></i> Track Order</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Order ID:</strong> <span id="trackOrderId"></span></p>
+                <hr>
+                <div class="timeline">
+                    <div class="d-flex mb-3" id="trackStep1">
+                        <i class="bi bi-check-circle-fill me-3" style="color: #28a745; font-size: 1.2rem;"></i>
+                        <div><strong>Order Placed</strong><br><small class="text-secondary" id="trackDate1">-</small></div>
+                    </div>
+                    <div class="d-flex mb-3" id="trackStep2">
+                        <i class="bi bi-circle me-3" style="color: #e0e0d5; font-size: 1.2rem;"></i>
+                        <div><strong>Processing</strong><br><small class="text-secondary" id="trackDate2">-</small></div>
+                    </div>
+                    <div class="d-flex mb-3" id="trackStep3">
+                        <i class="bi bi-circle me-3" style="color: #e0e0d5; font-size: 1.2rem;"></i>
+                        <div><strong>Shipped</strong><br><small class="text-secondary" id="trackDate3">-</small></div>
+                    </div>
+                    <div class="d-flex mb-3" id="trackStep4">
+                        <i class="bi bi-circle me-3" style="color: #e0e0d5; font-size: 1.2rem;"></i>
+                        <div><strong>Delivered</strong><br><small class="text-secondary" id="trackDate4">-</small></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn-primary-custom" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        let currentUser = localStorage.getItem('tb_user_name');
+        let userType = localStorage.getItem('tb_user_type');
+
+        if(!currentUser || userType !== 'artist') {
+            window.location.href = "{{ url_for('auth.register') }}";
+        }
+
+        let orders = [];
+        let currentTab = 'incoming';
+
+        function loadOrders() {
+            $.ajax({
+                url: "{{ url_for('transaction.artist_orders_data') }}",
+                type: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    orders = data.orders || [];
+                    updateStatistics();
+                    renderOrders();
+                },
+                error: function(err) {
+                    console.error('Error loading orders:', err);
+                    orders = [];
+                    updateStatistics();
+                    renderOrders();
+                }
+            });
+        }
+
+        function updateStatistics() {
+            let totalOrders = orders.length;
+            let pending = orders.filter(function(o) { return o.status === 'Pending'; }).length;
+            let shipped = orders.filter(function(o) { return o.status === 'Shipped'; }).length;
+            let totalRevenue = 0;
+            for(let i = 0; i < orders.length; i++) {
+                if(orders[i].status !== 'Cancelled') {
+                    totalRevenue += orders[i].amount;
+                }
+            }
+            
+            $('#totalOrdersCount').text(totalOrders);
+            $('#pendingCount').text(pending);
+            $('#shippedCount').text(shipped);
+            $('#totalRevenue').text('$' + totalRevenue.toLocaleString());
+        }
+
+        function getStatusBadge(status) {
+            let badgeClass = '';
+            if(status === 'Pending') badgeClass = 'badge-pending';
+            else if(status === 'Processing') badgeClass = 'badge-processing';
+            else if(status === 'Shipped') badgeClass = 'badge-shipped';
+            else if(status === 'Delivered') badgeClass = 'badge-delivered';
+            else if(status === 'Completed') badgeClass = 'badge-completed';
+            else if(status === 'Cancelled') badgeClass = 'badge-cancelled';
+            else badgeClass = 'badge-pending';
+            
+            return '<span class="' + badgeClass + '"><i class="bi bi-info-circle"></i> ' + status + '</span>';
+        }
+
+        function renderOrders() {
+            let filteredOrders = [];
+            if(currentTab === 'incoming') {
+                filteredOrders = orders.filter(function(o) { return o.status === 'Pending' || o.status === 'Processing'; });
+            } else if(currentTab === 'completed') {
+                filteredOrders = orders.filter(function(o) { return o.status === 'Delivered' || o.status === 'Completed'; });
+            } else {
+                filteredOrders = orders;
+            }
+            
+            if(filteredOrders.length === 0) {
+                $('#ordersContainer').html(`
+                    <div class="empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <h4 class="fw-bold">No orders found</h4>
+                        <p class="text-secondary">When patrons purchase your artwork, orders will appear here</p>
+                    </div>
+                `);
+                return;
+            }
+            
+            let html = '';
+            for(let i = 0; i < filteredOrders.length; i++) {
+                let order = filteredOrders[i];
+                html += `
+                    <div class="order-card">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                <img src="${order.artworkImage || 'https://placehold.co/80x80/e67300/white?text=Art'}" alt="${order.artworkTitle}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 12px;">
+                            </div>
+                            <div class="col-md-3">
+                                <h6 class="fw-bold mb-1">${order.artworkTitle}</h6>
+                                <small class="text-secondary">Order #${order.id}</small>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="fw-bold" style="color: #e67300;">$${order.amount}</div>
+                                <small class="text-secondary">${order.orderDate}</small>
+                            </div>
+                            <div class="col-md-2">
+                                <div><i class="bi bi-person"></i> ${order.buyerName}</div>
+                                <small class="text-secondary">${order.buyerEmail}</small>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-2">${getStatusBadge(order.status)}</div>
+                                <div class="btn-group" role="group">
+                                    ${order.status !== 'Completed' && order.status !== 'Cancelled' && order.status !== 'Delivered' ? 
+                                        '<button class="btn-sm-update me-2 update-status" data-order-id="' + order.id + '"><i class="bi bi-pencil"></i> Update</button>' : ''}
+                                    <button class="btn-sm-track track-order" data-order-id="' + order.id + '"><i class="bi bi-geo-alt"></i> Track</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            $('#ordersContainer').html(html);
+            
+            $('.update-status').click(function() {
+                let orderId = $(this).data('order-id');
+                let order = orders.find(function(o) { return o.id === orderId; });
+                if(order) {
+                    $('#updateOrderId').text(order.id);
+                    $('#updateArtworkTitle').text(order.artworkTitle);
+                    $('#updateBuyerName').text(order.buyerName);
+                    $('#newStatusSelect').val(order.status === 'Pending' ? 'Processing' : (order.status === 'Processing' ? 'Shipped' : 'Delivered'));
+                    $('#updateStatusModal').modal('show');
+                    
+                    $('#confirmUpdateBtn').off('click').on('click', function() {
+                        let newStatus = $('#newStatusSelect').val();
+                        let today = new Date().toISOString().split('T')[0];
+                        
+                        order.status = newStatus;
+                        if(newStatus === 'Processing' && !order.processingDate) {
+                            order.processingDate = today;
+                        } else if(newStatus === 'Shipped' && !order.shippedDate) {
+                            order.shippedDate = today;
+                        } else if(newStatus === 'Delivered' && !order.deliveredDate) {
+                            order.deliveredDate = today;
+                        }
+                        
+                        updateStatistics();
+                        renderOrders();
+                        $('#updateStatusModal').modal('hide');
+                        alert('Order status updated to ' + newStatus);
+                    });
+                }
+            });
+            
+            $('.track-order').click(function() {
+                let orderId = $(this).data('order-id');
+                let order = orders.find(function(o) { return o.id === orderId; });
+                if(order) {
+                    $('#trackOrderId').text(order.id);
+                    $('#trackDate1').text(order.orderDate || '-');
+                    $('#trackDate2').text(order.processingDate || 'Not yet');
+                    $('#trackDate3').text(order.shippedDate || 'Not yet');
+                    $('#trackDate4').text(order.deliveredDate || 'Not yet');
+                    
+                    let step2Icon = $('#trackStep2 i');
+                    let step3Icon = $('#trackStep3 i');
+                    let step4Icon = $('#trackStep4 i');
+                    
+                    step2Icon.removeClass().addClass('bi me-3');
+                    step3Icon.removeClass().addClass('bi me-3');
+                    step4Icon.removeClass().addClass('bi me-3');
+                    
+                    if(order.processingDate) {
+                        step2Icon.addClass('bi-check-circle-fill').css('color', '#28a745');
+                    } else {
+                        step2Icon.addClass('bi-circle').css('color', '#e0e0d5');
+                    }
+                    
+                    if(order.shippedDate) {
+                        step3Icon.addClass('bi-check-circle-fill').css('color', '#28a745');
+                    } else {
+                        step3Icon.addClass('bi-circle').css('color', '#e0e0d5');
+                    }
+                    
+                    if(order.deliveredDate) {
+                        step4Icon.addClass('bi-check-circle-fill').css('color', '#28a745');
+                    } else {
+                        step4Icon.addClass('bi-circle').css('color', '#e0e0d5');
+                    }
+                    
+                    $('#trackModal').modal('show');
+                }
+            });
+        }
+
+        $('.nav-item-custom').click(function() {
+            $('.nav-item-custom').removeClass('active');
+            $(this).addClass('active');
+            currentTab = $(this).data('tab');
+            renderOrders();
+        });
+
+        loadOrders();
+    });
+</script>
+{% endblock %}
