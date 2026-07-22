@@ -1,10 +1,11 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
+from flask_migrate import Migrate
 
 db = SQLAlchemy()
 csrf = CSRFProtect()
-
+migrate = Migrate()
 
 def create_app():
     from pkg import config
@@ -12,12 +13,14 @@ def create_app():
 
     app = Flask(__name__, instance_relative_config=True)
 
-    # Load config from instance/config.py first, then pkg/config.py class
+    # Load config
     app.config.from_pyfile('config.py', silent=True)
     app.config.from_object(config.DevelopmentConfig)
 
+    # Initialize extensions
     db.init_app(app)
     csrf.init_app(app)
+    migrate.init_app(app, db)
 
     # Register blueprints
     from pkg.auth_routes import auth

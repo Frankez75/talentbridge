@@ -16,25 +16,15 @@
     .role-option i { font-size: 2.5rem; color: #e67300; margin-bottom: 0.75rem; display: block; }
     .role-option h5 { font-weight: 700; margin-bottom: 0.5rem; }
     .role-option p { font-size: 0.85rem; color: #6c6c5a; margin: 0; }
-    .password-toggle { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #6c6c5a; cursor: pointer; font-size: 1.1rem; padding: 0; }
-    .password-toggle:hover { color: #e67300; }
     .input-group-icon { position: relative; }
     .input-group-icon i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #6c6c5a; font-size: 1.1rem; }
     .input-group-icon .form-control { padding-left: 2.8rem; }
     .error-message { background-color: #f8d7da; color: #721c24; padding: 0.75rem 1rem; border-radius: 16px; font-size: 0.9rem; display: none; }
     .error-message.show { display: block; animation: shake 0.4s ease-out; }
-    .success-message { background-color: #d4edda; color: #155724; padding: 0.75rem 1rem; border-radius: 16px; font-size: 0.9rem; display: none; }
-    .success-message.show { display: block; }
-    .password-strength { height: 4px; border-radius: 2px; margin-top: 0.5rem; background: #e0e0d5; overflow: hidden; }
-    .password-strength-bar { height: 100%; border-radius: 2px; transition: width 0.3s ease, background 0.3s ease; width: 0%; }
-    .password-strength-text { font-size: 0.75rem; color: #6c6c5a; margin-top: 0.25rem; }
     .divider { display: flex; align-items: center; text-align: center; margin: 1.5rem 0; }
     .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #e0e0d5; }
     .divider span { padding: 0 1rem; color: #6c6c5a; font-size: 0.85rem; }
-    .btn-back { border: 1.5px solid #111100; background: transparent; color: #111100; font-weight: 600; padding: 0.5rem 1.25rem; border-radius: 40px; transition: all 0.3s ease; text-decoration: none; display: inline-block; }
-    .btn-back:hover { background-color: #111100; color: #FFFFFF; transform: scale(1.02); }
-    .social-btn { width: 48px; height: 48px; border-radius: 50%; border: 1.5px solid #e0e0d5; background: transparent; transition: all 0.3s ease; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem; color: #6c6c5a; }
-    .social-btn:hover { border-color: #e67300; color: #e67300; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-10px); } 40% { transform: translateX(10px); } 60% { transform: translateX(-10px); } 80% { transform: translateX(10px); } }
 </style>
 {% endblock %}
 
@@ -51,76 +41,74 @@
                 <i class="bi bi-exclamation-circle"></i> <span id="errorText">Please fix the errors below.</span>
             </div>
 
-            <div class="success-message" id="successMessage">
-                <i class="bi bi-check-circle"></i> <span id="successText">Registration successful!</span>
-            </div>
-
-            <form id="registerForm">
-                {{ csrf_token() }}
+            <form id="registerForm" method="POST">
+                {{ form.hidden_tag() }} <!-- Injects CSRF token automatically -->
+                
                 <div class="mb-3">
                     <label class="form-label"><i class="bi bi-person"></i> Full Name</label>
                     <div class="input-group-icon">
                         <i class="bi bi-person-circle"></i>
-                        <input type="text" class="form-control" id="regName" placeholder="e.g., John Doe" required>
+                        {{ form.fullname(class="form-control", id="fullname", placeholder="e.g., John Doe") }}
                     </div>
-                    <div class="invalid-feedback" id="nameError">Please enter your full name.</div>
+                    {% for error in form.fullname.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label"><i class="bi bi-envelope"></i> Email Address</label>
                     <div class="input-group-icon">
                         <i class="bi bi-envelope"></i>
-                        <input type="email" class="form-control" id="regEmail" placeholder="you@example.com" required>
+                        {{ form.email(class="form-control", id="email", placeholder="you@example.com") }}
                     </div>
-                    <div class="invalid-feedback" id="emailError">Please enter a valid email address.</div>
+                    {% for error in form.email.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label"><i class="bi bi-lock"></i> Password</label>
                     <div class="input-group-icon">
                         <i class="bi bi-key"></i>
-                        <input type="password" class="form-control" id="regPassword" placeholder="Min 8 characters" required>
-                        <button type="button" class="password-toggle" id="togglePassword">
-                            <i class="bi bi-eye"></i>
-                        </button>
+                        {{ form.password(class="form-control", id="password", placeholder="Min 8 characters") }}
                     </div>
-                    <div class="password-strength">
-                        <div class="password-strength-bar" id="passwordStrengthBar"></div>
-                    </div>
-                    <div class="password-strength-text" id="passwordStrengthText">Password strength: Weak</div>
-                    <div class="invalid-feedback" id="passwordError">Password must be at least 8 characters.</div>
+                    {% for error in form.password.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label"><i class="bi bi-lock-fill"></i> Confirm Password</label>
                     <div class="input-group-icon">
                         <i class="bi bi-check-circle"></i>
-                        <input type="password" class="form-control" id="regConfirmPassword" placeholder="Confirm your password" required>
+                        {{ form.confirm_password(class="form-control", id="confirm_password", placeholder="Confirm your password") }}
                     </div>
-                    <div class="invalid-feedback" id="confirmError">Passwords do not match.</div>
+                    {% for error in form.confirm_password.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
                 </div>
 
                 <div class="mb-4">
                     <label class="form-label"><i class="bi bi-person-badge"></i> I want to join as:</label>
                     <div class="row g-3 mt-1">
+                        {% for subfield in form.user_type %}
                         <div class="col-6">
-                            <div class="role-option" id="artistRole" data-role="artist">
-                                <i class="bi bi-brush"></i>
-                                <h5>Artist</h5>
-                                <p>Sell & showcase my work</p>
-                                <input type="radio" name="userType" value="artist">
+                            <div class="role-option" data-role="{{ subfield.data }}">
+                                {% if subfield.data == 'artist' %}
+                                    <i class="bi bi-brush"></i>
+                                {% else %}
+                                    <i class="bi bi-hand-sparkles"></i>
+                                {% endif %}
+                                <h5>{{ subfield.label.text }}</h5>
+                                <p>{% if subfield.data == 'artist' %}Sell & showcase my work{% else %}Discover & buy art{% endif %}</p>
+                                {{ subfield(id="user_type_" + subfield.data) }}
                             </div>
                         </div>
-                        <div class="col-6">
-                            <div class="role-option" id="patronRole" data-role="patron">
-                                <i class="bi bi-hand-sparkles"></i>
-                                <h5>Patron</h5>
-                                <p>Discover & buy art</p>
-                                <input type="radio" name="userType" value="patron">
-                            </div>
-                        </div>
+                        {% endfor %}
                     </div>
-                    <div class="invalid-feedback" id="roleError">Please select a role.</div>
+                    {% for error in form.user_type.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
                 </div>
 
                 <div class="mb-3 form-check">
@@ -128,33 +116,18 @@
                     <label class="form-check-label" for="termsCheck" style="font-size: 0.9rem;">
                         I agree to the <a href="#" class="text-accent">Terms of Service</a> and <a href="#" class="text-accent">Privacy Policy</a>
                     </label>
-                    <div class="invalid-feedback" id="termsError">You must agree to the terms.</div>
                 </div>
 
-                <button type="submit" class="btn-register" id="registerBtn">
-                    <i class="bi bi-person-plus"></i> Create Account
-                </button>
+                {{ form.submit(class="btn-register", id="registerBtn") }}
             </form>
 
             <div class="divider">
                 <span>or continue with</span>
             </div>
 
-            <div class="text-center mb-3">
-                <button class="social-btn"><i class="bi bi-google"></i></button>
-                <button class="social-btn"><i class="bi bi-facebook"></i></button>
-                <button class="social-btn"><i class="bi bi-apple"></i></button>
-            </div>
-
             <div class="text-center">
                 <span class="text-secondary">Already have an account? </span>
                 <a href="{{ url_for('auth.login') }}" class="text-accent fw-bold text-decoration-none">Sign in</a>
-            </div>
-
-            <div class="text-center mt-3">
-                <a href="{{ url_for('main.index') }}" class="btn-back" style="font-size: 0.85rem; padding: 0.4rem 1.2rem;">
-                    <i class="bi bi-arrow-left"></i> Back to home
-                </a>
             </div>
         </div>
     </div>
@@ -164,82 +137,41 @@
 {% block extra_js %}
 <script>
     $(document).ready(function() {
-        let selectedRole = '';
-        let urlParams = new URLSearchParams(window.location.search);
-        let preSelectedRole = urlParams.get('role');
-        if(preSelectedRole === 'artist') selectRole('artist');
-        else if(preSelectedRole === 'patron') selectRole('patron');
+        // Handle role selection UI
+        $('.role-option').click(function() {
+            $('.role-option').removeClass('selected');
+            $(this).addClass('selected');
+            $(this).find('input[type="radio"]').prop('checked', true);
+        });
 
-        function selectRole(role) {
-            $('#artistRole, #patronRole').removeClass('selected');
-            if(role === 'artist') {
-                $('#artistRole').addClass('selected');
-                $('#artistRole input[type="radio"]').prop('checked', true);
-                selectedRole = 'artist';
-            } else if(role === 'patron') {
-                $('#patronRole').addClass('selected');
-                $('#patronRole input[type="radio"]').prop('checked', true);
-                selectedRole = 'patron';
-            }
-            $('#roleError').hide();
+        // Pre-select role if URL has ?role= parameter
+        let urlParams = new URLSearchParams(window.location.search);
+        let role = urlParams.get('role');
+        if(role) {
+            $(`.role-option[data-role="${role}"]`).click();
         }
 
-        $('.role-option').click(function() {
-            let role = $(this).data('role');
-            selectRole(role);
-        });
-
-        $('#togglePassword').click(function() {
-            let input = $('#regPassword');
-            let type = input.attr('type') === 'password' ? 'text' : 'password';
-            input.attr('type', type);
-            $(this).find('i').toggleClass('bi-eye bi-eye-slash');
-        });
-
-        $('#regPassword').on('input', function() {
-            let password = $(this).val();
-            let strength = 0;
-            let bar = $('#passwordStrengthBar');
-            let text = $('#passwordStrengthText');
-
-            if(password.length >= 8) strength++;
-            if(password.match(/[a-z]/)) strength++;
-            if(password.match(/[A-Z]/)) strength++;
-            if(password.match(/[0-9]/)) strength++;
-            if(password.match(/[^a-zA-Z0-9]/)) strength++;
-
-            let percentage = (strength / 5) * 100;
-            bar.css('width', percentage + '%');
-
-            if(strength <= 1) { bar.css('background', '#dc3545'); text.text('Password strength: Weak'); }
-            else if(strength <= 2) { bar.css('background', '#ffc107'); text.text('Password strength: Fair'); }
-            else if(strength <= 3) { bar.css('background', '#17a2b8'); text.text('Password strength: Good'); }
-            else if(strength <= 4) { bar.css('background', '#28a745'); text.text('Password strength: Strong'); }
-            else { bar.css('background', '#28a745'); text.text('Password strength: Very Strong'); }
-        });
-
+        // Handle form submission via AJAX using standard data object
         $('#registerForm').submit(function(e) {
             e.preventDefault();
-            let isValid = true;
-            let name = $('#regName').val().trim();
-            let email = $('#regEmail').val().trim();
-            let password = $('#regPassword').val();
-            let confirm = $('#regConfirmPassword').val();
-            let terms = $('#termsCheck').is(':checked');
-
-            $('#nameError').hide(); $('#emailError').hide(); $('#passwordError').hide();
-            $('#confirmError').hide(); $('#roleError').hide(); $('#termsError').hide();
+            
+            // Clear previous errors
             $('#errorMessage').removeClass('show');
+            $('.text-danger').remove();
 
-            if(name.length < 2) { $('#nameError').show(); isValid = false; }
-            if(!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) { $('#emailError').show(); isValid = false; }
-            if(password.length < 8) { $('#passwordError').show(); isValid = false; }
-            if(password !== confirm) { $('#confirmError').show(); isValid = false; }
-            if(!selectedRole) { $('#roleError').show(); isValid = false; }
-            if(!terms) { $('#termsError').show(); isValid = false; }
+            // Gather data safely
+            let formData = {
+                fullname: $('#fullname').val(),
+                email: $('#email').val(),
+                password: $('#password').val(),
+                confirm_password: $('#confirm_password').val(),
+                user_type: $('input[name="user_type"]:checked').val(),
+                csrf_token: $('input[name="csrf_token"]').val()
+            };
 
-            if(!isValid) {
-                $('#errorText').text('Please fix the errors above.');
+            // Validate checkbox manually
+            if(!$('#termsCheck').is(':checked')) {
+                $('#errorText').text('You must agree to the Terms of Service.');
                 $('#errorMessage').addClass('show');
                 return;
             }
@@ -248,37 +180,41 @@
             $('#registerBtn').html('<span class="spinner-border spinner-border-sm me-2"></span> Creating account...');
 
             $.ajax({
-                url: "{{ url_for('auth.register_post') }}",
+                url: "{{ url_for('auth.register') }}",
                 type: 'POST',
-                data: {
-                    fname: name.split(' ')[0] || name,
-                    lname: name.split(' ').slice(1).join(' ') || '',
-                    email: email,
-                    password: password,
-                    user_type: selectedRole
-                },
+                data: formData, // Standard key-value pairs
                 dataType: 'json',
                 success: function(response) {
                     if(response.status === 'success') {
                         window.location.href = response.redirect;
                     } else {
                         $('#registerBtn').prop('disabled', false);
-                        $('#registerBtn').html('<i class="bi bi-person-plus"></i> Create Account');
-                        $('#errorText').text(response.message);
-                        $('#errorMessage').addClass('show');
+                        $('#registerBtn').html('Create Account');
+                        
+                        // Display field-specific errors if present
+                        if(response.errors) {
+                            for(let field in response.errors) {
+                                let input = $(`#${field}`);
+                                if(input.length) {
+                                    input.after(`<div class="text-danger small">${response.errors[field]}</div>`);
+                                }
+                            }
+                            $('#errorText').text(response.message);
+                            $('#errorMessage').addClass('show');
+                        } else {
+                            $('#errorText').text(response.message);
+                            $('#errorMessage').addClass('show');
+                        }
                     }
                 },
-                error: function() {
+                error: function(xhr) {
                     $('#registerBtn').prop('disabled', false);
-                    $('#registerBtn').html('<i class="bi bi-person-plus"></i> Create Account');
-                    $('#errorText').text('An error occurred. Please try again.');
+                    $('#registerBtn').html('Create Account');
+                    let msg = xhr.responseJSON ? xhr.responseJSON.message : 'An error occurred. Please try again.';
+                    $('#errorText').text(msg);
                     $('#errorMessage').addClass('show');
                 }
             });
-        });
-
-        $('#regName, #regEmail, #regPassword, #regConfirmPassword, #termsCheck').on('input change', function() {
-            $('#errorMessage').removeClass('show');
         });
     });
 </script>

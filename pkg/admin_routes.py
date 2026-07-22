@@ -28,7 +28,7 @@ def admin_login_required():
 def admin_login():
     if 'admin_id' in session:
         return redirect(url_for('admin.admin_dashboard'))
-    return render_template('admin_login.html')
+    return render_template('admin/admin_login.html')
 
 
 @admin.route('/admin/login', methods=['POST'])
@@ -69,17 +69,37 @@ def admin_dashboard():
     total_artworks = db.session.query(TbArt).count()
     total_orders = db.session.query(OrderPurchase).count()
     
-    # Recent orders
-    recent_orders = db.session.query(OrderPurchase).order_by(
-        OrderPurchase.order_date.desc()
-    ).limit(5).all()
+    # Combine users for display
+    artists = db.session.query(TbArtist).all()
+    patrons = db.session.query(TbPatron).all()
     
-    return render_template('admin_homepage.html',
+    users = []
+    for a in artists:
+        users.append({
+            'id': a.artist_id,
+            'name': f"{a.artist_fname} {a.artist_lname}",
+            'email': a.artist_mail,
+            'role': 'artist',
+            'status': 'active',
+            'joined': a.artist_reg_date.strftime('%Y-%m-%d') if a.artist_reg_date else 'N/A'
+        })
+    
+    for p in patrons:
+        users.append({
+            'id': p.patron_id,
+            'name': f"{p.patron_fname} {p.patron_lname}",
+            'email': p.patron_mail,
+            'role': 'patron',
+            'status': 'active',
+            'joined': p.patron_regdate.strftime('%Y-%m-%d') if p.patron_regdate else 'N/A'
+        })
+    
+    return render_template('admin/admin_homepage.html',
+                           users=users,
                            total_artists=total_artists,
                            total_patrons=total_patrons,
                            total_artworks=total_artworks,
-                           total_orders=total_orders,
-                           recent_orders=recent_orders)
+                           total_orders=total_orders)
 
 
 # ─────────────────────────────────────────
@@ -93,7 +113,6 @@ def admin_users():
     artists = db.session.query(TbArtist).all()
     patrons = db.session.query(TbPatron).all()
     
-    # Combine and format for the template
     users = []
     for a in artists:
         users.append({
@@ -102,7 +121,7 @@ def admin_users():
             'email': a.artist_mail,
             'role': 'artist',
             'status': 'active',
-            'joined': a.artist_reg_date.strftime('%Y-%m-%d')
+            'joined': a.artist_reg_date.strftime('%Y-%m-%d') if a.artist_reg_date else 'N/A'
         })
     
     for p in patrons:
@@ -112,10 +131,10 @@ def admin_users():
             'email': p.patron_mail,
             'role': 'patron',
             'status': 'active',
-            'joined': p.patron_regdate.strftime('%Y-%m-%d')
+            'joined': p.patron_regdate.strftime('%Y-%m-%d') if p.patron_regdate else 'N/A'
         })
     
-    return render_template('admin_manage_users.html', users=users)
+    return render_template('admin/admin_manage_users.html', users=users)
 
 
 # ─────────────────────────────────────────
@@ -129,7 +148,7 @@ def admin_artworks():
     artworks = db.session.query(TbArt).order_by(TbArt.art_date.desc()).all()
     orders = db.session.query(OrderPurchase).order_by(OrderPurchase.order_date.desc()).all()
     
-    return render_template('admin_manage_artwork.html', artworks=artworks, orders=orders)
+    return render_template('admin/admin_manage_artwork.html', artworks=artworks, orders=orders)
 
 
 # ─────────────────────────────────────────
@@ -147,9 +166,7 @@ def admin_suspend_user():
         return jsonify({'status': 'error', 'message': 'User ID and type required.'})
     
     # In a real app, you would have a 'status' field on the user models
-    # Since the models don't have a status field, we'll simulate this by
-    # returning success and the admin would handle this in the frontend
-    
+    # Since the models don't have a status field, we'll simulate this
     return jsonify({'status': 'success', 'message': 'User suspended successfully.'})
 
 

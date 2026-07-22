@@ -54,9 +54,6 @@
                 },
                 error: function(err) {
                     console.error('Error loading dashboard data:', err);
-                    artworks = [];
-                    orders = [];
-                    messages = [];
                     loadTab('overview');
                 }
             });
@@ -77,22 +74,26 @@
             }
 
             let recentOrdersHtml = '';
-            for(let i = 0; i < Math.min(orders.length, 3); i++) {
-                let order = orders[i];
-                let statusClass = order.status === 'completed' ? 'badge-completed' : 
-                                 order.status === 'shipped' ? 'badge-shipped' : 'badge-pending';
-                recentOrdersHtml += `
-                    <div class="order-item">
-                        <div class="flex-grow-1">
-                            <div class="fw-bold">${order.artworkTitle}</div>
-                            <div class="text-secondary small">${order.buyerName}</div>
+            if(orders.length > 0) {
+                for(let i = 0; i < Math.min(orders.length, 3); i++) {
+                    let order = orders[i];
+                    let statusClass = order.status === 'completed' ? 'badge-completed' : 
+                                     order.status === 'shipped' ? 'badge-shipped' : 'badge-pending';
+                    recentOrdersHtml += `
+                        <div class="order-item">
+                            <div class="flex-grow-1">
+                                <div class="fw-bold">${order.artworkTitle}</div>
+                                <div class="text-secondary small">${order.buyerName}</div>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold" style="color: #e67300;">$${order.amount}</div>
+                                <span class="${statusClass}">${order.status}</span>
+                            </div>
                         </div>
-                        <div class="text-end">
-                            <div class="fw-bold" style="color: #e67300;">$${order.amount}</div>
-                            <span class="${statusClass}">${order.status}</span>
-                        </div>
-                    </div>
-                `;
+                    `;
+                }
+            } else {
+                recentOrdersHtml = '<p class="text-secondary">No orders yet. Upload your first artwork to get started!</p>';
             }
 
             return `
@@ -108,7 +109,7 @@
                         </div>
                         <div class="col-md-3">
                             <div class="dashboard-card text-center">
-                                <div class="stat-number">$${totalSales}</div>
+                                <div class="stat-number">$${totalSales.toFixed(2)}</div>
                                 <div class="stat-label">Total Revenue</div>
                             </div>
                         </div>
@@ -128,7 +129,7 @@
                 </div>
                 <div class="dashboard-card">
                     <h4 class="fw-bold mb-3">Recent Activity</h4>
-                    ${recentOrdersHtml || '<p class="text-secondary">No recent orders</p>'}
+                    ${recentOrdersHtml}
                     ${orders.length > 3 ? '<div class="text-center mt-2"><a href="#" class="btn-outline-custom btn-sm" onclick="loadTab(\'orders\')">View All Orders</a></div>' : ''}
                 </div>
             `;
@@ -158,7 +159,7 @@
                         <td class="fw-bold">${art.art_title}</td>
                         <td>${art.art_type_name || 'General'}</td>
                         <td><strong>$${art.art_price}</strong></td>
-                        <td><span class="badge-active">${art.artwork_status|title}</span></td>
+                        <td><span class="badge-active">${art.artwork_status || 'Available'}</span></td>
                         <td>
                             <button class="btn btn-sm btn-danger rounded-pill delete-artwork" data-id="${art.art_id}">
                                 <i class="bi bi-trash"></i>

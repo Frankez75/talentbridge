@@ -39,7 +39,7 @@
         }
 
         // Load initial data via AJAX
-        let favorites = [];
+        let favorites = JSON.parse(localStorage.getItem('tb_patron_favorites')) || [];
         let orders = [];
         let messages = [];
         let recommendedArtworks = [];
@@ -50,7 +50,6 @@
                 type: 'GET',
                 dataType: 'json',
                 success: function(data) {
-                    favorites = data.favorites || [];
                     orders = data.orders || [];
                     messages = data.messages || [];
                     recommendedArtworks = data.recommended || [];

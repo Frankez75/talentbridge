@@ -1,0 +1,953 @@
+﻿======== FILES ========
+*** blueprint_webservices_api_day1.pptx ***
+Checks – GRACEFUL DEGRADATION The get_or_404() method will cause an error that will be automatically handled by the error handler if the id does not exist on the database
+
+Checks – GRACEFUL DEGRADATION
+
+Checks – GRACEFUL DEGRADATION If you are making use of blueprint, the app instance may not be available within your route: you may decide to handle it within the top level __init__ file or within any of the blueprint using :  blueprint_object.app_errorhandler This will handle the error for all the routes regardless of which blueprint it was implemented in. (see notes)
+
+Sample HTTP POST REQUEST - CREATE ENDPOINT Within this route, you will usually receive the json request sent to it using  request.get_json()  or any other method Then retrieve the values one by one and instantiate an object of the table(Model) you wish to insert into, then commit to database using add() and commit respectively It is a good practice to always return a meaningful message at the end of every record insertion QUIZ : Having created the endpoints for /listall/, /create/, /listone/, create an endpoint for /delete
+
+How do we test our api? POSTMAN : GET
+
+The Blueprint’s __INIT__ The key is in the __init__.py file of the respective directories You must write:  from flask import Blueprint See full syntax below: class flask.Blueprint(blueprint_name, import_name, static_folder=None, static_url_path=None, template_folder=None, url_prefix=None, subdomain=None, url_defaults=None, root_path=None) Example adminobj = Blueprint(&apos;bpadmin&apos;, __name__, template_folder=&apos;templates&apos;, static_folder=&apos;static’) This instantiation of the Blueprint specifies the name of the Blueprint the location of the template files within the Blueprint. ,  specify template_folder if your blueprint will have its own templates folder Then  from . import admin_routes # to make the local routes available
+
+Organizing your resources in blueprint To render template within the blueprint&apos;s template folder, do:  return render_template(&apos;blueprint/file.html’)  To link from one page to another, use the url_for() function prefixed with the name of the blueprint and a dot (.); url_for(‘bpadmin.index&apos;) You can use relative prefixing with a dot only if you are within the blueprint
+
+SAMPLE Blueprint’s ROUTE from  projectapp.admin  import  adminobj @adminobj. route ( “ /” )  #@app is replaced with @adminobj def   home ():       return   &quot;Welcome to Home Page&quot;
+
+Organizing Your Project – using BLUEPRINT Flask uses a concept of blueprints for making application components and supporting common patterns within an application or across applications Each blueprint can be seen as a self-contained unit for the various parts of the application, they act like apps within your application With a divisional structure like the app in this listing, each directory under  propertyapp  is a separate blueprint.  Imagine a banking app with various sub-applications like card processing app, load processing app, insurance app All of the blueprints are applied to the Flask() app in the top-level __init__.py
+
+Testing POST USING curl Remember that if your app is protected by csrf on initialization, you need to exempt your API  routes using  @csrf.exempt  decorator The following curl options can be used to test the POST endpoint (see notes): -H : Pass Custom header to server &lt;header&gt; -X : specify the request to use, -X &lt;request Command&gt; -d : the data -d &lt;data&gt; curl -i -H &quot;Content-Type: application/json&quot; -X POST -d &apos;{&quot;name&quot;:&quot;Ayaoba Girls&quot;}&apos;  http://127.0.0.1:3000/api/v1.0/add/
+
+How do we test our api? curl Using a web browser to test a web service isn&apos;t the best idea since web browsers cannot easily generate all types of HTTP requests. Instead, we will use curl CURL is command line tool and library for transferring data with URLs To test if curl is available on your system: At the command line,  cURL makes HTTP requests just like a web browser. To request a web page from the command line, type curl followed by the site&apos;s URL: The web server&apos;s response is displayed directly in your command-line interface. If you requested an HTML page, you get the page source -- which is what a browser normally sees. Visit moatacademy.com via curl, visit your local project, a 404 page etc To install curl:https://curl.haxx.se/download.html To see all the curl options, type  curl –help  at the command line
+
+Sample blueprint  VS Functional structure
+
+MORE WAYS TO ORGANIZE YOUR PROJECT BLUEPRINT
+
+FULL SAMPLE with a landing general page and 3 blueprints. With the templates folder arrangement, each blueprint can retain its own template file even if there is a name clash When each of the blueprint has a URL prefix, they can retain their respective static files without clashing
+
+blueprint When defining routes in a blueprint, the @bp.route decorator is used instead of @app.route.  Where bp is the object instance of the Blueprint class There is also a required change in the syntax used in the url_for() to build URLs. For regular view functions attached directly to the application, the first argument to url_for() is the view function name. When a route is defined in a blueprint, this argument must include the  blueprint name  and the view function name, separated by a period. Example: bpadmin.home For example, all occurrences of url_for(&apos;login&apos;) will be url_for(‘bpadmin.login’) when registering a blueprint using register_blueprint(), there is an optional argument; url_prefix which gives you the option to attach a blueprint under a URL prefix, so any routes defined in the blueprint get this prefix in their URLs. using url_for() to generate the URLs ensures that all URLs will automatically incorporate the prefix.
+
+Providing authentication for your webservice Authentication method may be any of the folowing: Basic Authentication: requests for username and password, should generally only be used where transport layer security is provided such as https. Digest Authentication:  communicates credentials in an encrypted form by applying a hash function to the the username, the password, a server supplied nonce value, the HTTP method, and the requested URI. 
+
+Web services and api Computer programs frequently need to communicate amongst themselves or with the underlying operating system.  Application Programming Interface, refers to a part of a computer program designed to be used or manipulated by  another program, as opposed to an interface designed to be used or manipulated by a human API stands for Application Program Interface, it allows software to communicate with another software. Webservices  are APIs where communication is over the web, Web APIs allow a web server to interact with third-party software Moat A, cademy for Developers
+
+HTTP RESPONSE After the server receives a request from the client, it attempts to fulfill the request and send the client back a response. HTTP responses have a very similar structure to requests. The main difference is that instead of a method and a URL, the response includes a status code.  Status codes are three-digit numbers that each have a unique meaning. When used correctly in an API, this little number can communicate a lot of info to the client. Moat Academy for Developers
+
+HTTP REQUEST A complete HTTP request is made up of:   URL ,  method ,  headers , and  body HTTP implements a number of “methods,” which tell which direction data is moving and what should happen to it.  The two most common are GET, which pulls data from a server, and POST, which pushes new data to a server. We also have PUT: for updating data, DELETE for deleting data
+
+Flask-HTPAuth Usage Implement 2 methods get_password() and error_handler as follows: The get_password function is a callback function that the extension will use to obtain the password for a given user [from the database]. The error_handler callback will be used by the extension when it needs to send the unauthorized error code back to the client.  Within your view/route, do: from flask_httpauth import HTTPBasicAuth auth = HTTPBasicAuth() With the authentication system setup, all that is left is to indicate which functions need to be protected, by adding the @auth.login_required decorator. For example: See usage on next slide
+
+Communication over the web makes use of the HTTP Protocol which centers around a concept called the  Request-Response Cycle . The client sends the server a request to do something. The server, in turn, sends the client a response saying whether or not the server could do what the client asked HTTP Protocol Moat Academy for Developers
+
+When two systems (websites, desktops, smartphones) link up through an API, we say they are &quot;integrated.&quot; In an integration, you have two sides, each with a special name. The server side : This is the side that actually provides the API. It is sitting, waiting for others to ask it for data. The other side is the &quot;client.&quot;  This is a separate program that knows what data is available through the API and can manipulate it, typically at the request of a user.  The program that needs data is called “ CLIENT ” while the program that supplies data is called “ SERVER ” Consider two websites that are integrated. When one site pulls in data from the other, the site providing the data is acting as the server, and the site fetching the data is the client. We say the client is  consuming  an API QUIZ : in our scenario , which is the server? which is the client? which developer would create the API? - property.ng or devfest? How An API Is Used Moat Academy for Developers
+
+SOME HTTP RESPONSE CODEs 500 (Internal Server Error): A 500 error is never the client’s fault,most web frameworks automatically respond with this response status code whenever they execute some request handler code that raises an exception. 405 (Method Not Allowed): A 405 error indicates that the client tried to use an HTTP method that the resource does not allow. 404 (Not Found) 403 (Forbidden): indicates the user does not have the necessary permissions for the resource 400 (Bad Request):Errors can be like malformed request syntax, invalid request message parameters, or deceptive request routing etc. 200 (OK): indicates that the server successfully carried out whatever action the client requested 201 (Created successful) : commonly sent as a result of a POST request indicates that the HTTP request has led to the creation of a resource.  Moat Academy for Developers
+
+Providing authentication for your webservice Your webservice should not be open to just anybody, in a typical web application, these actions would be secured by a login form where the browser maintains user&apos;s persistence via session. REST is expected to be stateless - no session variable set anywhere Clients making use of your service have to send their authentication information with every request. Using Flask-HTTPAuth - A Simple extension that provides Basic and Digest HTTP authentication for Flask routes. Install as :pip install Flask-HTTPAuth
+
+Web services and api If you have large dataset you wish to share with the world online real-time, or you want users to perform actions other than retrieve data, such as contributing, updating, or deleting data on your system; an API is one way you can achieve this. When you need data from one machine to be stored or processed on another machine, (or across different programming languages) you need a neutral data structure  XML and JSON are the two most common formats for data interchange in the Web today. They are commonly used for transmitting data in web applications ( e.g sending some data from the server to the client, so it can be displayed on a web page )
+
+SOAP VS REST Feature SOAP (Simple Object Access Protocol) REST (Representational State Transfer) Protocol Strictly uses XML over HTTP, SMTP, TCP Uses HTTP (usually) and supports multiple formats (JSON, XML, etc.) Architecture Style Protocol with rules and standards Architectural style that leverages standard HTTP methods Message Format Only XML JSON (commonly), XML, YAML, etc. Standards Support Can work over HTTP, SMTP, JMS, etc. Mostly over HTTP/HTTPS Complexity Built-in standards for security, transactions, reliability Lighter on standards; external libraries/tools are often used Statefulness Heavyweight (strict contracts via WSDL) Lightweight (no strict contract needed) Performance Supports both stateless and stateful operations Typically stateless Use Cases Slower due to XML and envelope overhead Faster and more efficient, especially with JSON
+
+Providing authentication for your webservice
+
+Scenario
+
+HTTP Protocol HTTP (Hypertext Transfer Protocol) is the primary means of communicating data on the web.  HTTP implements a number of “methods,” which tell which direction data is moving and what should happen to it. The two most common are GET, which pulls data from a server, and POST, which pushes new data to a server. We also have PUT: for updating data, DELETE for deleting data Moat Academy for Developers
+
+Providing authentication for your webservice
+
+WEBSERVICES Architecture The two common architectures for implementing web APIs are SOAP and REST SOAP  stands for Simple Object Access Protocol, is an XML-based design that has standardized structures for requests and responses.  REST, which stands for Representational State Transfer, is a philosophy that describes some best practices for implementing APIs. It is a more open approach; it supports multiple formats (XML, JSONetc). APIs designed with some or all of these principles in mind are called REST APIs. Moat Academy for Developers
+
+NOTE:Your blueprint template layout Despite the blueprints arrangement; if you have a blueprint in a folder products, your template layout should have the structure shown in order to ensure that the app uses the templates defined in the blueprint, that is the html files defined within products/templates/products/ Note that templates/products/view.html will be used anytime you specify view.html since there is a name clash and the template in the app has higher priority over that of the blueprint
+
+SAMPLE Blueprint’s __INIT__ from flask import Blueprint userobj = Blueprint(&apos;bpuser&apos;, __name__, template_folder=&apos;templates&apos;, static_folder=&apos;static&apos;) # To make the local routes available in this package from . import user_routes   #  can be written as from propertyapp.user import user_routes
+
+POSTMAN View : POST
+
+Blueprint - Organizing your project structure to reflect divisional  Place setup.py, instance on the same level. The project package contains a top level __init__ file with the other folders (blueprints) You can exclude an entire blueprint from csrf protect by specifying within the package __init__ as:  csrf.exempt(api_blueprint) Each folder in the project package is a package too (self sufficient with view, template, static) and of course an __init__ file to show that it’s a package All the packages can share a model, and, in such case, the model is on the same level as the blueprints, same as the form definition The end result should be that each blueprint has a  routes.py  file with all of the routes for that blueprint.  No two blueprints should define exactly the same route. Each  templates/  directory should only include the templates for the routes in that blueprint. Each  static/  directory should only include the static files that should be exposed by that blueprint
+
+Blueprint’s template The template path added by a blueprint has lower priority than the application’s templates directory.  That means if you have two templates of the same name in the blueprint’s template and the application templates directories, Flask will use the template from the application’s directory.
+
+Update endpoint – http put method Here you will usually want to ensure that the user is sending values in the appropriate format. You want to confirm that the id exists on the table – all these are done through different checks and validation It is important to return a meaningful message of similar format on success and another message on failure
+
+  The static folder The endpoint is named blueprint_name.static. You can generate URLs to it with url_for() like you would with the static folder of the application: Resources in the static folder will be available at the url_prefix of the blueprint + /static. If the blueprint has the prefix /user, the static URL will be /user/static url_for(‘bp_name.static&apos;, filename=&apos;style.css&apos;) If the blueprint does not have a url_prefix,  it is not possible to access the blueprint’s static folder.  This is because the URL would be /static in this case, and the application’s /static route takes precedence. userobj  =  Blueprint( &apos;bpuser&apos; , __name__, template_folder = &apos;templates’ ,  static_folder = &apos;static&apos; ,url_prefix = &apos;/user&apos; ) Unlike template folders, blueprint static folders are not searched if the file does not exist in the application static folder.
+
+THE Blueprint’s ROUTE FILES Within the route file of each blueprint, you must now import the blueprint created in the respective blueprint’s init file as follows: from . import  blueprint_instance The above importation makes it possible to use  @blueprint_instance.route  as the decorator for the routes defined in the blueprint rather than  @app.route
+
+Developing your API ENDPOINTS LISTALL, LISTONE, CREATE ...
+
+THE PACKAGE‘s __INIT__ Changes will be made in the package init Next, register your blueprint in the project package’s top level init file as follows: from yourproject.blueprintdir import instance_of_blueprint app = Flask(__name__) app.register_blueprint(instance_of_blueprint) Example: within projectapp/__init__.py: from   projectapp . admin   import   adminobj from   projectapp . user   import   userobj app = Flask (__name__, instance_relative_config = True ) app . register_blueprint ( adminobj ) app . register_blueprint ( userobj )
+
+Handling templates in blueprint flask will look for the template in  pkg/templates , if not found, it will look for it within the templates of the  first registered blueprint   pkg/blueprint/templates Implication is, if there is a name clash across any of the templates folder, the one with highest priority will win. In order to ensure that every blueprint uses its own template file despite clash in the file name, provide an inner level as shown: blueprint/templates/blueprint/file.html and this should be rendered as : return render_template(“blueprint/file.html”)
+
+MATTERS ARISING Graceful Degradation, catch all possible errors/exceptions - don’t crash, respond! Standardize the feedback
+
+from flask import Flask from flask_wtf.csrf import CSRFProtect from flask_migrate import Migrate csrf = CSRFProtect() def create_app():      from pkg.model import db      from pkg import config       # bring in the instance of the blueprints respectively      from pkg.admin import adminobj          from pkg.user import userobj      from pkg.api import apiobj     app = Flask(__name__,instance_relative_config=True)   # register the blueprints so that app can be aware of them    app.register_blueprint(userobj) app.register_blueprint(adminobj) app.register_blueprint(apiobj) app.config.from_pyfile(&quot;config.py&quot;,silent=True)      app.config.from_object(config.TestConfg)      db.init_app(app)      csrf.init_app(app)      csrf.exempt(apiobj)      migrate=Migrate(app,db)      return app #ends the class app=create_app() from pkg import general_routes,model
+
+Your blueprint template layout If you have a blueprint named admin and you want to render a template called index.html which is specific to this blueprint, the best idea is to lay out your templates as shown: The reason for the extra admin folder is to avoid getting our template overridden by a template named index.html in the actual application template folder
+
+OTHER terminologies A Uniform Resource Identifier (URI) is a string of characters that unambiguously identifies a particular resource.  The most common form of URI is the Uniform Resource Locator (URL), (web address). URL (Uniform Resource Locator) - An address for a resource on the web, such as https://moatacademy.com/about. A URL consists of a protocol (http://), domain (moatacademy.com), and optional path (/about). A URL describes the location of a specific resource, such as a web page. 
+
+Characteristics of rest api Client-Server : There should be a separation between the server that offers a service, and the client that consumes it.The only information the client application should know about the server is the URI of the requested resource; Similarly, a server application shouldn&apos;t modify the client application other than passing it to the requested data via HTTP Stateless : Each request from a client must contain all the information required by the server to carry out the request; The server cannot store information provided by the client in one request and use it in another request. Cacheable : caching compensates for the statelessness of  REST, The server must indicate to the client if requests can be cached or not through the headers; allowing for faster response times in subsequent requests for the same resource and reduction in server load.
+
+Characteristics of rest api Layered System : Communication between a client and a server should be standardized, the endpoint may decide to execute multiple instructions or involve intermediaries to respond to requests instead of the end server, without the client having to do anything different.     Uniform Interface : The method of communication between a client and a server must be uniform. The specification of the API is a contract between the app and the server. The app needs to know that it can hit the same URI to get a particular piece of data, every-time! It also needs to know that it’ll get the data in the format that it expects, and that format will not change. This is the Contract and the URI.  Code on demand: Servers can provide executable code or scripts for clients to execute in their context. This constraint is the only one that is optional. Moat Academy for Developers
+
+HOW DO CLIENT MAKE A REQUEST?  THE  METHOD s The method is the type of request you send to the server. You can choose from these five types below: GET : This request is used to get a resource from a server. POST: This request is used to create a new resource on a server. PUT: This is used to update /replace  a resource on a se rver PATCH: Same as Put, used to  partially  update a resource on a server DELETE: This request is used to delete a resource from a server HEAD: To retrieve meta data OPTIONS: To get communication options PUT vs POST PUT is  idempotent  in that sending the same request multiple times produces the same result (no side effects after the first call) while POST is  not idempotent  as sending the same request multiple times may result in duplicate resources or different outcomes.
+
+Naming Conventions for YOUR endpoints Consistent naming conventions in REST API endpoints enhance readability, understanding, and troubleshooting; it also makes it possible to acheive scalability. Below are some best practices around naming your endpoints: Separate words with hyphens Use forward slashes Use Nouns Avoid file extensions Avoid special characters The version number is used to isolate clients from changes to the REST API that might be introduced in future releases. A format might be: https://&lt;address of the host&gt;/&lt;name&gt;/&lt;version&gt;/&lt;resource_name&gt;/&lt;endpoint_ID&gt; Example:  http://api.dataatwork.org/v1/jobs
+
+Implementation of RESTFUL API set up a new project
+
+Exercise - PROJECT STRUCTURE set up a Flask app in the divisional mode as shown: Create a database with the table that stores the items. id,name,category etc Make use of an appropriate URL Prefix to reflect the adopted format  Example: /api/v1/
+
+Developing your API The first thing to do is to decide what is the root URL to access the API service Then what are the possible endpoints? Note that communications and data exchange between the two system will be via web services and JSON respectively Create the view for the API – better to separate  it from your main app Load the API view in your init just like the other views Create your first route using the naming convention advised Test by calling the route from the webrowser (check the header) … and then from curl –I (the -i, option include protocol response headers in the output)
+
+What are we building? the endpoints URI Action METHOD http://[hostname]/api/v1.0/listall/ Retrieve list of items GET http://[hostname]/api/v1.0/listone/&lt;int:id&gt;/ Retrieve details of an item GET http://[hostname]/api/v1.0/create/ Add New Item Details POST http://[hostname]/api/v1.0/update/&lt;int:id&gt;/ Update existing item details PUT http://[hostname]/api/v1.0/delete Delete an item data DELETE Moat Academy for Developers
+
+Developing your API ENDPOINTS: LIST ITEMS TASK 1: Create tables from your model TASK 2: Write a Query that fetches from the table   Retrieve data from database Convert to dictionary and return a json response using jsonify (compare output with json.dumps) – json data vs json response You may define a 404 handler as well that will return a json response which can be parsed on the client side
+
+Some useful flask methods get_json(force=False, silent=False, cache=True) Parse and return the data as JSON. If the mimetype does not indicate JSON (application/json, see is_json()), this returns None unless force is true. If parsing fails, on_json_loading_failed() is called and its return value is used as the return value.      Parameters: &#9;          force – Ignore the mimetype and always try to parse JSON.          silent – Silence parsing errors and return None instead.          cache – Store the parsed JSON to return for subsequent calls. is_json:  Check if the mimetype indicates JSON data, either application/json or application/*+json. Example Usage within your view:   if request.is_json: dict_body = request.get_json(); else : ‘Not allowed’
+
+MATTERS ARISING: Providing authentication for your webservice Your web service should not be open to just anybody, in a typical web application, these actions would be secured by a login form where the browser maintains user&apos;s persistence via session. You wouldn’t want just any Tom Dick and Harry to connect to your API and change /delete data or  even stress your server by sending too many requests. Adding authentication to an API is a crucial step to ensure that only authorized users or systems can access your API resources.  It can also help you if there is need to keep track of  number of request made by who. REST is expected to be stateless - no session variable set anywhere Clients making use of your service have to send their authentication information with every request. Moat Academy for Developers
+
+Providing authentication for your webservice Authentication verifies a user is who they claim to be, and authorization determines what an authenticated user is allowed to do. Both are necessary when implementing webservices and API.  In our example: the merchants table contains all the clients of the server, the column merchant_type describes the access levels available to the respective clients. Authentication allows use to verify the client while Authorization specifies what the client can access. Recall that RESTful APIs should be stateless – so request authentication/authorization should not depend on cookies or sessions. Instead, each API request should come with some sort authentication credentials which must be validated on the server for each and every request  Moat Academy for Developers
+
+Checks – GRACEFUL DEGRADATION You can implement custom error handlers to handle specific errors like 404, 400, 405 (especially 400 to handle wrong JSON format) so that the application will always return a meaningful response.  If your application has other routes other than the API routes, this error handler will be equally used, and this may not be suitable for a user end, a more customized error handler is as shown on the next slide
+
+‎Organizing Your FLASK APP with a package, ROUTING & MVC  
+‎Page 1  
+‎
+‎OUTLINE  
+‎• Restructuring your app as a package  
+‎• MVC & Routing  
+‎• URL_FOR function  
+‎• Dynamic routing  
+‎• Displaying HTML output via templates: The static and Templates folder  
+‎• The use of /static today, tomorrow. url_for('static',filename="") will be treated the next day or when possible.  
+‎• Passing data to view: Displaying (looping) data within view  
+‎
+‎Image 2  
+‎routing  
+‎Page 3  
+‎
+‎• The route decorators are used to associate (or map) a URL to a function; it tells Flask what URL should trigger our function. The parameter of the decorator (URL) must begin with a slash  
+‎• As an alternative, you can use addurlrule() method instead of route decorator to define routes. The addurlrule() is a simple method not a decorator. It accepts the URL, the end point and then the name of view function to call.  
+‎• Modern web applications use meaningful URLs to help users. it also helps in achieving SEO  
+‎• The Werkzeug routing system try to ensure that URLs are unique.  
+‎
+‎Model – view – controller concept  
+‎
+‎Image 3  
+‎Model – view – controller concept  
+‎Page 5  
+‎
+‎[MVC Diagram with boxes: DATABASE -> MODEL <-> CONTROLLER <- ROUTES, CONTROLLER -> VIEW -> Laptop/Browser]  
+‎
+‎• A user requests to view a page by entering a URL. The application matches the URL to a predefined route.  
+‎• The Controller associated with the route receives that request.  
+‎• It uses the Models to retrieve all of the necessary data from the database and then sends it to the  
+‎• View, which then uses that data to render the final webpage presented to the user in their browser.  
+‎• With MVC, your routes are not file names!  
+‎
+‎Conventions used  
+‎• Routes – sometimes, interchangeably referred to as view  
+‎• Templates: the html files  
+‎• App launcher or starter  
+‎
+‎Organizing Your Project – using a Package  
+‎
+‎Image 4  
+‎Same content as Image 3, duplicate of pages 5 and conventions slide  
+‎
+‎Model – view – controller concept  
+‎Page 5  
+‎[Same bullet points and diagram as above]  
+‎
+‎Conventions used  
+‎• Routes – sometimes, interchangeably referred to as view  
+‎• Templates: the html files  
+‎• App launcher or starter  
+‎
+‎Organizing Your Project – using a Package  
+‎
+‎Image 5  
+‎Organizing Your Project – using a Package  
+‎Page 7  
+‎
+‎• Rather than using a single file to structure your application, you can make use of package especially for a larger application  
+‎• Handling everything (starting of server, routes definitions, database models etc) within a single module can get messy  
+‎• Packages allows us to factor out the different components of our app into a group of inter-connected modules.  
+‎• We can put all the views (routes) into a single module of its own such as routes.py  
+‎• Flask doesn't impose any restrictions on how you should structure your application.  
+‎
+‎Converting your Project to a Package  
+‎• Create a folder (package) within your project - all the components that make up your app should be in the package  
+‎• Create templates and static folder in this package respectively  
+‎• Create an init.py file within the package to show that it is indeed a package  
+‎• Let your routes module be within the package  
+‎• Separate the starting of your server into a different  
+‎
+‎[Folder structure image:  
+‎myproject  
+‎  pkg  
+‎    static  
+‎    templates  
+‎    myroutes.py  
+‎    init.py  
+‎  vmyproject  
+‎  requirements.txt  
+‎  starter.py]  
+‎
+‎Organizing Your Project – using a Package  
+‎
+‎Image 6  
+‎Organizing Your Project – using a Package  
+‎Page 9  
+‎
+‎• The init.py within your application package serves 2 purposes:  
+‎  • it initializes your application and brings together all of the various components.  
+‎  • It shows that the folder is a package and also is used as above  
+‎• Within the package's init, you will usually do the following:  
+‎
+‎import relevant modules needed by the app
+‎  from flask import Flask  
+‎
+‎Initialize the app by instantiating an object of Flask
+‎  app = Flask(name)  
+‎
+‎Load the views(routes)
+‎  from packageName import routes  
+‎
+‎Organizing Your Project – using a Package  
+‎
+‎• The Flask Application object has to be a global variable so that any other module within our package can import it easily  
+‎• For example: all the route function need to be decorated with decorators that come from app, such as @app.route. Therefore, the initialization must be done within the init.py of your package  
+‎• Also, you can import anything that should be available to the application instance such as the routes within init.py  
+‎
+‎Image 7  
+‎Page 11  
+‎
+‎• The setup / starter file will merely serve the purpose of starting your application instance; it will import app from your package (your app folder) as follows:  
+‎  from packageName import app  
+‎  if name == 'main':  
+‎      app.run()  
+‎• Within the view/route, you will import the app from the package as well and any other modules that may be needed:  
+‎  from packageName import app  
+‎
+‎Image 8  
+‎Routing – Dynamic Routes  
+‎
+‎• You can make parts of the URL dynamic by passing variables with <variablename>; your function then receives the <variablename> as a keyword argument.  
+‎• You can also use a converter to specify the type of the argument like converter:variablename ( in Bing). Example: int:age ( in Bing)  
+‎
+‎Routing – converter types  
+‎Page 14  
+‎string (default) accepts any text without a slash  
+‎int accepts positive integers  
+‎float accepts positive floating point values  
+‎path like string but also accepts slashes  
+‎uuid accepts UUID strings  
+‎
+‎Image 9  
+‎Passing parameters via the URL – Notice the highlighted section same page different ID hence diff content  
+‎
+‎TEMPLATES FOLDER  
+‎
+‎• Generating HTML from within Python could be cumbersome because you have to do the HTML escaping on your own to keep the application secure.  
+‎• DEMO  
+‎• In Flask, the Jinja2 template engine handles that for you automatically.  
+‎• Flask app uses a folder called templates to house HTML files called templates  
+‎
+‎templates  
+‎Page 19  
+‎
+‎• By default, Flask looks for templates in this subdirectory named templates inside the application folder. To change this default, pass 'template_folder' argument to the Flask constructor at the time of creating application instance.  
+‎• app = Flask(name, templatefolder="mytemplates")  
+‎
+‎MORE ON RENDER_TEMPLATE  
+‎Page 23  
+‎
+‎The render template can take a list of templates as the first argument such that the first available template will be shown  
+‎
+‎See below:  
+‎pages = ['home.html','index.html']  
+‎return render_template(pages)  
+‎
+‎Static files AND TEMPLATES  
+‎Page 23  
+‎
+‎• Dynamic web applications also need static files. Static Files are files which don’t change very often, for example, CSS files, JS files, font files etc.  
+‎• Create a folder called static in your package or next to your module and it will be available at /static on the application.
+
+*** file_upload2_xml_json_ajax_day1.pptx ***
+SAMPLE – CLIENT SIDE   $ ( document ). ready ( function (){              $ ( '#demo' ). click ( function (){                  var   userinput  =  $ ( '#username' ). val ()                  var   csrf  =  "{{csrf_token()}}"                  var   data2send  = { "user" :userinput , "csrf_token" :csrf }                  $ . post ( '/check' , data2send ,  function ( rsp ){                      $ ( '#feedback' ). html ( rsp )                 })             })        })
+
+File upload with wtforms – part ii A better way to handle upload
+
+xml XML stands for eXtensible Markup Language. XML was designed to store and transport data. XML was designed to be both human- and machine-readable. XML is just information wrapped in tags; someone must write a piece of software to send, receive, store, or display it: XML The XML language has no predefined tags. The author must define both the tags and the document structure.store, or display it.
+
+JSON JSON stands for  J ava S cript  O bject  N otation. JSON is a syntax for storing and exchanging data. JSON is text, written with JavaScript object notation ** JSON and XML are human readable formats and are language independent. They both have support for creation, reading and decoding in real world situations **  The format of the Javascript object is sample={user:”Gabriel”,age:25} How is the above different from python dictionary?
+
+SAMPLE – server SIDE @ app.route ( '/check' ,  methods =[ 'POST' , "GET" ]) def   check_username ():     email = request.form.get( 'email’ )  #or request.args.get(‘email’) for get request     tot = db.session.query(User).filter(User.email==email).count()      if  tot:          return   "Username is taken"      else :          return   "Username is available"
+
+Xml SYNTAX &lt;root&gt;   &lt;child&gt;     &lt; subchild &gt;.....&lt;/ subchild &gt;   &lt;/child&gt; &lt;/root&gt;  You can read XML using modules such as  xmltodict : it converts the XML to a Python  OrderedDict  item   OrderedDict Item allows your dictionary to have the same key , that can be processed as a list  (form data too are  ordereddict too)   pip install  xmltodict  import  xmltodict  res =  xmltodict.parse (xml)
+
+StORing data in xml How would you store the following details about a product ? Name of a product Where you can find it How many of such products exists in the diff locations Price, Description, Promo description on the product Supposing you have stored the info using a combination of different data types you learnt in Python and you need to pass it on to a  Javascript  Frontend? how would it understand it?  storing in XML helps overcome this  barier
+
+Xml Exercise &lt;product version="covid-19 special"&gt; &lt;title&gt;SuperStore&lt;/title&gt;   &lt;store&gt;     &lt; opebi &gt;24&lt;/ opebi &gt;     &lt; lekki &gt;56&lt;/ lekki &gt;   &lt;/store&gt;   &lt; prodname  desc="An all-day perfume for al fashionista"&gt;      Moringha  Perfume Spray   &lt;/ prodname &gt; &lt;/product&gt; A store with 2 outlets has an XML to describe a product. The content of each nodes can be retrieved with with   open ( 'sample.txt' )  as   fd : 	doc  =   xmltodict.parse ( fd.read ()) 	print  doc[ 'product' ][ 'title' ] 	print  doc[ 'product' ][ '@version' ] Since  prodname  node has both  attribute  and content (xml calls this text) , you can go on to access the attribute as follows: doc[ 'product' ][ ‘ prodname ’] [ ‘@ desc ' ]  And the textual content as doc[ ‘product’][‘ prodname ’][‘#text’]
+
+StORing data in xml output = xmltodict.parse(xml_string) output['tag'] #use this to pick the content when the tag doesn't have attribute output['tag']['@attribute'] #Use this to pick the attribute when the tag has both attribute and content output['tag']['#text']  #Use this to pick the textual content when the tag has both attribute and content print(output['product']['prodname']['#text']) print(output['product']['prodname']['@desc'])
+
+Data exchange over varying platforms When you need data from one machine to be stored or processed on another machine, (or across different programming languages)  you need a neutral data structure  XML and JSON are the two most common formats for data interchange in the Web today. They are commonly used for transmitting data in web applications (  e.g  sending some data from the server to the client, so it can be displayed on a web page ) Supposing you retrieved data from the page using javascript and you need to send it to a server side program built in Python. These are 2 different programming languages
+
+DATA EXCHANGE OVER VARYING PLATFORMS Xml, json NEUTRAL DATA STRUCTURE
+
+Form with WTForms :DELETE File A common scenario on most web application is to allow users change their profile picture, when they do this, it is important that you retrieve the old picture name and delete the file from your server How do you delete the file?  os.remove(fullpath_of_the_file) You could programmatically get the path using os.path with your config value as shown below:   import os os.remove(os.path.join(app.config['UPLOADED_ITEMS_DEST'], filename)) os.remove(“devapp/pkg/static/”+filename) #if you are not using CONFIG
+
+File upload PART II : Using WTForms The FileField provided by Flask-WTF differs from the WTForms-provided field. It will check that the file is a non-empty instance of FileStorage, otherwise data will be None. from flask_wtf.file import FileField, FileAllowed FileField optionally takes the error message it returns in case of a failed validation (stored in the form.field.errors) The FileAllowed class takes 2 arguments namely: upload_set – A list/tuple of extention names or an instance of flask.ext.uploads.UploadSet message – error message
+
+Saving and Retrieving Image File To save within static folder:  hh  =  os . path . join ( 'projectapp/static/avatars/' ,  newname ) To retrieve within html: &lt;img   src = "{{ url_for('static',filename='avatars/qjkgomxysi.jpg') }}" &gt; To retrieve dynamically (where image is within a variable img) &lt;img  src  = "{{ url_for('static',filename='images/uploads/'+img)}}"  width="120"&gt;
+
+ALTERNATIVELY: To save within static folder:  import secrets newname=secrets.token_hex(5) fileobj = request.files["dp"]                            fileobj.save("devapp/static/uploads/"+newname) To retrieve within html dynamically (where image is within userdeets.img &lt;img  src  = "{{ url_for('static',filename='images/uploads/'+userdeets.img)}}"  width="120"&gt;
+
+File upload PART II : Using WTForms In the form class definition, define the field as shown: from flask_wtf.file import FileField, FileRequired class PhotoForm(FlaskForm):     photo = FileField(validators=[FileRequired()])  #with more validations upload = FileField('image', validators=[         FileRequired(),  FileAllowed(['jpg', 'png'], 'Images only!')])
+
+File upload PART II : Using WTForms In the view, the form file can be retrieved using the  request.files ; If you pass request.form explicitly, then you must pass request.files too; You can however make both available simultaneously via a handle as follows:  from werkzeug.datastructures import CombinedMultiDict form = PhotoForm(CombinedMultiDict((request.files, request.form))) #form.field.data #form.filefield.data.filename # to retrieve the filename
+
+File upload PART II : Using WTForms Using config to define file path: It is possible to define the path of default upload folder and maximum size of uploaded file in configuration settings of Flask object. In the init file, define as follows app.config[‘UPLOAD_FOLDER’] 	Defines path for upload folder app.config[‘MAX_CONTENT_PATH’] 	Specifies maximum size of file to be uploaded – in bytes In your view, the file should be saved to  app.config[‘UPLOAD_FOLDER’]  concatenated with the file name
+
+File upload PART II : uploading multiple In your form class definition; from wtforms import MultipleFileField class NewForm(FlaskForm):     files = MultipleFileField('File(s) Upload')  #this will generate an input of type file with attribute multiple so that the user will be able to select many files at the same time (while holding down the ctrl key)
+
+SAMPLE – CLIENT SIDE    $ ( document ). ready ( function (){              $ ( '#demo' ). click ( function (){                  var   userinput  =  $ ( '#username' ). val ()                  var   csrf  =  "{{csrf_token()}}"                  var = "user="+userinput //query string                  var   data2send  = { "user" :userinput , "csrf_token" :csrf } //JS Object                  $ ( '#feedback' ). load ( '/check' , data2send )             })        })
+
+$.POST() method / $.GET() METHOD Other methods are the $.post() and $.get() respectively with full syntax as follows: $.post(URL,data2send,function( serverRsp ){ // do whatever you want with the response from the server  serverRsp }) It allows you to explicitly make a post and get request to the server respectively, the request can be accompanied with data (data2send) and response (if any) can be received from the server through the parameter passed to the callback function The data is sent as an object for $.post while it is sent as a query string for $.get See Example:
+
+Jquery  AJAX  The native way of making AJAX request is via Javascript. Jquery also provides a way of sending AJAX requests to the server. We will focus on common Jquery AJAX methods :
+
+Json functions Given a python object ( dict ), recall that python dictionary doesn’t have to use double quotes for either its location and/or values import json x = {   ‘name’: ‘John’,   ‘age’: 30,   ‘city’: "New York" } y =  json.dumps (x) # convert into JSON print(y) # the result is a JSON string
+
+JSON Functions The  json.loads()  method can be used to convert from JSON to Python, the elements can now be accessed as dictionary in Python json.dumps()  converts any Python object (dict, list, tuple, string, int, float, True, False, None etc) to JSON equivalent Python dict will become Javascript object, list and tuple become array respectively You can optionally pass an argument (indent) to json.dump() to format the json string by a specified indentation json.dumps(x,indent=3) Another parameter sort_keys=True can be used to sort the json keys
+
+JSON Functions Python has a built-in package called json, which can be used to work with JSON data. The module must be imported as follows:   import json
+
+anotherJSON = {                   "squadName": "Super hero squad",                   "homeTown": "Metro City",                   "active": true,                    "members": [                              {                                   "name": "Molecule Man",                                   "age": 29,                                   "secretIdentity": "Dan Jukes",                                   "powers": [                                   "Radiation resistance",                                   "Radiation blast"                                    ]                              }                   ]     }
+
+JSON JSON is a lightweight text-based open standard designed for human-readable data interchange. It is commonly used for transmitting data in web applications ( e.g sending some data from the server to the client, so it can be displayed on a web page )
+
+$(SELECTOR).load method Allows us to visit the server and load dynamic contents into the view (template) Full Syntax : $(selector).load( URL,data,callback ) Data can be sent either as query string or as a  javascript  object.  When sent as  Javascript  object, the request will be treated as a POST request on the route (implication is that you will retrieve it as a  request.form.get (‘field’) and if your POST route is protected by  csrf , you need to pass  csrf_token  too See example:
+
+JSON JSON data is written as name/value pairs. A name/value pair consists of a field name (in double quotes), followed by a colon, followed by a value: Example "name":"John“ JSON is parsed into a ready-to-use JavaScript object. JSON is faster than XML in AJAX
+
+Json functions In creating your web routes, it must end with a return statement.  You have learnt that the routes can return string, template, redirect.. it can also return json Supposing you fetched data from your db within your route, you can convert the data to json by using the json.dumps() @app.route("/favourite") def favourite_topics():     bootcamp =  {'name':'olusegun','topics':['html','css','python']}        cats =  db.session.query(Category).all()        category=  [c.cat_name for c in cats]     return json.dumps(category,indent=3)
+
+JSON Format JSON storing array is: {"employees":[ "John", "Anna", "Peter" ] } JSON storing boolean is: { " sale ":true   } JSON storing objects is: {"employee":{ "name":"John", "age":30} } JSON storing string must be double quotes { "name":"John" } JSON storing number (int or float) { "age":30 } QUIZ: Using json, how would you store your name and the 3 best topics for you in this bootcamp so far? 
+
+Your experience with html form submission - POST/GET Recall that you need the following to submit contents to the database: A html form with input elements A button of type submit (or input of type submit) to get the contents to the page specified in the “action” field A Python statement on the destination (views/route) to pick the variables MySQL statement(s) to insert the data into database Implication (user has to submit the form to another page where the database insertion is done
+
+AJAX With AJAX, you need not leave the current page in order to send request to the server and also get response! – This is the principle of AJAX Synchronous and Asynchronous requests: A request that is executed synchronously waits for the event to finish executing before starting /moving to other events while the one executed asynchronously can execute many events at the same time. AJAX requests are executed asynchronously.
+
+Benefits of using AJAX With AJAX, you can: Update a web page without reloading the page Request data from a server - after the page has loaded Receive data from a server - after the page has loaded Send data to a server - in the background
+
+AJAX When creating a web application it’s often needed to pass in the data from client side to the server side methods to get response from the server. This can be achieved in Python using Jquery ajax method AJAX, is a web development technique for creating interactive web applications. Functions running in parallel with other functions are called asynchronous. With asynchronous programming, JavaScript programs can start long-running tasks, and continue running other tasks in paralell. Although X in Ajax stands for XML, JSON is used more than XML nowadays because of its many advantages such as being lighter and a part of JavaScript.  Both JSON and XML are used for packaging information in Ajax model.
+
+AJAX Xml, json DATA EXCHANGE OVER VARYING PLATFORMS
+
+Introduction to AJAX  (Asynchronous JavaScript and XML ) A new way of making request to the server.
+
+Under the hood: The browser and the Server Your Python scripts plus the HTML, CSS etc that make up your site are stored on the web server Users make a request to your application by visiting a certain route through the browser The Server responds to the request through your view function.. Sometimes may need to fetch something from the database..  Or fetch a static file like your templates and sends back a response…
+
+*** filter_join_css_variables.pptx ***
+database read operation fetching records from database
+
+Deleting  From tables To delete from a single item from a table, create an object of the class from a session and commit the action.  x = db.session.query(Customer).get(2)  db.session.delete(x)  db.session.commit() #Bulk Delete: db.session.query(Customer).filter(Customer.state==’Lagos’). delete() db.session.commit()
+
+More Select statements  where clause, the ORM waY
+
+Querying Data – filter() method The filter() method allows us to filter our query result by adding WHERE clause to the query. It accepts a column, an operator and a value.  You can use the filter() method to filter the records before you fire the select with all() or first() or even the count() db.session.query(Post).filter(Post.title == 'Post 1').all() EXERCISE : SELECT products that are more than N10,000 We can pass multiple filters to the filter() method and they will be joined together using SQL AND operator.  &gt;&gt;&gt; db.session.query(Post).filter(Post.id &gt;= 1, Post.id &lt;= 4).all()
+
+Common filter operators -  InTROducing   And  in where The basic AND is generated  db.session.query(Post).filter(Post.id &gt;= 1, Post.id &lt;= 4).all() AND: generated by either putting multiple commas separated criteria in the filter or using and_() method  from sqlalchemy import and_ (or simply use db.and_, remember db is an instance of Flask-SqlAlchemy which is an extension huilt over SQLAlchemy! ) filter(and_(User.name == 'timi', User.fullname == 'timi bakare')) default without and_ method comma separated list of conditions are AND. Example: filter(User.name == 'timi', User.fullname == 'timi bakare') match: query.filter(User.name.match('timi'))
+
+Querying Data – INTRODUCING OR IN filter() OR:  Method 1 #by using | among the fields;   .filter( () | () ) allusers = Customer.query.filter((Customer.cust_email == 'dapo@y.com')|(Customer.cust_email=='ilu@y.com')).all() Method 2 #from sqlalchemy import or_ (db.or_) allusers = Customer.query.filter(or_(Customer.cust_email == 'dapo@y.com',Customer.cust_email=='ilu@y.com')).all()
+
+Common filter operators Equals: query.filter(User.name == ‘timi’) not equals : query.filter(User.name != 'timi’) LIKE: query.filter(User.name.like('%timi%'))   IN: query.filter(User.name.in_(['timi', 'tolu', 'bakare'])) NOT IN: query.filter(~User.name.in_(['lee', 'sola'])),  NOT IN: query.filter(Employee.firstname.not_in(names)).all() IS NULL: filter(User.name == None) IS NOT NULL: filter(User.name != None)
+
+FILTER_BY() There is also  filter_by()  which can take varying number of  keyword arguments;  when arguments is more than one, the query statement is built with AND. db.session.query(Product).filter_by(prod_cat=1,prod_price=2000).all()  will produce WHERE prod_cat=‘1’  AND prod_price=‘2000’ The equalsTo sign on Filter is comparism operator while the equalsTo sign on  filter_by is just a sign of keyworded arguments
+
+join and filter statements From the syntax of  filter_by ;  filter_by (** kwargs )  it accepts a varying number of Keyword-arguments which may be separated by comma and represents  tablecolumn  = value  It cannot hold expression  while filter() can contain any valid Python expression on the Database Model.  filter() uses more flexible SQL expression language constructs hence allowing you to use regular Python operators with the class-level attributes on your mapped class Because ORM allows you to treat your models like normal Python class, you can make use of python constructs in your filter statement as such: User.query.filter ( User.email. endswith ('@example.com')).all()
+
+ORDER BY #ordering results: db.session.query(Book).order_by(Book.price).all() from sqlalchemy import desc db.session.query(Book).order_by(desc(Book.price)) Without import  order_by(Model.attribute.desc())  // order_by(Book.price.desc()) Offset and Limit db.session.query(Book).offset(5) #offset the result by 5  db.session.query(Book).limit(5) # return at most 5 books
+
+Selecting From Multiple tables Joining Tables
+
+Querying / RETRIEVING Data  SQLAlchemy fetch queries can be done in 2 ways namely: db.session.query([my model name])…. [my model name].query….  db.session.query(User).all() OR   User.query.all() When selecting from many tables, you may find the db.session.query method more convenient as opposed to the Model.query The following code returns all the records from the posts table. db.session.query(Post).all() [&lt;1:Post 1&gt;, &lt;2:Post 2&gt;, &lt;3:Post 3&gt;, &lt;4:Post 4&gt;] In its simplest form, the query() method can take one or more model class or columns as arguments.  db.session.query(Post.post_title,Post.post_date).all() The above will return a list of tuple 
+
+SELECTING FROM MULTIPLE TABLES A relational database usually stores data across related tables. To retrieve data across multiple tables, we usually join the relevant tables on their common field(s) Within our model, we indicate foreign keys as follows: db.Column(db.Integer(),  db.ForeignKey('tablename.primaryKey')) Suppose for an ecommerce store, we have a table (product) that captures the details of prouducts and category whch captures all the possible categories.  See Next slides
+
+creating foreign key column class Product(db.Model): ''' the child class, parent is Category ''' id  = db.Column(db.Integer, primary_key=True,autoincrement=True) product_name  = db.Column(db.String(64), index=True) product_price  = db.Column(db.String(120)) product_added_on  = db.Column(db.DateTime(), default=datetime.utcnow) # create a Foreign Key Column product_category = db.Column(db.Integer(),  db.ForeignKey('category.catid')) class Category(db.Model): ''' The Parent Class ''‘ catid  = db.Column(db.Integer,primary_key=True,autoincrement=True) category_name  = db.Column(db.String(50), nullable=False)
+
+join and filter statements db.session.query (Model1).join(Model2).all(): will produce an INNER join on the two tables on their  Foreignkey =Primary key column, Records will therefore be just those where there is a match.  In the above, we will only have access to  columns  contained in the Model queried. That is if the columns are not explicitly specified, only the columns on the Model1 will be fetched To fetch  columns  from all the tables (Models) joined, do: dbinstance  =  db.session.query (Model1, Model2).join(Model2).first() The above instance will return a tuple of the form (&lt;Model1&gt;,&lt;Model2&gt;) and you can retrieve the values in the respective columns as :  dbinstance[0].column  and  dbinstance[1].col  respectively (tuple assignment can also be used)
+
+join and filter statements You can also fiddle with the query to generate the  values  needed rather than  the columns as tuple: dbinstance  =  db.session.query (Model1. col , Model1. col2 , Model2. col ).join(Model2).first() Will return the values from the respective models (classes) as (‘Value from col in Model1’,’Value from col2 in Model1’,’Value from col2 of Model2’) To retrieve what is being returned, we can do: dbinstance[0], dbinstance[1]  and  dbinstance[2]   (tuple assignment can also be used)
+
+OUTERJOIN [Left join] outerjoin  will produce left join, where all the records from the left table are selected as well as any matching record from the right table , any record with no corresponding right record is set to NULL on the right fields db.session.query (Model1, Model2). outerjoin (Model2, Model1.key==Model2.key)
+
+RETRIEVING Data from multiple columns When applying filter to your query where you joined tables, the columns not queried will not be automatically available except you use the  add_columns () function as in method2 data  =  Product .query.join ( Category ).filter( Category.cat_name =‘Toy’ ).all() In the above, cat_name  will not be available, only columns from Products will be, to make it available, use the  add_column data  =  Product .query.join ( Category ). add_columns ( Category ).filter( Category.cat_name ).all()
+
+RETRIEVING Data from multiple columns When using the other method of select, you can include columns from joined models as follows: #method1 data  =  Product .query.join ( Category ). add_columns ( Category ).all() #compare to method 2: data2  =  db . session . query ( Product , Category ). join ( Category ).all() Note that you can join to as many tables as possible, the FlaskSQLAlchemy knows where to join
+
+EXERCISE Create a Brand Table that has brand_id (PK, AI, Integer) brand_name (Varchar, NN) On the product table, introduce product_brand column so that each product in addition to being linked to category table is also linked to the brand table. Set the foreign key Select all products as well as their respective category and brand
+
+RETRIEVING Data from multiple columns Solution: #method1 data  =  Product .query.join ( Category ).join( Brand ). add_columns ( Category ,  Brand ).all() #method 2: data2  =  db . session . query ( Product , Category , Brand ). join ( Category ).join( Brand ).all() QUIZ:  SELECT only the products belonging to category 1
+
+join and filter statements – SPECIFYING WHERE TO JOIN Query.join() knows how to join between two tables when there is only one foreign key between them.  If there are no foreign keys, or more foreign keys, Query.join() works better through explicit specification of the Join columns Rather than joining tables on their primaryKey=foreignKey; To select from two tables while stating the columns to join explicitly, .join(Model1, Model2, Model1.col==Model2.col) Example: control =  db.session.query(Product,Category,Brand).join(Category,Product.product_category==Category.catid).join(Brand).filter(Product.product_price &gt; 10000).all()  
+
+Querying / RETRIEVING Data  To see the raw query used , at the terminal:  &gt;&gt;&gt;print( db.session.query (Post)) Exercise : Retrieve the data in the product table and display on your template file using bootstrap table You can also pass the column names explicitly to the query() method as follows:  db.session.query (Post.id,  Post.title ).all()
+
+ADVANCED CSS ADVANCED FUNCTIONALITIES IN CSS
+
+CSS Naming Conventions When working on large scale projects, developers might run into bloated code bases due to the presence of legacy or unknown css classes that must not be tampered with. The  BEM  naming convention which stands for  Block ,  Element ,  Modifier  is a naming convention for CSS classes to write clean, readable, and maintainable code, especially in large-scale projects. Block  : a self-contained piece of UI that makes sense on its own, you can re-use it independently across the site. Example: button, form, menu, etc syntax of the class:  .block Element : A part of the block that has no standalone meaning - like an item in a menu or a label in a form. syntax of the class:  .block__element Modifier : A flag on a block or element that changes its appearance or behavior.  syntax of the class:  .block--modifier  or  block__element--modifier
+
+CSS Naming Conventions while BEM can lead to long css names, more css classes, it has the benefit of helping to avoids naming conflicts, making it clear where styles apply and also encourages component-based structure. Other CSS methodologies and naming conventions for organizing styles in scalable and maintainable ways include: SMACSS  (Scalable and Modular Architecture for CSS) OOCSS  (Object-Oriented CSS) which focuses on separating structure from content Atomic CSS / Utility-First CSS  : used in Tailwind CSS, uses small, single-purpose classes where you can compose complex designs from atomic building blocks
+
+CSS Naming Conventions &lt;div class=&quot;card&quot;&gt;    &lt;img src=&quot;image.jpg&quot; alt=&quot;Card Image&quot; class=&quot; card__image &quot; /&gt;    &lt;div class=&quot; card__content card__content--bordered &quot;&gt;      &lt;h2 class=&quot; card__title &quot;&gt;Card Title&lt;/h2&gt;      &lt;p class=&quot; card__description &quot;&gt;This is a description of the card.&lt;/p&gt;      &lt;button class=&quot; card__button card__button--primary &quot;&gt;Learn More&lt;/button&gt;    &lt;/div&gt; &lt;/div&gt; #css .card{} .card__image{} .card__title{} .card__content--bordered{} .card__content{} .card__description{} .card__button{} .card__button--primary{}
+
+Variables in CSS Instead of repeating the same rule :value; over and over again, you can place them in  custom properties  (also known as variables) and re-use in many places. These properties can either have global scope (in which it is available throughout the entire stylesheet) OR Local scope (available only in the selector where it was defined. Use -- to define custom properties (variables). Use var() to retrieve the value of a variable. Local Scope Global scope .button {    --button-color: #e74c3c;    /*can only be used here */ } //usage: .button {    --button-color: #e74c3c;    background-color: var(--button-color); } :root {    --primary-color: #3498db;    --font-size: 16px; } //Usage body {    background-color: var(--primary-color);     font-size: var(--font-size); }
+
+Fallback values When using the variable you defined, you can provide a fallback value in case a variable is not defined ** p {    color: var(--text-color, black); /* p will set to black if --text-color is not defined*/ } With the idea of CSS variable, you can keep all your definitions in a single file, import it and then use it. You can also
+
+CREATING ACCOUNT What query do we need ? INSERT Upon successful creation of account, we can decide : to  redirect  the user to their dashboard/profile page or ask them to login again in which case feedback is important. save the userid in SESSION before redirection. to insert into database and redirect the user to login page. Matters arising: Feedback to the user is important,let them know if anything went wrong Form validation is also important, ensure the user can not visit the action page directly.
+
+Querying Data – count() The count() method returns the number of results returned by the query.  db.session.query(Customer).count() The count filter in Jinja template also works
+
+Querying Data – first() method The first() method returns only the first result of the query or None if the query returns zero results.  db.session.query(Customer).first()
+
+Querying Data – get() method The get() method returns the instance which matches the primary key passed to it or None if no such object found; the get() method allows you filter the records by primary key Syntax: db.session.query(Post).get(2) QUIZ: Consider the listguest/guestid route that displays the details of the user whose id has been passed through the URL. What if someone types a string instead of the id? how can you control it? Do you have checks before looping /retrieving values from details?  Remember get() returns None  if nothing was found …. Graceful degradation
+
+Querying Data – get_or_404() method Same as get() method but instead of returning None when no object found, it returns HTTP 404 Error.  db.session.query(Post).get_or_404(1) we also have db.session.query().first_or_404()
+
+UPDATE AND DELETE Editing records and deleting a record
+
+Updating tables To update an object simply set its attribute to a new value, add the object to the session and commit the changes. Steps: Using the get() or first() method, retrieve the record as an object, assign new value to its attribute(s) and then commit user = db.session.query(Users).get(2)  user.address = ‘Opebi Lagos’   db.session.commit()
+
+*** mon_cookies_session.pptx ***
+Exercise Given a website with a travel advisory section, where a user select a continent and is advised on the essential items to take along that matches the weather.
+
+Cookies AND SESSION in Flask In Flask, the set_cookie() method of the  response object  is used to set cookies Recall that make_response() can be used to add headers and generate a response object from a return value of a view?  Cookies are part of the header data, therefore, you must import make_response Basic Syntax is set_cookie(key, value=&quot;&quot;, max_age=None) The key is a required argument and refers to the name of the cookie.  The value is data you want to store in the cookie and it defaults to empty string.  The max_age refers to the expiration time of the cookie in seconds, if not set the cookie will cease to exist when the user closes the browser. (See Notes) A warning is raised if the size of the cookie header exceeds max_cookie_size, but the header will still be set
+
+Cookies – How it works A cookie is just a piece of data which the server sets in the browser:  It is stored on a client’s computer in the form of a text file. Its purpose is to remember and track data pertaining to a client’s usage and can be used to create better visitor experience and site statistics. The browser sends the request for a webpage to the server. The server responds to the browser request by sending the requested webpage along with one or more cookies. Upon receiving the response, the browser renders the webpage and saves the cookie in the user computer. The subsequent request to the server will include data from all the cookies in the Cookie header. This process will continue until the cookie expires. Once the cookie expires, it is removed from the browser.
+
+EXAMPLE #pkg/__init__.py import os from flask import Flask from dotenv import load_dotenv load_dotenv() app = Flask(__name__) app.config[&apos;ADMIN_EMAIL&apos;] = os.getenv(&apos;ADMIN_EMAIL&apos;) app.config[&apos;SECRET_KEY&apos;] = os.getenv(&apos;SECRET_KEY’) from pkg import routes
+
+Cookies AND SESSION in Flask The HTTP is a stateless protocol.  Say, you are logged in to facebook and you access the picture page ..and then your friend’s profile page, HTTP has no inbuilt way to tell the server, that both of these requests came from the same user. As a result, the server has no idea whether you are requesting the page for the first time or 10th time.  It serves everyone equally as if they are requesting the page for the first time. Web applications often need to personalize the user’s experience by remembering the user’s name accross the pages he visits within the website Solution ? Cookies and Session 
+
+ENVIRONMENT VARIABLES Apart from setting your configuration items via typing it through the command line or within your code base, you can also do this with a .env file too; Install  pip install -U python-dotenv Create .env  outside of your repository  and save sample environment variables inside such as: ADMIN_EMAIL=admin@domain.com SECRET_KEY=my_secret_key  Within your __init__.py file, you can load the environment variables from an .env file as: import os from dotenv import load_dotenv load_dotenv()  // loads the variables from .env into the  os environment Access the particular ones you need: app.config[“SECRET_KEY”]= os.getenv(&apos;FLASK_ENV&apos;)  //access it with os
+
+Hello World! – OTHER ENVIRONMENT VARIABLES To enable all development features (including debug mode) you can export the FLASK_ENV environment variable and set it to development before running the server: $ export FLASK_ENV=development( set  instead of  export  on Windows OS) or set the FLASK_DEBUG=True |1 FLASK_RUN_PORT will allow you specify a different Port number other than the default 5000.   set  FLASK_RUN_PORT =portNumber flask run
+
+Hello World! – Running your application An application of environment variable is in running your starter file; currently, the starter can run on its own with the following: if __name__ ==”__main__”: app.run We can comment out the above and run the starter file as a Flask App. At the command prompt (within your project folder), set the FLASK_APP environment variable by typing the following: On Windows System: #set FLASK_APP=starter.py #python -m flask run (or simply  flask run ) On Linux System: #export FLASK_APP=starter.py #python -m flask run (or simply  flask run ) The first command tells the system which app to run. The next one starts the server. A webserver will be created which can interpret Python commands thus allowing you to view your  app  from a browser
+
+ENVIRONMENT VARIABLES Environment variables are key-value pairs that hold information about the environment in which the flask app runs.  The variables are accessible to any program running in that environment and can affect the behavior of the software. You can set it from the terminal (while within your virtual environment) as: WINDOWS: set ENVIRONMENT_VARIABLE=value LINUX: export ENVIRONMENT_VARIABLE=value
+
+OUTLINE Environment Variables Cookies Session Application of session and cookies
+
+FLASK DAY 3 MoRE environment variables, cookies and session
+
+Example - Set the cookie @app.route(&apos;/travel, methods = [&apos;POST&apos;, &apos;GET&apos;]) def travel(): user_choice =request.form[‘continent’]  #europe resp = make_response(redirect(&apos;/&apos;))  #final directive is to redirect resp.set_cookie(&apos;userID&apos;, user)  #save cookie before redirect. Also same as resp.headers[&quot;Set-Cookie&quot;] = “userID=ahmed&quot; return resp
+
+FLASK AND CACHE One thing you can do is disable cache so that the use of the back button would not reveal access to a protected page after a successful logout @ app .after_request def   after_request ( response ):      response .headers[ &quot;Cache-Control&quot; ] =  &quot;no-cache, no-store, must-revalidate&quot;      return   response   How can the before_request be useful. For setting permissions ??, find out…
+
+Exercise - use the cookie From now onwards, the cookie userID will be sent along with any request to the server. To access the cookie, we use the cookie attribute of the request object.  The cookie attribute is a dictionary like attribute which contains all the cookies sent by the browser Basic syntax is  request.cookies.get(&apos;cookieName’)  whether you are retrieving it from the routes or within the template
+
+FLASK AND CACHE A Flask application objects comes with 2 methods- after_request() and before_request()- that can be assigned a function to run in the specified situation. You can make use of these decorators to attach functions that will be run as follows: @ app .after_request def   after_request ( response ):      #do anything just before the server responds      return   response
+
+Browser and caching When a browser requests some content from the web server, they sometimes store it in their cache to improve performances and speed. It does it via: If the content is not in the browser cache, then it is retrieved directly from the web server. If the content was previously cached, the browser bypasses the server and loads the content directly from its cache. For this reason, sometimes even after you have deleted a logged in user’s session (logout) the back button would still show the protected page
+
+SESSION and cache Removing all browser-cached data
+
+Management of session
+
+Logout When we are done, we logout  To delete a session, use dictionary pop method  session.pop(‘key’ ,None) To remove all the session’s key:value pair for the current user, use  session.clear()
+
+APPLICATION OF Session and cookies - EXERCISE  Simulate login using session variable Given a list of passcodes on a webapp as [“1111”,”2222”,”3333”,”4444”] create a login page to accept a username and passcode. Create the dashboard page and another page, say profile.html (each of these pages should have menu with hypertext links that allow the user navigate around the website) If the passcode supplied by the user is within the list, save the username in a session and redirect the user to the dashboard page. Personalize the pages as the user moves around: your pages should remember your user’s username until they sign out
+
+session To use session, you must set the secret key first and import session The cookie used to store session data is known as session cookie. However, unlike an ordinary cookie, Flask Cryptographically signs the session cookie. It means that anyone can view the contents of this cookie (encrypted) but can’t modify the cookie unless he has the secret key used to sign the cookie. It can also keep track of modifications Once the session cookie is set, every subsequent request to the server verifies the authenticity of the cookie by un-signing it using the same secret key. This makes it more secure
+
+session Session objects are used just like an ordinary dictionary To set a session,  session[‘key’] = value You can retrieve it in the same manner or simply use the get method of dictionary;  session.get(‘key’)  in the route or within Jinja template To view it in jinja template: {{ session[‘key&apos;] }}
+
+session In Python, Session data unlike Cookie is stored on the server but a session with each client connecting to the server is assigned a Session ID (this session ID is kept in the browser as a session cookie). You can also store some data in a session so that it will persist across the pages too. Session data are stored on top of cookies and the server signs them cryptographically(encryption), a Flask application needs a defined SECRET_KEY.
+
+Caution  when using cookies Cookies are not secure. The data stored in the cookie is visible to anyone, so you shouldn’t use it to store sensitive data like passwords, credit card details and so on. Cookies can be disabled. Most browsers give users option to disable cookies Each Cookie can store no more than 4KB of data. In addition to that browsers also imposes limits on the number of cookies a website can set.   Cookies are sent every time you request a page from the server. Say you have 20 cookies and each of them store 4KB of data. That means you have an additional payload of 80KB on every request! items for the cookies can even be gathered automatically without the user completing any form; it might just be retrieved based on user’s interaction with the app. 
+
+Cookies AND SESSION in Flask If the expiration time is not set, a cookie expires after the browser is closed. However if the expiration is set, it expires at the set time Regardless, cookies expire when the user clears them from the browser You can delete a cookie when it has not expired by setting the expiration time to a time in the past as shown: @app.route ( &apos;/deletecookie/&apos; ) def   deletec ():      resp   =   make_response ( redirect ( &apos;/store/&apos; ))      resp . set_cookie ( ‘userID&apos; , max_age =- 1 * 24   *   60   *   60 )       return   resp
+
+*** mon_fetch_join_orm_file_upload.pptx ***
+File upload i – basic steps The save() method returns a filename, you can use the secure_filename() function from the Werkzeug module of the Flask framework to return a secure version of the filename.  from werkzeug.utils import secure_filename Filenames as inputs can be very dangerous, as they can be used to attempt to maliciously modify files on a server. Once we have a secure filename, we create the URL to the image At the terminal import the above, and run: secure_filename("My cool movie%&lt;script&gt;alert&lt;/script&gt;.jpg") Checking the extension alone would mark this file as ‘safe’
+
+File upload I – checks! Check if a file was selected for upload: if file.filename == ‘’: Check if extension is allowed name, ext = os.path.splitext('file.txt’) #splits file into 2 parts on the extension if ext in [‘allowed’] You may generate random string using this import  secrets; secrets.token_hex(*arg)  //arg is the number of bits you want it to generate for you OR use the method below: import   random , string random . sample ( string . ascii_lowercase , 10 ) #random.sample(samplespace,length)
+
+File upload i – basic steps Other attributes in the  FileStorage  object are:  filename: The filename of the file on the client. name: The name of the form field. close():Close the underlying file if possible. content_length : The content-length sent in the header. Usually not available content_type:The  content-type sent in the header. Usually not available mimetype:Like  the  content_type  sent in the header, but without parameters ( eg , without charset, type etc.) and always lowercase. For example if the content type is text/HTML; charset=utf-8 the  mimetype  would be 'text/html'.
+
+One to one Establishing a one-to-one relationship in SQLAlchemy is almost the same as one-to-many relationship, the only difference is that we pass an additional argument  uselist=False  to the db.relationship() directive. This tells the column that only one instance of the other table is mounted
+
+One to one Consider a scenario where we need to store user details as well as some details about their national passport. Assumption is that a user can only have one passport as reflected by the ERD shown
+
+sample on db relationship, join and filter statements products = db.relationship("Product", back_populates=" cat ")   //this will be set on the Category model cat = db.relationship("Category", back_populates=" products ")   //this will be set on the Product model back_populates has the same meaning as backref, except that the complementing relationship property is not created automatically. So using back_populates makes the model code more explicit, with no hidden/implicit properties. You have to create a corresponding back_populate from the other table
+
+sample on db relationship, join and filter statements db.relationship is used to define the relationship in the model class, it is not a column on the table but will be available class Category(): 	products = db.relationship('Product', backref='cat') products  is a relationship that can  be used on Category table to retrieve many instances of category from the product table. While  cat  is a property that can be used WHILE ON product table to retrieve the corresponding category Any time you query the Category table, the products property will be available which will contain all the products belonging to the category queried. Likewise any time you query the product table, cat property will be available which will contain the details of the category the product belongs to. An additional lazy argument in backref indicates the execution mode for the query. A mode of dynamic sets up the query to not run until specifically requested
+
+sample on db relationship, join and filter statements class Product( db.Model ): ,  autoincrement = True,primary_key =True) product_namprod_id  =  db.Column ( db.Integere   =  db.Column ( db.String (64)) product_price  =  db.Column ( db.String (120))  # create a Foreign Key Column  product_category  =  db.Column ( db.Integer (),  db.ForeignKey (' category.categoryid ')) class Category( db.Model ): categoryid  =  db.Column ( db.Integer ,  primary_key =True) category_name  =  db.Column ( db.String (50),  nullable =False)  # the relationship can be used to retrieve many instances of the child class products =  db.relationship ('Product',  backref ='cat')
+
+Recall database relationship : ONE TO MANY One to many relationships is created by placing a foreign key on the child table, Example: a product can belong to one category  In your model, Create a new db.Column instance using db.ForeignKey constraint in the child class. Define a new property using db.relationship directive in the parent class. This property will be used to access related objects.* Backref is the property on this parent table that can be used to access many children belonging to this field
+
+Selecting From Multiple tables USING RElationships
+
+Sample models - many to many Relationship  class Product( db.Model ):     id =  db.Column ( db.Integer ,  primary_key =True)      product_name  =  db.Column ( db.String (64), index=True, unique=True)      product_price  =  db.Column ( db.String (120), index=True, unique=True)      product_added_on  =  db.Column ( db.DateTime (), default= datetime.utcnow ) class User( db.Model ):          id =  db.Column ( db.Integer (),  primary_key =True)           fullname  =  db.Column ( db.String (100))          email =  db.Column ( db.String (50))          profile =  db.Column ( db.String (100))           registration_date  =  db.Column ( db.DateTime (), default= datetime.utcnow )
+
+Recall database relationship: many to many A many-to-many relationship occurs when multiple records in a table are associated with multiple records in another table.  For example, a many-to-many relationship exists between customers and products: customers can purchase various products, and individual product can be purchased by many customers. In your model, many-to-many relationships make use of a helper table (relationship table) The orders is the relationship table and it must contain the primary keys of all participating tables
+
+Deleting records from related tables Delete can be defined as cascading in  SQLAlchemy  model: All items related to the deleted item by  sqlalchemy .  ForeignKey  are removed. This is usually the wanted behavior if the foreign key cannot be set to null (orphaned rows).  To activate this, include  cascade="all, delete-orphan"  in your relationship:  products =  db.relationship ('Product',  backref ='category', cascade="all, delete-orphan") To delete: Create an object of the class from a session and commit the action  x=  db.session.query (Customer) .get(2)   db.session.delete (x)   db.commit ()
+
+File upload I – basic steps To facilitate file upload in Flask, your HTML form method must be  POST , the form must have its  enctype  attribute set to  ‘multipart/form-data ’ and the action is a route you have already defined in your view. The application accesses the file from the  files  dictionary on the  request  object as  request.files . This returns a FileStorage object use the save() method of the FileStorage object to save the file permanently somewhere on the filesystem. The file will upload to the same directory where your setup script is executed unless otherwise stated
+
+FILE UPLOAD WITH and Without FLASk FORM
+
+Sample models - many to many Relationship  class Orders( db.Model ):      order_id  =  db.Column ( db.Integer ,  primary_key =True)      order_prodid  =  db.Column ( db.Integer (),   db.ForeignKey ('product.id'))      order_custid  =  db.Column ( db.Integer (),   db.ForeignKey (' user_registration.regid '))      # relationships      ordered_products  =  db.relationship ('Product',  backref =' allorders ')      ordered_by  =  db.relationship ('Registration',  backref =' myorders ') The above is a simplified version of ordering system where user can order one type of product at a time. In a situation when  order_details  table is needed, the relationship will be between  order_details  and product
+
+*** Sending mails from flask.pptx ***
+Sending mails from flask The  Flask-Mail  extension provides a simple interface to set up SMTP with your Flask application and to send messages from your views and scripts Within your virtual environment or otherwise, Install Flask-Mail with pip as follows:  pip install Flask-Mail Preferably, in your init file, Import Mail and Message class from flask-mail module as follows:  from flask_mail import Mail, Message Then, configure Flask-mail settings using as per the following options: This may be done within your init file using app.init[‘CONSTANT’]=‘value’ or in any of your config files
+
+NOTE When sending html message, any external resources therein must be accessible online. If you are including logo for example, you must specify an online location of the logo image Msg.attach(‘Filename’,’mimetype’,fileobject) @app.route('/test')  def testmail():      msg= Message(subject=&quot;Testing Mail&quot;, sender=&quot;sender@gmail.com&quot;, recipients=['moatacad@gmail.com'])      fp = open('requirements.txt')      msg.html = &quot;&lt;div&gt;&lt;h1&gt;Welcome on Board!&lt;/h1&gt;&lt;p&gt;You rae our greatest customer!&lt;/p&gt;&lt;hr&gt; Signed by Management&lt;img src='https://picsum.photos/id/1/200/300' width='100%'&gt;&lt;/div&gt;&quot;           msg.attach(&quot;Requirements.txt&quot;, &quot;application/text&quot;, fp.read())      mail.send(msg)      return &quot;Mail was sent&quot;
+
+Sending Bulk mail from flask To send bulk email, the send() method may be inadequate, therefore you need to open the connection to the host using the .connect() method as follows: with  mail.connect () as conn:     for user in users:         message = '...'         subject = &quot;hello, %s&quot; % user.name         msg = Message(recipients=[ user.email ],                       body=message,                       subject=subject)          conn.send (msg)
+
+Using  gmail  mail settings The GMAIL settings are: MAIL_SERVER=‘smtp.gmail.com’ MAIL_PORT=465 MAIL_USERNAME=‘youremail@gmail.com’ MAIL_PASSWORD=‘yourpass’ MAIL_USE_SSL=True You need to update your gmail settings to allow sending email from Apps. See next slides for How To.
+
+1. Go to your google account https://myaccount.google.com/  2.  In the security section go to App password. (Note: Make sure that your 2-step verification is on) ---- Or search “App Password” in settings
+
+3. Select app, then it will ask you to Select the app and device you want to generate the app password for, set it to the website, and Click on Generate. It will generate a password. 4Go to the settings for your Google Account in the application or device you are trying to set up. Replace your password with the 16-character password shown above. Just like your normal password, this app password grants complete access to your Google Account. You won't need to remember it, so don't write it down or share it with anyone.
+
+use cases There are times when you need to send email from your application,  there are various reasons for sending mail, such as: welcoming a new user to your application  sending email confirmation code to their email Password reset link or code receiving submission from a form in an email rather than in database table
+
+Sending mails from flask Possible Configurations MAIL_SERVER : default ‘localhost’ MAIL_PORT : default 25 MAIL_USE_TLS : default False MAIL_USE_SSL : default False MAIL_DEBUG : default  app.debug MAIL_USERNAME : default None MAIL_PASSWORD : default None MAIL_DEFAULT_SENDER : default None MAIL_MAX_EMAILS : default None MAIL_SUPPRESS_SEND : default  app.testing MAIL_ASCII_ATTACHMENTS : default False Any mail to be sent out must pass through an established mail server, and mailbox These are set in the MAIL_SERVER and MAIL_USERNAME respectively. The password for the mailbox is also specified with MAIL_PASSWORD
+
+Retrieving values from your  cpanel  account Create an email account within your Cpanel to be used for sending mails
+
+Retrieving values from your  cpanel  account Retrieve the settings highlighted
+
+Sending mails from flask Create an instance of the Mail using: app = Flask(__name__) mail = Mail(app) # or mail=Mail(); mail.init_app(app) Within your route, import mail and Message objects respectively To send a message first create a Message instance:  #msg=Message(Subject, sender, recipients=['email@example.com’]) EXERCISE: create a contact us page that: Send an acknowledgement mail to the user Submits to a given email
+
+Sending mails from flask The Mail class contains the following methods.  send(): It sends the message object content to the recipient.  connect(): It is used to open the connection with mail host.  send_message(): It is used to send the message object.
+
+Sending mails from flask Subject is a string which specifies the Subject of the mail sender could be a string which specifies the sender's email address, it could also be a two-element tuple which will be split into name and address as follows: sender= (&quot;Me&quot;, &quot;me@example.com&quot;).  Note that If you have set MAIL_DEFAULT_SENDER you don’t need to set the message sender explicitly, as it will use this configuration value by default recipients is a list of email addresses to be sent to
+
+Sending mails from flask The message can contain a body and/or HTML: msg.body  = &quot;testing&quot; msg.html = &quot;&lt;b&gt;testing&lt;/b&gt;&quot; Finally, to send the message, you use the  Mail instance  configured with your Flask application: mail.send (msg) # the send method sends a single message instance To add attachment do; with  app.open_resource (&quot;image.png&quot;) as  fp :      msg.attach (&quot;image.png&quot;, &quot;image/ png &quot;,  fp.read ())
+
+*** sqlalchemy_models_mifration_orm.pptx ***
+FLASK DAY 7 INTERACTING WITH DB USING ORM
+
+Database migration This can be likened to version control for database. The SQLAlchemy create_all() method only creates missing tables from the models. Once the table is created, it doesn’t alter table schema based upon changes in the model. in a production environment, you cannot afford to execute db.drop_all() just to apply changes in schema Flask-Migrate is an extension which implements Alembic; a database Migration tool which allows us to manage changes we make to the models, and propagate these changes in the database.  Alembic emits ALTER statements to a database thus implementing changes made to the models. It also auto-generates minimalistic migration scripts, which may otherwise be complex to write.
+
+Database migration In your virtual environment  , install Flask-Migrate extension and its dependencies using the following command. pip install flask-migrate In your  init  file or otherwise, import Migrate class from  flask_migrate  package and create an instance of Migrate class by passing application instance (app) and  SQLAlchemy  object ( db ), as shown below: The migrate object will allow us to run migrations using Flask-Migrate Without Application Factory, within __init__ from  flask_migrate  import Migrate With Application Factory, within the factory function from  flask_migrate  import Migrate db  =  SQLAlchemy (app) migrate = Migrate(app,  db ) from pkg.models import db app=Flask(__name__) db.init_app(app) migrate = Migrate(app, db)
+
+THE FINAL APPLICATION FACTORY def  create_app():      from  pkg.models  import  db     app = Flask(__name__, instance_relative_config= True )     app.config.from_pyfile( &quot;config.py&quot; )  #the config inside instance     app.config.from_object(LiveConfig)  #the config with pkg defined as class     db.init_app(app)     migrate = Migrate(app,db)     csrf.init_app(app)      return  app
+
+Database migration To create a migration repository, at the command prompt; &gt;  set FLASK_APP=yourmain.py  #so that you can make use of the flask commands to run your app, in Linux and Mac, use export instead of set &gt;  flask db init The above will create a directory (migrations) with the structure shown within your flask app: alembic.ini  – A configuration file for Alembic. env.py  – A Python file that is run everytime Alembic is invoked. It is responsible for connecting to the database, starting a transaction and calling the migration engine. README  – A README file. script.py.mako  – A template file that will be used to create migration scripts * version  – A directory for storing migration scripts.
+
+Database migration To create your migration, at the terminal; &gt; flask db migrate This will generate code for upgrade() and downgrade() function after comparing models with the current version of the database If you get a message &quot; No changes in schema detected &quot;, it means your Model and Database are in sync Each time you make a change to your model, always run  &gt;flask db migrate   if changes are detected, it will create the script within the versions directory – check out the contents…
+
+Database migration To apply the migration: &gt;  flask db upgrade This ensures that the change is applied without re-creating your db tables The above is known as automatic Migration since the codes for the upgrade and downgrade functions are auto generated. Automatic migration has its limitation compared to manual migration. See next slides…
+
+Database migration – Automatic migration Operations that Alembic can detect:     Addition or removal of tables     Addition or removal or columns     Changes in foreign keys     Changes in column type     Changes in indexes and explicitly named unique constraints Operations that Alembic can’t detect:     Change in table name     Change in column name     Constraints without explicit names
+
+Relating with the database via ORM Object relational mappings
+
+Interacting with the database via  orm Object-relational mapping (ORM) is a mechanism that makes it possible to address, access and manipulate objects without having to consider how those objects relate to their data sources SQLAlchemy comes with a powerful ORM ( Object Relational Mapper ) which allows us to work with various databases using Object Oriented code instead of writing raw SQL.  In this concept, your database table are treated as Classes while the columns on the table are the classes’ properties. ORM  lets programmers maintain a consistent view of objects over time , even when the source changes. For example if your database changes from MySQL to ORACLE, you don’t have to adjust your code. SQLAlchemy will generate the sql query that matches ORACLE syntax
+
+Interacting with the database via  orm Advantages of Using ORM: It handles: 1-connecting to database server . 2-generating query . 3- sanitizing the parameter if any. 4-fetching the data and serializing it if necessary . 5- fetching related records
+
+Database Migration Interacting with Db via ORM SQLAlchemy Columns CRUD Operations Syntaxes OUTLINE
+
+Creating models A Model is a Python class which represents the database table and its attributes map to the column of the table. A model class inherits from  db.Model  and defines columns as an instance of  db.Column  class. Your model should be a class that extends  db.Model  and should have class variables which represent the columns/fields on the table Each class may have an optional method, __ repr __  which tells Python how to print objects of this class, which might be useful for debugging
+
+Creating models The constructor db.Column() is used to create the different columns the first parameter specifies the column type class Post(db.Model):     __tablename__ = 'posts'     id = db.Column(db.Integer(), primary_key=True)     post_title = db.Column(db.String(255), nullable=False)     post_content = db.Column(db.Text(), nullable=False)     post_created_on = db.Column(db.DateTime(), default=datetime.utcnow)     post_updated_on = db.Column(db.DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)       def __repr__(self):  	return &quot;&lt;{}:{}&gt;&quot;.format(self.id, self.post_title[:10])
+
+CREATING MODELS You can explicitly set autoincrement=True for your primary key if you are using counter as primary key
+
+SQLAlchemy  column types
+
+Db.column  constraints nullable : When set to False makes the column required. Its default value is True. default : It provides a default value for the column. Index: A boolean attribute. If set to True creates an indexed column. Onupdate: It provides a default value for the column while updating a record. primary_key: A boolean attribute. If set to True marks the column as the primary key of the table. unique : A boolean attribute. If set to True each value in the column must be unique. set default for enum as follows: post_status =db.Column(db.Enum('1','0'),nullable=False, server_default=(&quot;0&quot;))
+
+SQL Alchemy The __tablename__ is a special class variable used to define the name of the database table. By default, table name is the class name
+
+EXERCISE Following the explanations, create another class to generate the customer table. Let it have the following columns: cust_id,  cust_name ,  cust_email , c ust_phone, cust_datereg.  cust_id  is the primary key while  cust_datereg  should have a default of current timestamp
+
+Performing crud operations with orm insert, fetch, update and delete records
+
+Inserting Data To create a new record using SQLAlchemy, follow these steps: Create an object. Add the object to the session. The session object which handles the connection to the database can be accessed through db.session  Commit the session. To demonstrate the above, let’s create a route, say “/insert” and execute the following within it. c = Customer( cust_name =‘Adedeji’,  cust_email =‘a@b.com’,  cust_phone =‘080455566’) db.session.add (c) db.session.commit () Ponder, how will you get the last insertid?
+
+Go Further: Let’s connect the above to a front end form and implement it from end to end:   Design a Contact Us Form to capture the above details for your customer,  validate_on_submit (), Form, redirect, flash PROJECT TASK:  Implement the Sign Up form on your respective project
+
+Interacting with the database with  SQLAlchemy SQLAlchemy, provides us with the following options: Using the SQLAlchemy CORE functions Using  SQLAlchemy  Object Relational Mapper (ORM) Flask-SQLAlchemy is the Flask’s implementation of SQLAlchemy SQLAlchemy CORE functions gives developers more control over the SQL statements being executed compared to ORM and is faster to execute than ORM, It is especially more suitable when running DDL queries from your code
+
+Inserting MULTIPLE Data Instead of adding one object to the session at a time, we can use add_all() method. The add_all() method accepts a  list of objects  to be added to the session. c1=Customer(cust_name='Adetayo', cust_email='t@y.com', cust_phone='067456789') c2=Customer(cust_name='Funmi', cust_email='funmi@y.com', cust_phone='080234567') &gt;&gt;&gt; db.session.add_all([c1, c2]) &gt;&gt;&gt; db.session.commit() To get the last insert id obj.tableID Example: c1.id
+
+database read operation fetching records from database
+
+Querying / RETRIEVING Data  SQLAlchemy fetch queries can be done in 2 ways namely: db.session.query([my model name])…. [my model name].query….  db.session.query(User).all() OR   User.query.all() When selecting from many tables, you may find the db.session.query method more convenient as opposed to the Model.query The following code returns all the records from the posts table. db.session.query(Post).all() [&lt;1:Post 1&gt;, &lt;2:Post 2&gt;, &lt;3:Post 3&gt;, &lt;4:Post 4&gt;] In its simplest form, the query() method can take one or more model class or columns as arguments.  db.session.query(Post.post_title,Post.post_date).all() The above will return a list of tuple 
+
+Querying / RETRIEVING Data  Exercise : Retrieve the data in the product table and display on your template file using bootstrap table You can also pass the column names explicitly to the query() method as follows:  db.session.query (Post.id,  Post.title ).all()
+
+Querying Data – get() method The get() method returns the instance which matches the primary key passed to it or None if no such object found; the get() method allows you filter the records by primary key Syntax: db.session.query(Post).get(2) QUIZ: Consider the listguest/guestid route that displays the details of the user whose id has been passed through the URL. What if someone types a string instead of the id? how can you control it? Do you have checks before looping /retrieving values from details?  Remember get() returns None  if nothing was found …. Graceful degradation
+
+Deleting  From tables To delete from a single item from a table, create an object of the class from a session and commit the action.  x = db.session.query(Customer).get(2)  db.session.delete(x)  db.session.commit()
+
+SQLAlchemy CORE - INSERT within your routes: from pkg.models import db,user @app.route(&quot;/core/insert/&quot;) def sqlcore1():     statement = user.insert().values(name=&quot;Abidemi&quot;,email=&quot;abi@y.com&quot;,message=&quot;Hello&quot;)     result = db.session.execute(statement)     db.session.commit()      return str(result.lastrowid)
+
+SQLAlchemy CORE - UPDATE    new_username = 'Abidemi Lawal'     new_email = 'updated_email@example.com'     # Create an update statement with the desired changes     update_stmt = (         db.update(user)         .where(user.c.id == 1)         .values(name=new_username, email=new_email)     )     db.session.execute(update_stmt)     db.session.commit() c  is  a convenient way to refer to the table column instead of  columns 
+
+from  datetime  import  datetime from  flask_sqlalchemy  import  SQLAlchemy db = SQLAlchemy() class  User(db.Model):     id = db.Column(db.Integer(), primary_key= True ,autoincrement= True )     username = db.Column(db.String( 100 ), nullable= False )     regdate  = db.Column(db.DateTime(),default=datetime.utcnow) Rather than defining your table with db.Table(), we can  update the models.py to contain the structure of the database. The class here will become table user (small case) and the properties will become the table columns
+
+SQLAlchemy CORE + MODEL - INSERT from pkg.models import db,User @app.get( &quot;/core/&quot; ) def  core_insert():         sql = db.insert(User).values(username= 'Tunde' )     result = db.session.execute(sql)     db.session.commit()      return  str(result.lastrowid)
+
+database migration a version control for your database
+
+*** thurs_flash_redirect_config_include.pptx ***
+FLASK DAY 2 HANDLING FORM SUBMISSION And redirect
+
+FLASH In order to remove the flashed message from the session and to display it to the user, the template has to call get_flashed_messages() Pulls all flashed messages from the session and returns them. Further calls in the same request to the function will return the same messages. 
+
+Retrieve values from flash using the  get_flASHED_messages  – SAMPLE {% with messages =  get_flashed_messages () %}         {% if messages %}         &lt;ul&gt;             {% for message in messages %}             &lt;li&gt;{{ message }}&lt;/li&gt;             {%  endfor  %}         &lt;/ul&gt;         {% endif %}         {%  endwith  %}
+
+FLASH - FULL SYNTAX The Full Syntax is : flash(message, category='message') message – the message to be flashed. category – the category for the message. Recommended values: 'message' for any kind of message, 'error' for errors, 'info' for information messages and 'warning' for warnings. However any kind of string can be used as category.
+
+FLASH A Flask module contains  flash()  method, it passes a message to the next and ONLY next request, which generally is a template. Note that browsers and sometimes web servers enforce a limit on cookie sizes. This means that flashing messages that are too large for session cookies causes message flashing to fail silently You must import flash and set the SECRET_KEY variable within config file for it to work Abridged Syntax is : flash(message) message – the message to be flashed.
+
+FLASK INTERNALLY USED CONFIG VARIABLES There are the default built-in configuration variables, which can be modified by assigning new value to the respective keys as follows: app.config["KEY"] = "value SECRET_KEY:A secret key that will be used for securely signing the session cookie and can be used for any other security related needs by extensions or your application. It should be a long random string of bytes.
+
+OUTLINE URL_FOR static  (b/f from day 1) Request.method Retrieving Form Data Redirect Configuration Items  and Flash Messages
+
+Redirect This function instructs the client web browser to automatically navigate to a different page, given as an argument. it returns a response object (a WSGI application) that, if called, redirects the client to the target location basic syntax is :  redirect('location’)   redirect   must be imported A typical application of this is when your user logs in, the authentication is carried out on the  action  page and the user is redirected to their profile page if successful but redicted to login page if not
+
+Configuration items Every application needs configuration, some of these configuration values are used internally by Flask and are expected to be available when the application starts up. Configuration variables can be used by Flask, extensions or you.  We could set and use app.config["ADMIN_EMAIL"] whenever we need to use a default “admin email address". Putting that information in a configuration variable makes it easy to change it in the future.  We will learn more ways of implementing application configuration items
+
+Retrieve values from flash using the  get_flASHED_messages  – SAMPLE Retrieving just the message {% with messages =  get_flashed_messages () %}         {% if messages %}         &lt;ul&gt;             {% for message in messages %}             &lt;li&gt;{{ message }}&lt;/li&gt;             {%  endfor  %}         &lt;/ul&gt;         {% endif %}         {%  endwith  %} Retrieving message and categories  {% with msg =  get_flashed_messages ( with_categories =True) %}      {% for  k,i  in msg %}        {% if k=='message': %}           &lt;div class="alert alert-danger"&gt;               {{  i  }}           &lt;/div&gt;        {% else: %}           &lt;div class="alert alert-warning"&gt;               {{  i  }}           &lt;/div&gt;       {% endif %}     {%  endfor  %}    {%  endwith  %}
+
+DEMO: create a website with 3 or more pages where the header/menu/footer  sections are included everywhere...
+
+Sample Website structure
+
+EXAMPLE #pkg/__init__.py import  os from flask import Flask from  dotenv  import  load_dotenv load_dotenv () app = Flask(__name__) app.config ['ADMIN_EMAIL'] =  os.getenv ('ADMIN_EMAIL') app.config ['SECRET_KEY'] =  os.getenv ('SECRET_KEY’) from pkg import routes
+
+ENVIRONMENT VARIABLES Apart from setting your configuration items via typing it through the command line or within your code base, you can also do this with a .env file too; Install  pip install -U python-dotenv Create .env  outside of your repository  and save sample environment variables inside such as: ADMIN_EMAIL=admin@domain.com SECRET_KEY=my_secret_key  Within your __init__.py file, you can load the environment variables from an .env file as: import os from dotenv import load_dotenv load_dotenv()  // loads the variables from .env into the  os environment Access the particular ones you need: app.config[“SECRET_KEY”]= os.getenv('FLASK_ENV')  //access it with os
+
+Some sections of the website is common across the pages, can you identify the parts?
+
+Sample Website structure
+
+TEMPLATES Include The include statement renders a template inside another template. The include statement is commonly used to render a static section of a webpage which is repeated throughout the site. Syntax is: {% include 'path/to/template' %} Note that any variable passed to the main template can be accessed both within the template and all other files it includes. For example if we include header.html within about.html: return render_template(“about.html”, title=”About Us”)  // variable title can be accessed within about.html and header.html as  {{ title }}  respectively
+
+TEMPLATE INCLUDE The two pages have the same layout (design): we will identify the part  that is common to the two pages , separate it into a new file, say: header.html and include header.html in the two pages respectively
+
+ENVIRONMENT VARIABLES Environment variables are key-value pairs that hold information about the environment in which the flask app runs.  The variables are accessible to any program running in that environment and can affect the behavior of the software. You can set it from the terminal (while within your virtual environment) as: WINDOWS: set ENVIRONMENT_VARIABLE=value LINUX: export ENVIRONMENT_VARIABLE=value
+
+TEMPLATES Include You can use the  include keyword to include pieces of codes that are common across your templates  within each of the template file respectively. For example if all your pages have the navbar shown below: &lt;ul&gt; &lt;li&gt;Home&lt;/li&gt; &lt;li&gt;About&lt;/li&gt; &lt;/ul&gt;  You can place this code snippets within a file nav.html within your templates folder. All you need to do henceforth is to include nav.html in all your html files at the very point you need the navigation bar to show
+
+Hello World! – OTHER ENVIRONMENT VARIABLES To enable all development features (including debug mode) you can export the FLASK_ENV environment variable and set it to development before running the server: $ export FLASK_ENV=development( set  instead of  export  on Windows OS) or set the FLASK_DEBUG=True |1 FLASK_RUN_PORT will allow you specify a different Port number other than the default 5000.   set  FLASK_RUN_PORT =portNumber flask run
+
+Hello World! – Running your application An application of environment variable is in running your starter file; currently, the starter can run on its own with the following: if __name__ ==”__main__”: app.run We can comment out the above and run the starter file as a Flask App. At the command prompt (within your project folder), set the FLASK_APP environment variable by typing the following: On Windows System: #set FLASK_APP=starter.py #python -m flask run (or simply  flask run ) On Linux System: #export FLASK_APP=starter.py #python -m flask run (or simply  flask run ) The first command tells the system which app to run. The next one starts the server. A webserver will be created which can interpret Python commands thus allowing you to view your  app  from a browser
+
+*** tues_config_template_include_custom_error.pptx ***
+FLASK DAY 5 CONFIG items, Custom error pgs, template include
+
+PYTHON MODULE to generate random string ( secret_key ?) Some special characters are not allowed within the configuration variables. For instance your SECRET_KEY may not contain the character # You can leverage on the module,  secrets  to generate a URL safe random string as follows: At the terminal, &gt;&gt;&gt; import secrets  &gt;&gt;&gt; secrets.token_urlsafe(n) Note that n is any number to define the string  lenght
+
+Accessing Config variables Regardless of what  approach a developer  chooses for her Flask application configuration, all configuration values are loaded on the config attribute(configuration dictionary) of the Flask application object You can access any of the configuration variables as dictionary keys of  app.config  ( app is the Flask object) @app.route ( '/' ) def   hello ():      return   render_template ( 'demo.html’ , data = app.config ) #within the template: {{ data }}
+
+Configuration : FILE-based Flask allows you to specify some configurations by defining some variables in a configuration file usually named config.py and should contain one variable assignment per line, usually of the form UPPERCASE_NAME = ‘value’ Simply place config.py in the root of your project (package), When your app is initialized, the variables in config.py are used to configure Flask  #config.py DEBUG =False SECRET_KEY = 'fthfrw6$et7' #setup.py app  =  Flask(__name__) app.config.from_pyfile ( &quot;config.py&quot; )
+
+The config  - the instance folder Sometimes you’ll need to define configuration variables that contain sensitive information.  We’ll want to separate these variables from those in config.py and keep them out of the repository (package).  You may be hiding secrets like database passwords and API keys, or defining variables specific to a given machine.  To make this easy, Flask gives us a feature called  instance folders . 
+
+The config  - the instance folder The instance folder is a sub-directory of the repository  root  and contains a configuration file specifically for this instance of the application.  You should also add the instance folder to your version control system's ignore list.  To be able to use it,  set  instance_relative_config =True   when creating the Flask object   app = Flask(__name__,  instance_relative_config =True  ) The configurations can then be loaded after creating the app object as follows: app.config.from_pyfile (‘config.py’)  #There is no need to specify the folder name If the  instance_path  parameter is not provided the following default locations are searched for to locate the : setup.py  instance/
+
+USING INSTANCE FOLDER CONFIG AND CONFIG MODULE If you decide to use both types of  config , you should make the one within your package  a class and the one within instance folder assignment based Whether you load from file or from instance folder, you could also make use of classes to define different configurations. You will usually define a base class that contains the default settings and more classes that extend the base class. Example: class Config(object):     DATABASE_URI = ' sqlite :///:memory:'     MERCHANT_ID ='1w456' class  ProductionConfig (Config):     DATABASE_URI = ' mysql :// user@localhost /foo'     MERCHANT_ID = 'asdfgh455^&amp;*(AG78' class  DevelopmentConfig (Config):     DATABASE_URI = ' mysql :// demo@localhost /foo' This kind of config is loaded using the method:  app.config.from_object ( configmodule.ProductionConfig )
+
+Full configuration Here is a full example within your __init__ of how to configure Flask to preload the config from a module and then override the config from a file in the config folder if it exists: from pkg import config   //import the config within your package app = Flask(__name__,  instance_relative_config =True ) app.config.from_object ( config.Classname )  //use the imported config app.config.from_pyfile (‘config.py', silent=True)   //silent is set to True if you want to silent failure for missing files. Or vice versa depending on which one is loaded first
+
+THE route fileS You now have 2 route files,  admin_routes.py  and  user_routes.py  (both can be placed within a package of their own such as  myroutes . Make the following changes in each of the routes file:  When rendering template, make a reference to the sub-folder with the templates folder that houses the html pages  return  render_template ('user/index.html’)
+
+THE Package’s __init__.py from   flask   import   Flask #from  flask_wtf.csrf  import  CSRFProtect app = Flask (__name__, instance_relative_config = True ) #csrf =  CSRFProtect ()  #or use this method  csrf.init_app (app) #load the package's config here after the app has been created from   projectapp   import   config   #config within package folder app . config .from_object ( config . LiveConfig ) app . config .from_pyfile ( 'config.py' )  #loads config from instance folder #Routes are now separated, load routes each from the respective folder from   projectapp . myroutes   import   admin ,  user from   projectapp   import   forms
+
+OUTLINE More ways to organize your project The config Template Include Custom Error Pages Template Inheritance
+
+Sample Website structure
+
+Sample Website structure
+
+Some sections of the website is common across the pages, can you identify the parts?
+
+TEMPLATES Include You can use the  include keyword to include pieces of codes that are common across your templates  within each of the template file respectively. For example if all your pages have the navbar shown below: &lt;ul&gt; &lt;li&gt;Home&lt;/li&gt; &lt;li&gt;About&lt;/li&gt; &lt;/ul&gt;  You can place this code snippets within a file nav.html within your templates folder. All you need to do henceforth is to include nav.html in all your html files at the very point you need the navigation bar to show
+
+TEMPLATES Include The include statement renders a template inside another template. The include statement is commonly used to render a static section of a webpage which is repeated throughout the site. Syntax is: {% include 'path/to/template' %} Note that any variable passed to the main template can be accessed both within the template and all other files it includes. For example if we include header.html within about.html: return render_template(“about.html”, title=”About Us”)  // variable title can be accessed within about.html and header.html as  {{ title }}  respectively
+
+TEMPLATE INCLUDE The two pages have the same layout (design): we will identify the part  that is common to the two pages , separate it into a new file, say: header.html and include header.html in the two pages respectively
+
+DEMO: create a website with 3 or more pages where the header/menu/footer  sections are included everywhere...
+
+Return type of the route function When you return a string, a response object is generated with the HTTP code set to 200, (meaning all went well) the content-type header set to text/html You may also return a response object as a tuple The tuple must be of the form (body, status, headers), (body, status), or (body, headers) where status is the HTTP code you want the server to return and headers are any HTTP header you may want to set. eg return render_template(‘y.html’), 404 You could also use the function  make _ response  to generate a response object. This function allows you to easily set custom headers* as well as the response code (You need to import  make_response ) HTTP headers allow the client and the server to pass additional information with the request or the response.
+
+On which of the e-commerce site would you use your debit card?
+
+MORE FOLDER Organization Now that you have organized your project as a package, you can arrange it even further. You can separate your routes even more into related groups  ( e.g admin_routes.py and user_routes.py ) Perhaps this is what makes Python Flask different from other framework – flexibility of organizing your project! Your project structure can follow any of the following approaches: Functional Based Divisional based
+
+Error pages and custom error pages Flask provides a function named abort() for terminating a request with a specific error code like 404, 500 and so on.  You need to import abort and use as abort(404) Each of these is a generic page – Page Not Found, Internal Server Error  You can customize your error page using the  errorhandler   decorator It accepts a single argument which is the HTTP error code for which you are creating custom error page, then the function that follows returns the custom error page and the error code as a tuple of the form (body, status) It is important to return the status otherwise it would be treated as 200 - recall that if the file was found, it implies 200
+
+Error pages and custom error pages @ app.errorhandler (404) 	def  mypagenotfound (error):    	return  render_template (' error.html',error =error), 404 Note that the return statement is of the form body, status When the error is generated, an error variable is set as error which can be passed to the template. The variable can be a sequence which can in turn be referenced in the error view page You can still make use of abort() to raise this error
+
+Common HTTP STATUS Codes  200, or &quot;OK&quot;,  signifies that a request has been successfully received, understood, and processed by the server, and the requested resource is being returned 404 Not Found Shows when user is looking for resources which is not there. It’s a very good idea to make sure there is actually something useful on a 404 page, at least a link back to the index. 403 Forbidden If you have some kind of access control on your website, you will have to send a 403 code for disallowed resources. When they try to access a forbidden resource. 410 Gone The idea is that resources that previously existed and got deleted answer with 410 instead of 404. . 500 Internal Server Error Usually happens on programming errors or if the server is overloaded. 503: The server is currently unavailable (because it is overloaded or down for maintenance). 
+
+Going from page to page in the website shown, there are some sections of the pages that are looking different in terms of content. Can you identify these sections?
+
+FROM INCLUDE TO TEMPLATE Inheritance Template Inheritance Allows the creation of a base template which contains the HTML skeleton and markers that child template can override.  In this method, the base template will contain the parts that are not changing  , you will remove the things that change from page to page from the base layout and create markers in the position they are removed from. Other html files can inherit (extend) this base layout and then implement contents for the marker within the child template. DEMO
+
+Include Vs base template The two pages have the same layout (design). For include, we will identify the part  that is common to the two pages , separate it into a new file, say: header.html and include header.html in the two pages respectively
+
+Include Vs base template The two pages have the same layout (design). For inheritance, we will identify the part  that changes across the two pages , create a base layout that has all the parts but create marker(s) to the part that change. The two pages can each inherit the layout and populate the marked areas with their own contents
+
+Template inheritance In the child template, use the  {% extends %}  tag to inherit from the base template. This is declared at the top of the child template We insert the dynamic content inside the  {% block  blockname  %} ... {%  endblock  %}  tags.  Everything else is loaded right from the base template, so we don't have to re-write things that are common to all pages, such as the navigation bar and the footer
+
+Template inheritance When Jinja encounters the extends statement it loads the base template and then replaces the blocks of content in the parent template with the blocks of content of the same name in the child template.  In case, a block of matching name isn’t found in the child template then the block from parent template will be used Data passed to the child template will be accessible from both the parent template as well as the child template. See example on the next slide:
+
+Sample  blueprint  VS Functional structure
+
+TEMPLATE INHERITANCE {% block title%} {% endblock %}   &lt;div class=&quot;row content&quot;&gt;  {% block content-left%}   &lt;!---col-md-6 which contains the left contents was removed here --&gt;  {% endblock content-left  %}  {% block content-right%}   &lt;!---col-md-6 which contains the right contents was removed here --&gt;  {% endblock content-right %}   &lt;/div&gt; #base template (Parent) location:templates/layout.html {% block title%}     &lt;h2&gt;About Us Page&lt;/h2&gt;&lt;hr&gt; {% endblock %} {% block content-left %} &lt;div class=&quot;col-md-6&quot;&gt;    &lt;p&gt;This is the about us page, there can be series of contents here as you like&lt;/p&gt; &lt;/div&gt; {%endblock content-left%}  {% block content-right%}   &lt;button class=”btn”&gt; FAQ&lt;/button&gt;  {% endblock content-right %}   #child template (where it will be used) Location:templates/about.html
+
+TEMPLATE INHERITANCE Within your template html, if you extend a super template, include the folder name too #LOCATION: templates/user/about {% extends 'layout.html' %} #the above should change to the below depending on how you have organized your folder to indicate layout in template/user {% extends 'user/layout.html' %}
+
+Named Block End-Tags You can optionally put the name of the block after the end tag for better readability,However, the  name  after the  endblock  word must match the block name: Syntax: {% block  block_name  %} 	…….. {%  endblock   block_name  %} Example: {% block content %}     &lt;h1&gt;Index&lt;/h1&gt;     &lt;p class=&quot;important&quot;&gt;       Welcome to my awesome homepage.     &lt;/p&gt; {%  endblock  content %}
+
+Super Blocks After overriding a block you can still refer to the content in the parent template by calling super() function.  The super() call is generally used when child template needs to add its own content  in addition to the content from the parent . {{ super() }} Example: {% block sidebar %}     &lt;h3&gt;Table Of Contents&lt;/h3&gt;     ...      {{ super() }} {%  endblock  %} Example : {% block sidebar %}  &lt;h3&gt;Table Of Contents&lt;/h3&gt;   #this is the content of the child    {{ super() }}  #contents of the parent will be available here {%  endblock  %}
+
+FUNCTIONAL- BASED Structure  Functional Based Structure allows you to set up your project folder structure according to their functions: if a file behaves like a route(views), keep it in a routes folder (sub-package) and  if it is a template, keep it in templates folder and so on. You can even go further to put all your routes together in a sub package. The templates are separated using folder as shown: # propertyapp  here is your package folder NOTE : No 2 routes must exists and no two route function must have the same name across all the route modules
+
+Application set up – using package With the divisional structure, you organize the pieces of the application based on which part of the app they contribute to.  If your app has largely independent pieces that only share things like models and configuration, divisional might be the way to go.  #propertyapp  here is your package folder
+
+Configuration items Every application needs configuration, some of these configuration values are used internally by Flask and are expected to be available when the application starts up. Configuration variables can be used by Flask, extensions or you.  We could set and use app.config[&quot;ADMIN_EMAIL&quot;] whenever we need to use a default “admin email address&quot;. Putting that information in a configuration variable makes it easy to change it in the future.  You can implement application configuration using different approaches namely: environment-variable-based -  (done) file-based:    instance-folders-based   object-based 
+
+FLASK INTERNALLY USED CONFIG VARIABLES These are the default built-in configuration variables, which can be modified by assigning new value to the respective keys as follows: app.config[&quot;KEY&quot;] = &quot;value SECRET_KEY:A secret key that will be used for securely signing the session cookie and can be used for any other security related needs by extensions or your application. It should be a long random string of bytes. DEBUG : Default is False, when it is True, an interactive debugger will be shown for unhandled exceptions, and the server will be reloaded when code changes. The environment variable  FLASK_DEBUG  can also be used by FLASK to enable debug mode
+
+*** webservices_api_day2.pptx ***
+Providing authentication for your webservice Your webservice should not be open to just anybody, in a typical web application, these actions would be secured by a login form where the browser maintains user's persistence via session. REST is expected to be stateless - no session variable set anywhere Clients making use of your service have to send their authentication information with every request. Using Flask-HTTPAuth - A Simple extension that provides Basic and Digest HTTP authentication for Flask routes. Install as :pip install Flask-HTTPAuth
+
+A client to consume your webservice After building your webservices, you want to expose your API for consumption by others (clients) Steps and Documentation: Provide the endpoint to the different services (publish it) Provide sample request format (publish it) Provide response format and sample (publish it) Sample implementation in any programming language (publish it)
+
+DAY 2 CONSUMING API
+
+A client to consume your webservice integrating to the webservice from another software Moat Academy for Developers
+
+Building the client Recall our scenario, we want to display all the items in your table on our class project and we have decided to consume the endpoints provided by the developers of the PropertyApp. The one who needs is the clients in this case; a client basically needs to make a connection to the endpoint using curl: Moat Academy for Developers
+
+Webservice Client - Provide the endpoint to the different services Given an endpoint:  http://127.0.0.1:5000/hostel/api/v1.0/list  where clients can connect to retrieve list of hostels Request format: make a get request using curl, no data is sent in this case. Given an endpoint: where clients can create hostels headers = {     'Content-Type': 'application/json’, } data = '{&quot;reference&quot;: &quot;7PVGX8MEk85tgeEpVDtD&quot;, &quot;amount&quot;: 500000, &quot;email&quot;: &quot;customer@email.com&quot;}’ Request is by POST and data and headers are being sent
+
+Webservice Client – request and response Making a curl call in Python can be easily generated using tools like:  https://curlconverter.com  which converts any curl command to python equivalence  pip install requests response =  requests.get ('http://127.0.0.1:5000/hostel/ api /v1.0/list') response =  requests.post ('http://127.0.0.1:5000/hostel/ api /v1.0/create', headers=headers, data=data) Each of the above returns a Response Object which can be converted to json format (and hence manipulated using Python  dict  methods) by: json.loads ( response.text ) 		OR response.json ()
+
+REQUEST AND RESPONSE The endpoint provides json response with a key being an indicator of success or failure
+
+Sample public webservices/ api  connection Paystack https://developers.paystack.co/docs/test-cards
+
+TASKS Create a free account on  http://paystack.com Set up the necessary details about your project Specifics: Edit the payment page in the scenario application by fetching the bill items dynamically from the database  All transactions should be traceable with a unique  transaction reference number . Add the column ‘trxref’ to your transaction table, set ‘trxdate’ default value to current_timestamp, ‘trxothers’ to allow NULL The documentation for accepting payments on your app is available on: https://paystack.com/docs/payments/accept-payments/ Moat Academy for Developers
+
+SET UP your account on  Paystack Moat Academy for Developers
+
+Providing authentication for your webservice
+
+General principles of Implementing Payment Gateway  - case study  Paystack There are two methods of implementation namely: pop up and redirect: For the pop up:  Connect to the given endpoint sending data in the specified format,the  card details page of paystack will open as a pop up on your page For the redirect method:  when you connect to the endpoint sending data in the right format, a checkout page will be generated by paystack, paystack will then send you the URL to this page. You will then redirect the user to the URL so that they can enter their card details You will need to supply the redirect/callback URL on your paystack dashboard (this is where paystack will send its response to after the user has entered his/her card details (and money is deducted (or otherwise)) The callback URL can also optionally be passed as part of the data being sent to the page We will be making use of the redirect method
+
+Implementing The  Paystack  Payment Gateway  The initialize endpoint:  https://paystack.com/docs/api/transaction/#initialize At the beginning of every transaction, generate a ref no, keep in session, set your transaction status to ‘Pending’, save this value in your database before sending them to the endpoint alongside email, amount (in kobo) , see documentation for others Paystack sends you a preliminary response that contains the URL that loads the payment page.  Paystack will give you response via json object which when converted to python library can be parsed to get some of the values as usual  jsonresponse = response.json()  #convert response object to json [which is a python dict] #or use json.loads(response.text) response.text  retrives the response object as a text, json.loads converts to json 	authurl = jsonresponse['data']['authorization_url']  #redirect your user to this page    	 reference=jsonresponse['data']['reference']    	 verification_code = jsonresponse['data']['access_code'] NOTE:  The objective of this step is for you to get the redirect URL where the payment gateway Interface will be loaded
+
+Implementing The  Paystack  Payment Gateway - REDIRECT METHOD  After the customer supplies their card details and Paystack processes it.. The page is redirected to your  landing  page The verify endpoint:   https://paystack.com/docs/api/transaction/#verify In the  landing  page, retrieve the  ref   from the query string  appended to your landing page’s URL,  compare to what you have in session… (in case someone changes it from the URL) while on the landing page, call another endpoint to verify the status of the transaction:query the paystack service to know the ACTUAL transaction status because all transaction responses gets to the landing on this page whether they are successful or not if they are the same, retrieve other details coming from the payment page such as payment amount, currency, ip address, gateway_response and save into your db (update your database).  Most importantly, retrieve the status of the transaction as contained in this reponse NOTE:  The objective of this stage is to verify the status of a given transaction (using its transaction ref) and then updating the transaction on the database table
+
+Final Response/actions Successful Payment: Offer Service Declined Transaction: Repeat
+
+Transaction notifications Email notifications are usually sent to the user and merchant by paystack See documentation here: https://developers.paystack.co/reference#paystack-standard-x https://developers.paystack.co/docs/test-cards  
+
+Providing authentication for your webservice Authentication method may be any of the folowing: Basic Authentication: requests for username and password, should generally only be used where transport layer security is provided such as https. Digest Authentication:  communicates credentials in an encrypted form by applying a hash function to the the username, the password, a server supplied nonce value, the HTTP method, and the requested URI. 
+
+Providing authentication for your webservice
+
+Flask- HTPAuth  Usage Implement 2 methods  get_password () and  error_handler  as follows: The  get_password  function is a callback function that the extension will use to obtain the password for a given user [from the database]. The  error_handler  callback will be used by the extension when it needs to send the unauthorized error code back to the client.  Within your view/route, do: from  flask_httpauth  import  HTTPBasicAuth auth =  HTTPBasicAuth () With the authentication system setup, all that is left is to indicate which functions need to be protected, by adding the @ auth.login_required  decorator. For example: See usage on next slide
+
+@auth.get_password def get_password(username): 	deets = db.session.query(Merchant.mer_pwd).filter(Merchant.mer_username==username).first() 	if deets: 		return deets.mer_pwd 	return None @ auth.error_handler def unauthorized(): 	return  make_response ( jsonify ({'error': 'Unauthorized access'}), 401)  //see notes Activate authentication on a route as follows: @ app.route ('/ api /v1.0/list/&lt; int:hostel_id &gt;', methods=['GET']) @ auth.login_required def  get_hostel ( hostel_id ): #function body
+
+Providing authentication for your webservice Read more in the Documentation of Flask-HTPAuth and details of digest auth https://github.com/miguelgrinberg/flask-httpauth
+
+Sending Authorization parameters
+
+Having Done all …. Connect to the endpoint via postman with and without authorization parameters What do you observe?
+
+*** wed_data_to_view_form.pptx ***
+FLASK DAY 2 PASSING DATA TO VIEW, HANDLING FORM SUBMISSION 
+
+Routing – Generating URL for A function You can generate a URL/endpoint from a function name by using the  url_for () method of the flask object. (must be imported when used in the routes but readily available within Jinja templates). The method accepts the name of the function for which you want to generate a route, if the function requires an argument, you must supply them as a list of keyworded arguments to the  url_for () method. If there are more arguments specified than is required of the function, they are appended to the generated URL as query strings Given a function:  @ app.route ('/user/&lt;username&gt;') def  show_profile (username) We can generate the URL by:  url_for (‘ show_profile ’, username=‘value’)  produces  ‘/user/value’
+
+Template filters Filters modify the variables before they are rendered. The syntax of using filters is as follows: variable_or_value|filter_name example {{ fullname|title }} The title filter capitalizes the first character of every word, We can also chain filters to fine tune the output. For example: {{ full_name|striptags|title }}
+
+Template filters Complete list of filters is available here https://jinja.palletsprojects.com/en/3.0.x/templates/#builtin-filters
+
+Template escaping By default, Jinja automatically escapes the variable output for security purpose such that any variable with html tags will be rendered as the equivalent HTML entity The process ensures that the tags are merely displayed in the browser instead of interpreted. You can use the safe filter to render a string as it is without escaping. {{ myname|safe }}
+
+Setting variables within Jinja code block We can set variables within the Jinja code block as follows: {% set myvariable_name=value %} Variables set within a code block eg loop in Jinja is limited to the block. As a result, it is not possible to set auto increment variables as you would have done in Python A workaround here is to manipulate the loop.index which points to the current loop iteration QUIZ: Display the list [‘Janet’, ‘Sam’, ‘Gbolahan’,’Lola’] in a table with serial number
+
+EXERCISE On the static  website you have created, Create  'Our Team ' page where we will display all the team members and their title You have been given this dictionary:  team  = {'CEO‘ : 'Alhaji Dangote‘,  'Secretary‘ : 'Mayor Olu‘, 'President‘ : 'Prof Yemi‘ ,  'Chairman': 'Bola Tinubu’} Display the Role and Name  on a table , adding the serial number
+
+STATIC FILES  By default, Flask looks for static files in the static sub-directory inside the application directory.  We can change this default, by passing name of the directory to the ' static_folder ' keyword argument while creating application instance  app = Flask(__name__,  static_folder =&quot; my_static &quot;) To access the files in the static folder within your template: Example: “/static/main.css” You can also generate URLs for static files with special 'static' endpoint name: url_for ('static', filename='main.css')
+
+EXERCISE Create a registration form with username and password fields.  Let the form submit to another route, the method should be POST In the route you are submitting to, display a simple message such as “Form has been submitted”
+
+OUTLINE The use of url_for(‘static’,filename=’’) Passing data to view: Displaying (looping) data within view Request.method Retrieving Form Data
+
+Routing – HTTP Methods By default, a route only answers to GET requests. The route decorator has a parameter: methods which accepts a list as argument explicitly specifying the HTTP methods the function should handle. @app.route('/login', methods=['GET', 'POST']) In order to determine which type of request was passed, import the request module : from flask import request  and use the attribute, method as follows:  request.method
+
+Routing – HTTP Methods Rather than using the route decorator as shown above, you can also separate the routes for different methods into different functions using the shortcut provided by Flask for decorating such routes. @app.get('/login') def login_get():     return &quot;Show Login Form&quot; @app.post('/login') def login_post():     return &quot;Form Submitted here&quot;
+
+Retrieving form data IN flask (POST REQUEST) The request object provides information about the current web request. Request.method tells the HTTP request method The data submitted via the form is stored in the form attribute of the request object.  The request.form is used to retrieve from a HTML post form and is a dictionary like immutable object To access form data (data transmitted in a POST or PUT request) you can use the form attribute of the request method. ( request class must be imported ) Syntax is  request.form['fieldname’] EXERCISE: Update your code to receive the user details and save in  a file
+
+RECALL: Retrieving data from URL query string (GET REQUEST) To access parameters submitted in the URL (?key=value ) OR AS A GET request,   you can use the args attribute of the request method: Syntax is  variable = request.args.get('keyname', 'defaultvalue_ifkeymissing’) Example : data=request.args.get(“fullname”,”N/A”)
+
+Exercise Allow interested people to supply their email address to be notified, write to a file each time someone clicks the button. And inform them that their details have been saved
+
+SUMMARY : Assessing individual values sent through THE form request.form['name']: use indexing if you know the key exists request.form.get('name'): use get if the key might not exist
+
+templates A template is just a text file which contains static HTML code as well as some special markup denoting dynamic contents that will be known at the time of the request.  The process which replaces the dynamic markup and generates flat HTML page is known as template rendering.  Flask comes bundled with a template engine called Jinja which does the actual job of parsing templates and converting them to flat HTML page. Jinja can generate any text-based format such as HTML, XML etc.  Your template file (usually named .html) may contain tags, variables, and expressions within certain  delimiters .  An advantage of Jinja is that it escape all the data by defaults, treating them as unsafe, you don’t have to call function escape (if markup) before the data is escaped.
+
+Template delimiters {% ... %}  used for Control Structures (that is: all the things that control the flow of a program such as conditionals (i.e. if/elif/else), for-loops, and blocks. You can also define a variable within the template by using the set statement within this delimiter.  {{ ... }}  used where you need to print any literal/python object to the template output (eg string, numbers, list etc) or evaluate an expression, variable or function call and print the result into the template.The ternary operator is also regarded as expression {# ... #} for Comments not included in the template output: To comment-out part of a line in a template. 
+
+PASSING DATA TO TEMPLATE FILE To render a template from the routes (view function), we import render_template and call render_template() with the template name along with the data you want to pass to the template as keyword arguments. @app.route(&quot;/about&quot;) def aboutus():         return render_template('about.html', content  = &quot;Hello , Welcome to my web page.&quot;) In the above, variable  content  will be available in about.html and can be used within the appropriate delimiters {{ content }} If there are more variables to send to the template file through render_template(), just separate with a comma
+
+PASSING DATA TO TEMPLATE FILE To render a template from the routes (view function), we import render_template and call render_template() with the template name along with the data you want to pass to the template as keyword arguments. @app.route(&quot;/about&quot;) def aboutus():         return render_template('about.html', content  = &quot;Hello , Welcome to my web page.&quot;) In the above, variable  content  will be available in about.html and can be used within the appropriate delimiters {{ content }} If there are more variables to send to the template file through render_template(), just separate with a comma
+
+SERVER SIDE COMMENT VS HTML COMMENTS Server -side comments are executed right on the server while html comments are executed by the browser. As such, a server side error can not be  covered up  with an HTML comment
+
+*** wed_inheritance_flask_with_db.pptx ***
+FLASK DAY 6 TEMPLATE INHERITANCE, interacting with the database VIA  RAW QUERIES AND SQL ALCHEMY CORE
+
+FROM INCLUDE TO TEMPLATE Inheritance Template Inheritance Allows the creation of a base template which contains the HTML skeleton and markers that child template can override.  In this method, the base template will contain the parts that are not changing  , you will remove the things that change from page to page from the base layout and create markers in the position they are removed from. Other html files can inherit (extend) this base layout and then implement contents for the marker within the child template. DEMO
+
+Include Vs base template The two pages have the same layout (design). For include, we will identify the part  that is common to the two pages , separate it into a new file, say: header.html and include header.html in the two pages respectively
+
+Include Vs base template The two pages have the same layout (design). For inheritance, we will identify the part  that changes across the two pages , c reate a base layout that has all the parts but create marker(s) to the part that change. The two pages can each inherit the layout and populate the marked areas with their own contents
+
+Template inheritance In the child template, use the  {% extends %}  tag to inherit from the base template. This is declared at the top of the child template We insert the dynamic content inside the  {% block  blockname  %} ... {%  endblock  %}  tags.  Everything else is loaded right from the base template, so we don't have to re-write things that are common to all pages, such as the navigation bar and the footer
+
+Template inheritance When Jinja encounters the extends statement it loads the base template and then replaces the blocks of content in the parent template with the blocks of content of the same name in the child template.  In case, a block of matching name isn’t found in the child template then the block from parent template will be used Data passed to the child template will be accessible from both the parent template as well as the child template. See example on the next slide:
+
+TEMPLATE INHERITANCE {% block title%} {% endblock %}   &lt;div class=&quot;row content&quot;&gt;  {% block content-left%}   &lt;!---col-md-6 which contains the left contents was removed here --&gt;  {% endblock content-left  %}  {% block content-right%}   &lt;!---col-md-6 which contains the right contents was removed here --&gt;  {% endblock content-right %}   &lt;/div&gt; #base template (Parent) location:templates/layout.html {% block title%}     &lt;h2&gt;About Us Page&lt;/h2&gt;&lt;hr&gt; {% endblock %} {% block content-left %} &lt;div class=&quot;col-md-6&quot;&gt;    &lt;p&gt;This is the about us page, there can be series of contents here as you like&lt;/p&gt; &lt;/div&gt; {%endblock content-left%}  {% block content-right%}   &lt;button class=”btn”&gt; FAQ&lt;/button&gt;  {% endblock content-right %}   #child template (where it will be used) Location:templates/about.html
+
+TEMPLATE INHERITANCE Within your template html, if you extend a super template, include the folder name too #LOCATION: templates/user/about {% extends 'layout.html' %} #the above should change to the below depending on how you have organized your folder to indicate layout in template/user {% extends 'user/layout.html' %}
+
+Named Block End-Tags You can optionally put the name of the block after the end tag for better readability,However, the  name  after the  endblock  word must match the block name: Syntax: {% block  block_name  %} 	…….. {%  endblock   block_name  %} Example: {% block content %}     &lt;h1&gt;Index&lt;/h1&gt;     &lt;p class=&quot;important&quot;&gt;       Welcome to my awesome homepage.     &lt;/p&gt; {%  endblock  content %}
+
+Super Blocks After overriding a block you can still refer to the content in the parent template by calling super() function.  The super() call is generally used when child template needs to add its own content  in addition to the content from the parent . {{ super() }} Example: {% block sidebar %}     &lt;h3&gt;Table Of Contents&lt;/h3&gt;     ...      {{ super() }} {%  endblock  %} Example : {% block sidebar %}  &lt;h3&gt;Table Of Contents&lt;/h3&gt;   #this is the content of the child    {{ super() }}  #contents of the parent will be available here {%  endblock  %}
+
+OUTLINE Passing Parameter via the URL Template Inheritance Application Factory Interacting with Database: Introduction to the 3 methods, demonstrate: CRUD operations with RAW queries CRUD operations with SQL Alchemy core
+
+The model File Following the MVC design pattern and to allow for more readability of your code, you may create your database definitions within a separate file (model).  This file, called “Model” is the “M” in MVC design pattern. A model is a representation of a database table in code A model class is simply a Python class that represents a database table or collection. These classes define the structure and behavior of the data stored in a database and provide an abstraction layer for interacting with the data.  In your package, create a file say, model.py that will handle your database activities (just like we did for forms)
+
+Interacting with the database from flask SQLAlchemy is the de facto framework for working with relational databases in Python and it supports databases like MySQL, PostgreSQL, Oracle, MS-SQL, SQLite and so on Flask has its own implementation of SQLAlchemy  which you can install alongside its dependencies in your virtual env as: pip install flask- sqlalchemy Flask- SQLAlchemy  uses SQLALCHEMY_DATABASE_URI configuration key to specify the database URI. You need to also install the database driver of interest; we will be using the mysql connector Within your virtual environment type , pip install mysql-connector
+
+Interacting with the database from flask Next, we need to tell Flask- SQLAlchemy  the location of the database we want to use as a URI. The format of database URI is as follows:    dialect+driver://username:password@host:port/database The dialect refers to the name of the database like  mysql ,  mssql ,  postgresql   etc  while the driver refers to any python database API, for example using  mysqlconnector, within your config file, write: SQLALCHEMY_DATABASE_URI = mysql+mysqlconnector ://&lt;user&gt;:&lt;password&gt;@&lt;host&gt;[:&lt;port&gt;]/&lt; dbname &gt;   Note that  port  is the  mysql  port no!  not your  webserver  port, this is not required except you have changed your mysql default port or you have multiple mysql ports set up (see example in the notes) You can also explicitly specify a value for  SQLALCHEMY_TRACK_MODIFICATIONS = True|False  within your config file We will do the above in the config file
+
+#Your config.py class  GeneralConfig:     SQLALCHEMY_TRACK_MODIFICATIONS= False      	 SQLALCHEMY_DATABASE_URI= &quot;mysql+mysqlconnector://root@localhost/ blogdb &quot;
+
+Interacting with the database from flask To use Flask- SQLAlchemy,  import  SQLAlchemy  class from  flask_sqlalchemy  package and instantiate an  SQLAlchemy  object by passing an application instance to it.  In the __init__.py of your package (or otherwise): from  flask_sqlalchemy  import  SQLAlchemy if you are loading the  SQLALCHEMY_DATABASE_URI  Key from a config file, ensure it is  loaded here,  before you create the  db  handle db  =  SQLAlchemy (app) 
+
+Interacting with the database from flask Note: implementing the above in the __init__.py file implies that the db(FlaskSQLAlchemy) needs the app (Flask object)  __init__ loads the routes;  whereas the routes also need to import db from __init__ too The above can make you run into cyclic import error
+
+CIRCULAR IMPORTS If you are using Flask- SQLAlchemy  and  Blueprints  you may run into what is known as  circular imports circular or cyclic imports  is a situation when two modules depend on each other like below: #consider a file ‘a.py’ that contains: import b #another file ‘b.py’ which contains: import a
+
+CIRCULAR IMPORTS Circular dependencies  can generate problems in your code, it : may generate tight coupling between modules, and as a consequence, reduced code reusability. This fact also makes the code more difficult to maintain in the long run. can be the source of potential failures, such as infinite recursions, memory leaks, and cascade effects.  If you have a circular dependency in your code, it can be very difficult to debug the many potential problems it causes. Most Circular Imports are not actually logical circular imports but rather raise  ImportError  errors, because of the way import() evaluates top level statements of the entire file when called.
+
+CIRCULAR IMPORTS - SOLUTION def stuff(self):      from foo import bar      ... The above will avoid the execution of the import statement when the file is imported by other modules Similar idea is applied to setting up of your app when you use blueprints, the app instance is created in a function within the package-level  init , the function is referred to as  Application Factory
+
+APPLICATION FACTORY An application factory is a pattern used to create Flask application instances dynamically rather than creating them directly at the module level. It allows for greater flexibility in configuration and customization, as well as better organization of your code.  The basic idea is to define a function that creates and configures the Flask application instance, and then call this function to create the application. The function must import everything it needs to set up your app
+
+Routing – Dynamic Routes You can make parts of the URL dynamic by passing variables with  &lt; variable_name &gt;;   your function then receives the &lt; variable_name &gt; as a keyword argument.  You can also use a converter to specify the type of the argument like &lt; converter:variable_name &gt;. Example: &lt; int:age &gt;
+
+SAMPLE APPLICATION FACTORY #within pkg/models.py from flask_sqlalchemy import SQLAlchemy db=SQLAlchemy()  #moved here from __init__ #within pkg/myroutes.py we can import db from models as: from pkg import app from pkg.mymodels import db
+
+APPLICATION FACTORY # within __init__ def create_app():     &quot;&quot;&quot;keep all imports that may cause conflict within this function so that anytime we write &quot;from pkg.. import.. none of these statements will be executed&quot;&quot;&quot;     from pkg.models import db     app=Flask(__name__)      app.config.from_pyfile(&quot;config.py&quot;,silent=True)      db.init_app(app)  # We moved the instantiation of db to models.py     csrf.init_app(app)  # initializing the app with CSRFProject object      return  app app = create_app()    #call create_app to make app available here from pkg import myroutes; from pkg import forms
+
+#Final __init__ with application factory from  flask  import  Flask from  flask_wtf.csrf  import  CSRFProtect csrf=CSRFProtect() def  create_app():      from  blogapp  import  config      from  blogapp.models  import  db  #we want app to be aware of db     app=Flask(__name__,instance_relative_config= True )     app.config.from_pyfile( 'config.py' ,silent= True )     app.config.from_object(config.DevelopmentConfig)         csrf.init_app(app)  #lazy-loading     db.init_app(app)  #lazy-loading i.e supplying app to SQLAlchemy class at a later time      return  app app = create_app() from  blogapp  import  user_route,admin_route
+
+Next, We need to DEFINE THE TABLES IN OUR DB within pkg/models.py, define your tables. Example: from flask_sqlalchemy import SQLAlchemy db=SQLAlchemy() user=db.Table('user',      db.Column('id',db.Integer,primary_key=True),     db.Column('name',db.String(200)),     db.Column('email',db.String(100)),     db.Column('message',db.String(100)) )
+
+NExt Up: We need to create the Tables Via The DB.CREATE_All() command - 1 At the python interactive shell, do from  projectapp.mymodel  import  db from  projectapp  import app app.app_context ().push() db.create_all () Creating our database tables for the first time: The below commands will create all the tables defined within models.py
+
+Creating table from your models The create_all() method only creates table if it doesn’t already exist in the database.  The method doesn’t take account of the modifications made to the models while creating tables. (This, we will achieve later with Migration) The SQLAlchemy class also defines a method called drop_all() to delete all the tables from the database At the python shell, run:  from packageName import db (or similar steps for application factory) &gt;&gt;&gt; db.drop_all()
+
+Interacting with the database from flask When using a web framework, you can interact with your database as follows: Directly executing queries (RAW Queries) Using in-built function provided by the framework Using Object relational mapper (ORM)
+
+Interacting with the database from flask Raw queries: you have to filter by yourself. In the case of change in database engines, you have to modify your queries to suit the syntax. Core SqlAlchemy functions: No queries but you will call different methods of the SqlAlchemy CORE class to perform db operations. The functions will in turn generate the underlying SQL statements for you. Data sanitization are handled by the parameterized functions. Object Relational Mapper (ORM): No queries but you treat your database tables as if they were classes and the columns as if they were properties. Requires you to have knowledge of OOP. The biggest advantage is it helps you query related tables without joining. 
+
+Routing – converter types
+
+Raw queries Executing raw database queries is of the form:  # from sqlalchemy.sql import text  (see notes for more) #  result =  db.session.execute(text(“INSERT INTO tablename…”)) #db.session.commit() #  id = result.lastrowid To fetch from the table, #rsp = db.session.execute(‘select * from tablename where…’) #rsp.fetchall() You can also use  rsp.fetchmany (n),  fetchone () etc You may be required to cast the query string into a text form: check the notes for this Similar pattern applies to delete and update raw queries.
+
+Passing parameters via the URL –Notice the highlighted section same page different ID hence diff content Generate a route for this if the app were to be your Flask App
+
+SOLUTION @app.route ( '/in/&lt;user&gt;/' ) def   userpage (user):      return   f &quot;The page for user with id  { user } &quot;
+
+Sample Website structure
+
+Going from page to page in the website shown, there are some sections of the pages that are looking different in terms of content. Can you identify these sections?
+
+*** xml-json-ajax_day2.pptx ***
+AJAX DAY 2 AJAX DAY 2 -  $.AJAX method and more
+
+Client side – Serialize method All elements within a form can be encoded into a string (key=value pair)  for submission using the .serialize() method in Jquery. It doesnt accept any argument, simply used as $(form).serialize() The .serialize() method creates a text string in standard URL-encoded notation For a form element's value to be included in the serialized string, the element must have a name attribute.  Values from checkboxes and radio buttons (inputs of type &quot;radio&quot; or &quot;checkbox&quot;) are included only if they are checked.  Data from file select elements is not serialized
+
+Client side –  formdata An alternative to serialize is the  jquery   FormData , with the  formData , you could even add more fields that are not within the form to the list of form elements. The  FormData  object will be populated with the form's current keys/values using the name property of each element for the keys and their submitted value for the values.  It will also encode file input content. Syntax var   formdata  =  new   FormData ()  //creates an empty form data
+
+Client side -  formdata   //add new elements ( key,value ) pair **   formdata . append ( ' csrf_token' , 'my  random token’ ) When creating the  FormData  object, you can optionally specify the form argument to prepopulate it with values from the specified form:   //create a form object for a specified form (id= myForm ) m yform  =  document . getElementById ( ' myForm ' ); formData  =  new   FormData ( myform ); Note: Only successful form controls are included in a  FormData  object, i.e. those with a name, not disabled and checked (radio buttons and checkboxes) or selected (one or more options within a select).
+
+Client side -  formdata   //Notes when using form data object  When specifying the form as argument, note that  FormData requires a DOM Node, you will find the following more strightforward as they return DOM nodes: document.getElementById()  and  d ocument.querySelector (selector); When selecting with jQuery, the returned object is a jQuery object, and to get the actual DOM-node this represents, you use [0] on the jQuery object. var   myform  =  document . querySelector ( '# myForm ’ );  var   myform  =  $ ( '# myForm ' )[ 0 ] //the first form formData  =  new   FormData ( myform );
+
+Client side -  formdata Note: Only successful form controls are included in a FormData object, i.e. those with a name, not disabled and checked (radio buttons and checkboxes) or selected (one or more options within a select).
+
+Client side (FORMDATA) - FILE UPLOAD VIA AJAX When using the  formData , be sure to set the following ajax options: cache:false, processData:false, contentType:false, Retrieve form elements with the FormData method
+
+SAMPLE IMPLEMENTATION var   formData  =  new   FormData ( myForm ); formData . append ( 'csrf_token' , &quot;{{ csrf_token()}}&quot; ) formData . append ( 'user' , 'abi' ) $ . ajax ({              url: &quot;{{ url_for('submit')}}&quot; ,              type: 'POST' ,              dataType: 'text' ,              cache: false ,              processData: false ,              contentType: false ,              data:formData ,              beforeSend : function (){},              success : function ( rsp ){},              error : function ( errmsg ){}         })     
+
+Returning SEQUENCE from the Server There are times when you want to return multiple values. The server can return a  dict  value as follows:  json.dumps ({“ fullname &quot;: &quot;John&quot;, &quot;age&quot;: 30}) When using  json.dumps  directly from your route/view, it doesn’t add the ‘application/json’ header to it, you need to manually add it via  make_response sendback  ={ ' message' : 'Name  Available' , 'status’ : 1 } rsp  =  make_response ( json . dumps ( sendback ), 200 ) rsp . headers [ 'Content-Type' ] =  'application/json' return   rsp
+
+Returning SEQUENCE from the Server Json.dumps takes 1 argument (when sending back multiple value, this must be a sequence) In the javascript, the success callback function can retrieve the data as an array.  success: function(response){ 	var x = response.fullname ; var y = response.age }
+
+SUMMARY OF OUTLINE The basic $.ajax() method comparable to form submission (url,data,success,request type) come up with basic example Explore other keys in the $.ajax() such as error, beforeSend, complete go further with basic example above Receiving json from the server go further with the example above Bulk sending of data to the backend with serialize method add more form fields to the example above The intricacies of file upload with AJAX technique ** Opportunity to implement functionalities in class app **
+
+Returning SEQUENCE from the Server The flask has a method  jsonify  which is an enhancement over  json.dumps  as it turns the JSON output into a Response object with the application/json  mimetype . Such that your view can return the JSON response. It can take keyword arguments or any variable  jsonify (* args ,** keyargs )  jsonify (1,2,3,4) will serialize to [1,2,3,4]   from flask import  jsonify  return  jsonify  (username='admin', email=' a@b.com',id =1) A keyword argument as above will send the following JSON response to the browser {     &quot;username&quot;: &quot;admin&quot;,     &quot;email&quot;: &quot;a@b.com&quot;,     &quot;id&quot;: 1 }
+
+Jsonify  and JSON.DUMPS()
+
+Handson/exercises- HOW TO: Find username if it exists (Exercise) Adding animation / loading.. Handson Select State to Load LGA(handson)
+
+YOUR HTML  &lt;select  id = &quot;state&quot;   class = &quot;form-control&quot; &gt;           &lt;option value = &quot;&quot; &gt;Please select&lt;/option&gt; &lt;option value = &quot;1&quot; &gt;Lagos&lt;/option&gt;           &lt;option value = &quot;2&quot; &gt;Abuja&lt;/option&gt; &lt;/selcect&gt;   &lt;select  id = &quot;lgas&quot;   class = &quot;form-control&quot; &gt;&lt;/selcect&gt;  
+
+The JS Function within your template $(“#state”). change (){      tosend = 'item=' + $ (this). val ()      $ . ajax ({          url: &quot;{{ url_for('search')}}&quot; ,          data:tosend ,          type: 'GET' ,          dataType: 'text' ,          success : function ( msg ){              $ ( '#lgas' ). html ( msg )         },          error : function ( er ){ console . log }     }) }
+
+Within your route, create the endpoint @ app .route ( '/search/' ) def   search ():      item  =  request . args . get ( 'item' )      deets =  States .query.get( item ).all()      toret  =  &quot;&quot;      for   t   in   deets :          toret  =  toret +  f &quot;&lt;option value=' { t .id } '&gt;&lt;/option&gt;&quot;           return   toret
+
+The $.ajax() Method The ajax() method is used to perform an AJAX (asynchronous HTTP) request Syntax is : $.ajax( {name:value, name:value, ... } ) URL can also come as the first parameter wherein the other options specified in the name:value pair will be applied on the URL, if omitted, the ajax call will be applied to the current page The $.ajax() function is what every function discussed in the previously mentioned article calls behind the scene using a preset configuration The list of the options accepted by this function is very long but some are compulsory while others are optional
+
+AJAX vs Traditional request Given a post request coming from a form; In the traditional method, we use the action attribute to specify where, the form fields will have name in order to pick the data that is to be sent. TRADITIONAL AJAX The  action  attribute url Name attribute on form elements data Method attribute Request type Submit  button Not compulsory
+
+Client side – sending data to the server Using query string Using JS Object
+
+Client side – capturing form data with query string Attach an event to the HTML tag and call the AJAX function when the event is triggered You can send the data as part of the URL with a query string as follows: url = &quot;/URL/?name=James&amp;age=10“ the variables name and age respectively will be retrieved using request.args.get(‘name’) You can also send the data separately as data=”name=James&amp;age=10”
+
+Client side – capturing form data with JS Object You can also send the data as a Javascript object as follows: var details= {name:”James”,age:10}
+
+Returning a string from the Server The dataType option of ajax should optionally set to ‘text’. The default is  text The server can just return the string which will be received through the success function of ajax
+

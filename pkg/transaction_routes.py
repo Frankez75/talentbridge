@@ -36,8 +36,7 @@ def checkout():
         flash('Please sign in to complete your purchase.', 'warning')
         return redirect(url_for('auth.login', redirect='checkout'))
     
-    # Get cart items from session (in a real app, you'd have a Cart model)
-    # For now, we'll use a session variable or query parameter
+    # Get artwork from URL parameter
     art_id = request.args.get('art_id')
     art = None
     if art_id:
@@ -46,7 +45,7 @@ def checkout():
             flash('Artwork not available.', 'error')
             return redirect(url_for('main.artwork_listing'))
     
-    return render_template('checkout_order.html', art=art)
+    return render_template('transaction/checkout_order.html', art=art)
 
 
 # ─────────────────────────────────────────
@@ -64,7 +63,7 @@ def payment():
         flash('Artwork not available for purchase.', 'error')
         return redirect(url_for('main.artwork_listing'))
     
-    return render_template('payment.html', art=art)
+    return render_template('transaction/payment.html', art=art)
 
 
 # ─────────────────────────────────────────
@@ -162,7 +161,7 @@ def order_confirmation():
         flash('Order not found.', 'error')
         return redirect(url_for('main.artwork_listing'))
     
-    return render_template('order_confirmation.html', order=order)
+    return render_template('transaction/order_confirmation.html', order=order)
 
 
 # ─────────────────────────────────────────
@@ -177,7 +176,38 @@ def patron_orders():
         OrderPurchase.patron_ord_id == session['user_id']
     ).order_by(OrderPurchase.order_date.desc()).all()
     
-    return render_template('patron_orders.html', orders=orders)
+    return render_template('patron/patron_orders.html', orders=orders)
+
+
+# ─────────────────────────────────────────
+# PATRON ORDERS DATA (JSON for AJAX)
+# ─────────────────────────────────────────
+@transaction.route('/api/patron/orders')
+def patron_orders_data():
+    if not login_required_patron():
+        return jsonify({'status': 'error', 'message': 'Not logged in.'})
+    
+    orders = db.session.query(OrderPurchase).filter(
+        OrderPurchase.patron_ord_id == session['user_id']
+    ).order_by(OrderPurchase.order_date.desc()).all()
+    
+    data = [{
+        'id': o.order_id,
+        'artworkTitle': o.details[0].art_item.art_title if o.details else 'Unknown',
+        'artworkId': o.details[0].art_item.art_id if o.details else None,
+        'artistName': f"{o.artist_buyer.artist_fname} {o.artist_buyer.artist_lname}" if o.artist_buyer else 'Unknown',
+        'artistId': o.artist_ord_id,
+        'image': o.details[0].art_item.art_image if o.details else None,
+        'amount': float(o.total_amount),
+        'status': o.order_status.title(),
+        'orderDate': o.order_date.strftime('%Y-%m-%d') if o.order_date else None,
+        'processingDate': None,  # You can add these fields to your model
+        'shippedDate': None,
+        'deliveredDate': None,
+        'reviewed': False
+    } for o in orders]
+    
+    return jsonify({'orders': data})
 
 
 # ─────────────────────────────────────────
@@ -192,7 +222,36 @@ def artist_orders():
         OrderPurchase.artist_ord_id == session['user_id']
     ).order_by(OrderPurchase.order_date.desc()).all()
     
-    return render_template('orders_payment_page.html', orders=orders)
+    return render_template('transaction/orders_payment_page.html', orders=orders)
+
+
+# ─────────────────────────────────────────
+# ARTIST ORDERS DATA (JSON for AJAX)
+# ─────────────────────────────────────────
+@transaction.route('/api/artist/orders')
+def artist_orders_data():
+    if 'user_id' not in session or session.get('user_type') != 'artist':
+        return jsonify({'status': 'error', 'message': 'Not logged in.'})
+    
+    orders = db.session.query(OrderPurchase).filter(
+        OrderPurchase.artist_ord_id == session['user_id']
+    ).order_by(OrderPurchase.order_date.desc()).all()
+    
+    data = [{
+        'id': o.order_id,
+        'artworkTitle': o.details[0].art_item.art_title if o.details else 'Unknown',
+        'artworkImage': o.details[0].art_item.art_image if o.details else None,
+        'buyerName': f"{o.patron_buyer.patron_fname} {o.patron_buyer.patron_lname}" if o.patron_buyer else 'Unknown',
+        'buyerEmail': o.patron_buyer.patron_mail if o.patron_buyer else None,
+        'amount': float(o.total_amount),
+        'status': o.order_status.title(),
+        'orderDate': o.order_date.strftime('%Y-%m-%d') if o.order_date else None,
+        'processingDate': None,
+        'shippedDate': None,
+        'deliveredDate': None
+    } for o in orders]
+    
+    return jsonify({'orders': data})
 
 
 # ─────────────────────────────────────────
@@ -217,25 +276,14 @@ def track_order(order_id):
     
     # Build timeline
     timeline = []
-    
-    # Order placed
     timeline.append({
         'label': 'Order Placed',
         'date': order.order_date.strftime('%Y-%m-%d %H:%M:%S') if order.order_date else None,
         'completed': True
     })
     
-    # Payment status (simplified)
-    payment = db.session.query(Payment).filter(Payment.order_art_id == order_id).first()
-    if payment:
-        timeline.append({
-            'label': 'Payment ' + payment.payment_status.title(),
-            'date': payment.date_payed.strftime('%Y-%m-%d %H:%M:%S') if payment.date_payed else None,
-            'completed': payment.payment_status == 'successful'
-        })
-    
-    # Order status
-    statuses = ['processing', 'shipped', 'delivered', 'completed']
+    # Check status progression
+    statuses = ['pending', 'processing', 'shipped', 'delivered', 'completed']
     for status in statuses:
         if order.order_status == status:
             timeline.append({

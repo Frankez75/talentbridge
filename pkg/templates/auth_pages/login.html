@@ -116,8 +116,9 @@
 {% block extra_js %}
 <script>
     $(document).ready(function() {
-        let userType = localStorage.getItem('tb_user_type');
-        let userName = localStorage.getItem('tb_user_name');
+        // Automatically redirect if already logged in (from session)
+        let userType = "{{ session.get('user_type') }}";
+        let userName = "{{ session.get('user_name') }}";
         if(userType && userName) {
             if(userType === 'artist') window.location.href = "{{ url_for('user.artist_dashboard') }}";
             else if(userType === 'patron') window.location.href = "{{ url_for('user.patron_dashboard') }}";
@@ -161,14 +162,16 @@
             $.ajax({
                 url: "{{ url_for('auth.login_post') }}",
                 type: 'POST',
-                data: { email: email, password: password },
+                data: { email: email, password: password, csrf_token: "{{ csrf_token() }}" },
                 dataType: 'json',
                 success: function(response) {
+                    $('#loginBtn').prop('disabled', false);
+                    $('#loginBtn').html('<i class="bi bi-box-arrow-in-right"></i> Sign In');
+                    
                     if(response.status === 'success') {
+                        // SUCCESS: Actually redirect the browser
                         window.location.href = response.redirect;
                     } else {
-                        $('#loginBtn').prop('disabled', false);
-                        $('#loginBtn').html('<i class="bi bi-box-arrow-in-right"></i> Sign In');
                         $('#errorText').text(response.message);
                         $('#errorMessage').addClass('show');
                     }

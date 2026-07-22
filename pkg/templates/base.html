@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{% block title %}TalentBridge · Where Art Finds Its Patron{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -35,30 +36,44 @@
         .dashboard-card, .artwork-card, .review-card, .order-card { animation: fadeInUp 0.4s ease-out; }
         .empty-state { text-align: center; padding: 3rem 2rem; background: #FFFFFF; border-radius: 20px; border: 2px dashed #e0e0d5; }
         .empty-state i { font-size: 4rem; color: #e67300; margin-bottom: 1rem; }
-        {% block extra_css %}{% endblock %}
     </style>
+        {% block extra_css %}{% endblock %}
 </head>
 <body>
     {% block navbar %}
-    <nav class="navbar">
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('main.index') }}">Talent<span>Bridge</span></a>
-            <div>
-                {% if session.get('user_type') == 'patron' %}
-                    <span class="me-3" style="color: #e67300; font-weight: 600;">{{ session.get('user_name', 'Patron') }}</span>
-                    <a href="{{ url_for('user.patron_dashboard') }}" class="btn-outline-custom" style="padding: 0.4rem 1.5rem; font-size: 0.9rem;">Dashboard</a>
-                    <a href="{{ url_for('auth.logout') }}" class="btn-logout" style="padding: 0.4rem 1.5rem; font-size: 0.9rem;">Logout</a>
-                {% elif session.get('user_type') == 'artist' %}
-                    <span class="me-3" style="color: #e67300; font-weight: 600;">{{ session.get('user_name', 'Artist') }}</span>
-                    <a href="{{ url_for('user.artist_dashboard') }}" class="btn-outline-custom" style="padding: 0.4rem 1.5rem; font-size: 0.9rem;">Dashboard</a>
-                    <a href="{{ url_for('auth.logout') }}" class="btn-logout" style="padding: 0.4rem 1.5rem; font-size: 0.9rem;">Logout</a>
-                {% elif session.get('admin_id') %}
-                    <span class="me-3" style="color: #e67300; font-weight: 600;">Admin</span>
-                    <a href="{{ url_for('admin.admin_logout') }}" class="btn-logout" style="padding: 0.4rem 1.5rem; font-size: 0.9rem;">Logout</a>
-                {% else %}
-                    <a href="{{ url_for('auth.login') }}" class="btn-outline-custom" style="padding: 0.4rem 1.5rem; font-size: 0.9rem; margin-right: 0.75rem;">Sign In</a>
-                    <a href="{{ url_for('auth.register') }}" class="btn-primary-custom" style="padding: 0.4rem 1.5rem; font-size: 0.9rem;">Join</a>
-                {% endif %}
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="mainNavbar">
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.artwork_listing') }}">Discover</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#artists">For Artists</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#patrons">For Patrons</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.artwork_listing') }}">Gallery</a></li>
+                </ul>
+                
+                <div class="d-flex align-items-center gap-2">
+                    {% if session.get('user_type') == 'patron' %}
+                        <span class="me-2" style="color: #e67300; font-weight: 600;">{{ session.get('user_name', 'Patron') }}</span>
+                        <a href="{{ url_for('user.patron_dashboard') }}" class="btn-outline-custom" style="padding: 0.4rem 1.5rem; font-size: 0.9rem;">Dashboard</a>
+                        <a href="{{ url_for('auth.logout') }}" class="btn-logout" style="padding: 0.4rem 1.5rem; font-size: 0.9rem;">Logout</a>
+                    {% elif session.get('user_type') == 'artist' %}
+                        <span class="me-2" style="color: #e67300; font-weight: 600;">{{ session.get('user_name', 'Artist') }}</span>
+                        <a href="{{ url_for('user.artist_dashboard') }}" class="btn-outline-custom" style="padding: 0.4rem 1.5rem; font-size: 0.9rem;">Dashboard</a>
+                        <a href="{{ url_for('auth.logout') }}" class="btn-logout" style="padding: 0.4rem 1.5rem; font-size: 0.9rem;">Logout</a>
+                    {% elif session.get('admin_id') %}
+                        <span class="me-2" style="color: #e67300; font-weight: 600;">Admin</span>
+                        <a href="{{ url_for('admin.admin_logout') }}" class="btn-logout" style="padding: 0.4rem 1.5rem; font-size: 0.9rem;">Logout</a>
+                    {% else %}
+                        <a href="{{ url_for('auth.login') }}" class="btn-outline-custom" style="padding: 0.4rem 1.5rem; font-size: 0.9rem;">Log in</a>
+                        <a href="{{ url_for('auth.register') }}" class="btn-primary-custom" style="padding: 0.4rem 1.5rem; font-size: 0.9rem;">Sign up</a>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </nav>
@@ -73,6 +88,27 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Setup CSRF token for all jQuery AJAX requests
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", $('meta[name="csrf-token"]').attr('content'));
+                }
+            }
+        });
+
+        // Sync Flask session state with localStorage for frontend components
+        {% if session.get('user_id') %}
+            localStorage.setItem('tb_user_name', "{{ session.get('user_name', '') | safe }}");
+            localStorage.setItem('tb_user_email', "{{ session.get('user_email', '') | safe }}");
+            localStorage.setItem('tb_user_type', "{{ session.get('user_type', '') | safe }}");
+        {% else %}
+            localStorage.removeItem('tb_user_name');
+            localStorage.removeItem('tb_user_email');
+            localStorage.removeItem('tb_user_type');
+        {% endif %}
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

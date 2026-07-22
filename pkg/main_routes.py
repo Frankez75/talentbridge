@@ -15,7 +15,7 @@ def index():
         TbArt.artwork_status == 'available'
     ).order_by(TbArt.art_date.desc()).limit(6).all()
     
-    return render_template('index.html', recent_arts=recent_arts)
+    return render_template('auth_pages/index.html', recent_arts=recent_arts)
 
 
 # ─────────────────────────────────────────
@@ -23,7 +23,9 @@ def index():
 # ─────────────────────────────────────────
 @main.route('/artwork-listing')
 def artwork_listing():
-    return render_template('artwork_listing.html')
+    # Pass art types for the filter dropdown
+    art_types = db.session.query(TbArtType).all()
+    return render_template('art/artwork_listing.html', art_types=art_types)
 
 
 # ─────────────────────────────────────────
@@ -48,7 +50,7 @@ def art_detail(art_id):
         RatingReview.rated_art_id == art_id
     ).order_by(RatingReview.rating_date.desc()).all()
     
-    return render_template('artwork_detail.html',
+    return render_template('art/artwork_detail.html',
                            art=art,
                            artist=artist,
                            similar=similar,
@@ -61,7 +63,7 @@ def art_detail(art_id):
 @main.route('/art/category')
 def art_category():
     art_types = db.session.query(TbArtType).all()
-    return render_template('artwork_category.html', art_types=art_types)
+    return render_template('art/artwork_category.html', art_types=art_types)
 
 
 # ─────────────────────────────────────────
@@ -115,6 +117,12 @@ def artist_public_profile(artist_id):
         TbArt.artwork_status == 'available'
     ).order_by(TbArt.art_date.desc()).all()
     
+    # Get orders for sales count
+    orders = db.session.query(OrderPurchase).filter(
+        OrderPurchase.artist_ord_id == artist_id,
+        OrderPurchase.order_status == 'completed'
+    ).all()
+    
     ratings = db.session.query(RatingReview).filter(
         RatingReview.rated_artist_id == artist_id
     ).all()
@@ -122,9 +130,10 @@ def artist_public_profile(artist_id):
     # Calculate average rating
     avg_rating = sum([r.rating_score for r in ratings]) / len(ratings) if ratings else 0
     
-    return render_template('artist_page(public_facing).html',
+    return render_template('artist/artist_page(public_facing).html',
                            artist=artist,
                            artworks=artworks,
+                           orders=orders,
                            ratings=ratings,
                            avg_rating=avg_rating)
 
@@ -143,8 +152,6 @@ def contact_artist():
     if not all([artist_id, name, email, message]):
         return jsonify({'status': 'error', 'message': 'All fields are required.'})
     
-    # In a real app, you would send an email here
-    # For now, we'll just return success
-    # You could also create a ContactMessage model and save it
+    # In a real app, you would send an email here or save to a ContactMessage model
     
     return jsonify({'status': 'success', 'message': 'Message sent successfully!'})
