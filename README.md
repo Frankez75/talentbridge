@@ -47,7 +47,7 @@ Prerequisites
 
 · Python 3.8+  
 · pip  
-· SQLite/PostgreSQL/MySQL (depending on configuration)  
+· SQLite/PostgreSQL/MySQL
 
 Installation  
 
