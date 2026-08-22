@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
@@ -15,7 +16,13 @@ def create_app():
 
     # Load config
     app.config.from_pyfile('config.py', silent=True)
-    app.config.from_object(config.DevelopmentConfig)
+    if os.environ.get('FLASK_ENV') == 'production':
+        app.config.from_object(config.ProductionConfig)
+    else:
+        app.config.from_object(config.DevelopmentConfig)
+
+    # Initialize extensions
+    db.init_app(app)
 
     # Initialize extensions
     db.init_app(app)
