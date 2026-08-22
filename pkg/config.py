@@ -13,5 +13,5 @@ class DevelopmentConfig(Config):
 class ProductionConfig(Config):
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = (
-        'mysql+mysqlconnector://root:@localhost/talent_bridge'
+        'mysql+mysqlconnector://fnl:75ace75of75excel#@mysql-fnl.alwaysdata.net/fnl_talentbridge_db'
     )
