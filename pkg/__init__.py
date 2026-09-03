@@ -14,15 +14,12 @@ def create_app():
 
     app = Flask(__name__, instance_relative_config=True)
 
-    # Load config
+    # Load configuration dynamically based on FLASK_ENV environment variable
     app.config.from_pyfile('config.py', silent=True)
     if os.environ.get('FLASK_ENV') == 'production':
         app.config.from_object(config.ProductionConfig)
     else:
         app.config.from_object(config.DevelopmentConfig)
-
-    # Initialize extensions
-    db.init_app(app)
 
     # Initialize extensions
     db.init_app(app)
