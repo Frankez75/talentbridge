@@ -9,4 +9,4 @@ def not_found(environ, start_response):
 
 application = DispatcherMiddleware(not_found, {
     "/talentbridge": app
-}) = "/talentbridge"
+})
