@@ -1,4 +1,12 @@
 from pkg import create_app
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
-application = create_app()
-application.config["APPLICATION_ROOT"] = "/talentbridge"
+app = create_app()
+
+def not_found(environ, start_response):
+    start_response("404 Not Found", [("Content-Type", "text/plain")])
+    return [b"Not Found"]
+
+application = DispatcherMiddleware(not_found, {
+    "/talentbridge": app
+}) = "/talentbridge"
