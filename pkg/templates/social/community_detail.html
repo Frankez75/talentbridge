@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ group.group_name }} - TalentBridge{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <!-- Sidebar / Group Info -->
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow-sm rounded-4 position-sticky" style="top: 2rem;">
+                <div class="card-body p-4 text-center">
+                    <div class="bg-light rounded-circle p-4 text-accent d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="bi bi-people-fill fs-1"></i>
+                    </div>
+                    <h3 class="fw-bold">{{ group.group_name }}</h3>
+                    <p class="text-secondary">{{ group.description }}</p>
+                    <hr>
+                    
+                    {% if session.get('user_id') %}
+                        <button class="btn {% if is_member %}btn-outline-danger{% else %}btn-primary-custom{% endif %} w-100 rounded-pill mb-3" id="joinBtn">
+                            {% if is_member %}<i class="bi bi-box-arrow-right"></i> Leave Group{% else %}<i class="bi bi-plus-lg"></i> Join Group{% endif %}
+                        </button>
+                    {% else %}
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-custom w-100 rounded-pill mb-3">Login to Join</a>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('social.communities_list') }}" class="text-decoration-none text-secondary small"><i class="bi bi-arrow-left"></i> Back to Communities</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Posts Feed -->
+        <div class="col-lg-8">
+            {% if is_member %}
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <form action="{{ url_for('social.create_post', group_id=group.group_id) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <textarea class="form-control rounded-3 bg-light border-0" name="content" rows="3" placeholder="What's on your mind? Share with the community..." required></textarea>
+                        </div>
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary-custom rounded-pill px-4">Post</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-info rounded-4 border-0 mb-4 text-center">
+                <i class="bi bi-info-circle me-2"></i> Join the group to start posting and interacting with members!
+            </div>
+            {% endif %}
+
+            <h4 class="fw-bold mb-3">Recent Discussions</h4>
+            {% if posts %}
+                {% for post in posts %}
+                <div class="card border-0 shadow-sm rounded-4 mb-3">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 40px; height: 40px;">
+                                    {{ post.author_type[0]|upper }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">Member #{{ post.author_id }} <span class="badge bg-light text-dark fw-normal border ms-1">{{ post.author_type }}</span></div>
+                                    <small class="text-muted">{{ post.created_at.strftime('%b %d, %Y at %I:%M %p') }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="mb-0" style="white-space: pre-line;">{{ post.content }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-5 bg-white rounded-4 shadow-sm">
+                    <i class="bi bi-chat-square-text text-muted" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3 text-dark fw-bold">No posts yet</h5>
+                    <p class="text-secondary">Be the first to start a conversation in this community!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#joinBtn').click(function() {
+        let btn = $(this);
+        btn.prop('disabled', true);
+        
+        $.ajax({
+            url: "{{ url_for('social.join_community', group_id=group.group_id) }}",
+            type: 'POST',
+            success: function(response) {
+                if(response.status === 'success') {
+                    window.location.reload();
+                } else {
+                    alert(response.message);
+                    btn.prop('disabled', false);
+                }
+            },
+            error: function() {
+                alert('An error occurred. Please try again.');
+                btn.prop('disabled', false);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

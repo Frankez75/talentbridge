@@ -29,8 +29,6 @@
     .remember-me input[type="checkbox"] { width: 18px; height: 18px; accent-color: #e67300; border-radius: 4px; }
     .forgot-link { color: #6c6c5a; text-decoration: none; font-size: 0.9rem; transition: all 0.3s ease; }
     .forgot-link:hover { color: #e67300; }
-    .admin-link { display: inline-block; padding: 0.3rem 1rem; background: #f0f0ea; color: #6c6c5a; border-radius: 40px; font-size: 0.75rem; font-weight: 600; text-decoration: none; transition: all 0.3s ease; }
-    .admin-link:hover { background: #e67300; color: white; }
     @keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-10px); } 40% { transform: translateX(10px); } 60% { transform: translateX(-10px); } 80% { transform: translateX(10px); } }
 </style>
 {% endblock %}
@@ -92,7 +90,7 @@
             </div>
 
             <div class="text-center mb-3">
-                <button class="social-btn"><i class="bi bi-google"></i></button>
+                <a href="{{ url_for('auth.login_google') }}" class="social-btn" style="text-decoration: none;"><i class="bi bi-google"></i></a>
                 <button class="social-btn"><i class="bi bi-facebook"></i></button>
                 <button class="social-btn"><i class="bi bi-apple"></i></button>
             </div>

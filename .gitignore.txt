@@ -1,0 +1,43 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+vtalent/
+venv/
+env/
+.venv/
+
+# Environment Variables
+.env
+.env.local
+.env.development
+.env.production
+
+# Instance folder
+instance/
+
+# Database & Migrations
+*.sqlite
+*.sqlite3
+*.db
+*.sql
+
+# Flask / Python
+*.pyc
+*.pyo
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log

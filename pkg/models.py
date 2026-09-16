@@ -36,6 +36,7 @@ class TbArtist(db.Model):
     artist_art      = db.Column(db.String(200), nullable=True)
     artist_reg_date = db.Column(db.DateTime, default=datetime.utcnow)
     artist_state_id = db.Column(db.Integer, db.ForeignKey('state.state_id'), nullable=True)
+    google_id       = db.Column(db.String(255), nullable=True, unique=True)
 
     arts = db.relationship('TbArt', backref='artist', lazy=True)
     sent_messages = db.relationship(
@@ -82,6 +83,7 @@ class TbPatron(db.Model):
     patron_type     = db.Column(db.Enum('buyer', 'scout', 'business'), nullable=False)
     patron_regdate  = db.Column(db.DateTime, default=datetime.utcnow)
     patron_state_id = db.Column(db.Integer, db.ForeignKey('state.state_id'), nullable=True)
+    google_id       = db.Column(db.String(255), nullable=True, unique=True)
 
     patron_orders = db.relationship(
         'OrderPurchase',
@@ -274,3 +276,86 @@ class UserSearchTrack(db.Model):
 
     def __repr__(self):
         return f'<Search "{self.search_term}">'
+
+# ─────────────────────────────────────────
+# FOLLOWS
+# ─────────────────────────────────────────
+class Follow(db.Model):
+    __tablename__ = 'follows'
+
+    follow_id          = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    follower_type      = db.Column(db.Enum('patron', 'artist'), nullable=False)
+    follower_id        = db.Column(db.Integer, nullable=False)
+    followed_artist_id = db.Column(db.Integer, db.ForeignKey('tb_artists.artist_id'), nullable=False)
+    created_at         = db.Column(db.DateTime, default=datetime.utcnow)
+
+    followed_artist = db.relationship('TbArtist', backref='followers_rel')
+
+    def __repr__(self):
+        return f'<Follow {self.follower_type} {self.follower_id} -> Artist {self.followed_artist_id}>'
+
+# ─────────────────────────────────────────
+# NOTIFICATIONS
+# ─────────────────────────────────────────
+class Notification(db.Model):
+    __tablename__ = 'notifications'
+
+    notification_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    recipient_type  = db.Column(db.Enum('patron', 'artist'), nullable=False)
+    recipient_id    = db.Column(db.Integer, nullable=False)
+    message         = db.Column(db.String(255), nullable=False)
+    link            = db.Column(db.String(255), nullable=True)
+    is_read         = db.Column(db.Boolean, default=False)
+    created_at      = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Notification {self.notification_id} for {self.recipient_type} {self.recipient_id}>'
+
+# ─────────────────────────────────────────
+# COMMUNITY GROUPS
+# ─────────────────────────────────────────
+class CommunityGroup(db.Model):
+    __tablename__ = 'community_groups'
+
+    group_id     = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name         = db.Column(db.String(150), nullable=False, unique=True)
+    description  = db.Column(db.String(500), nullable=True)
+    category     = db.Column(db.String(100), nullable=True)
+    created_at   = db.Column(db.DateTime, default=datetime.utcnow)
+
+    members = db.relationship('GroupMember', backref='group', cascade="all, delete-orphan", lazy=True)
+    posts   = db.relationship('ForumPost', backref='group', cascade="all, delete-orphan", lazy=True)
+
+    def __repr__(self):
+        return f'<CommunityGroup {self.name}>'
+
+# ─────────────────────────────────────────
+# GROUP MEMBERS
+# ─────────────────────────────────────────
+class GroupMember(db.Model):
+    __tablename__ = 'group_members'
+
+    member_id   = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    group_id    = db.Column(db.Integer, db.ForeignKey('community_groups.group_id'), nullable=False)
+    member_type = db.Column(db.Enum('patron', 'artist'), nullable=False)
+    user_id     = db.Column(db.Integer, nullable=False)
+    joined_at   = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<GroupMember {self.member_type} {self.user_id} in Group {self.group_id}>'
+
+# ─────────────────────────────────────────
+# FORUM POSTS
+# ─────────────────────────────────────────
+class ForumPost(db.Model):
+    __tablename__ = 'forum_posts'
+
+    post_id     = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    group_id    = db.Column(db.Integer, db.ForeignKey('community_groups.group_id'), nullable=False)
+    author_type = db.Column(db.Enum('patron', 'artist'), nullable=False)
+    author_id   = db.Column(db.Integer, nullable=False)
+    content     = db.Column(db.Text, nullable=False)
+    created_at  = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<ForumPost {self.post_id} in Group {self.group_id}>'

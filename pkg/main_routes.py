@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify, abort
-from pkg.models import db, TbArt, TbArtist, TbArtType, RatingReview, State
+from pkg.models import db, TbArt, TbArtist, TbArtType, RatingReview, State, Follow, OrderPurchase
 from datetime import datetime
 
 main = Blueprint('main', __name__)
@@ -130,12 +130,24 @@ def artist_public_profile(artist_id):
     # Calculate average rating
     avg_rating = sum([r.rating_score for r in ratings]) / len(ratings) if ratings else 0
     
+    follower_count = db.session.query(Follow).filter_by(followed_artist_id=artist_id).count()
+    
+    is_following = False
+    if 'user_id' in session:
+        is_following = db.session.query(Follow).filter_by(
+            follower_type=session.get('user_type'),
+            follower_id=session.get('user_id'),
+            followed_artist_id=artist_id
+        ).first() is not None
+    
     return render_template('artist/artist_page(public_facing).html',
                            artist=artist,
                            artworks=artworks,
                            orders=orders,
                            ratings=ratings,
-                           avg_rating=avg_rating)
+                           avg_rating=avg_rating,
+                           follower_count=follower_count,
+                           is_following=is_following)
 
 
 # ─────────────────────────────────────────

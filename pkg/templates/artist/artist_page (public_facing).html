@@ -70,7 +70,7 @@
         </div>
         <div class="col-md-3">
             <div class="stat-card">
-                <div class="stat-number" id="followerCount">1,247</div>
+                <div class="stat-number" id="followerCount">{{ "{:,}".format(follower_count) }}</div>
                 <div class="text-secondary fw-semibold">Followers</div>
             </div>
         </div>
@@ -91,7 +91,9 @@
     <div class="row mb-5">
         <div class="col-12 text-center">
             <button class="btn-contact me-3" id="contactBtn"><i class="bi bi-chat-dots"></i> Contact Artist</button>
-            <button class="btn-follow" id="followBtn"><i class="bi bi-heart"></i> Follow</button>
+            <button class="btn-follow {% if is_following %}active{% endif %}" id="followBtn">
+                {% if is_following %}<i class="bi bi-heart-fill"></i> Following{% else %}<i class="bi bi-heart"></i> Follow{% endif %}
+            </button>
         </div>
     </div>
 
@@ -239,18 +241,39 @@
         });
 
         $('#followBtn').click(function() {
-            isFollowing = !isFollowing;
-            if(isFollowing) {
-                $(this).addClass('active');
-                $(this).html('<i class="bi bi-heart-fill"></i> Following');
-                let count = parseInt($('#followerCount').text().replace(/,/g, ''));
-                $('#followerCount').text((count + 1).toLocaleString());
-            } else {
-                $(this).removeClass('active');
-                $(this).html('<i class="bi bi-heart"></i> Follow');
-                let count = parseInt($('#followerCount').text().replace(/,/g, ''));
-                $('#followerCount').text((count - 1).toLocaleString());
+            if(!currentUser) {
+                if(confirm('Please sign in to follow artists. Go to login?')) window.location.href = "{{ url_for('auth.login') }}";
+                return;
             }
+            
+            let btn = $(this);
+            btn.prop('disabled', true);
+            
+            $.ajax({
+                url: "/social/follow/" + artistId,
+                type: 'POST',
+                success: function(response) {
+                    btn.prop('disabled', false);
+                    if(response.status === 'success') {
+                        let count = parseInt($('#followerCount').text().replace(/,/g, '')) || 0;
+                        if(response.action === 'followed') {
+                            btn.addClass('active');
+                            btn.html('<i class="bi bi-heart-fill"></i> Following');
+                            $('#followerCount').text((count + 1).toLocaleString());
+                        } else {
+                            btn.removeClass('active');
+                            btn.html('<i class="bi bi-heart"></i> Follow');
+                            $('#followerCount').text(Math.max(0, count - 1).toLocaleString());
+                        }
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function() {
+                    btn.prop('disabled', false);
+                    alert('An error occurred.');
+                }
+            });
         });
     });
 </script>

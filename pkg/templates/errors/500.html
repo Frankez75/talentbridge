@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}TalentBridge · Internal Server Error{% endblock %}
+
+{% block content %}
+<div class="container text-center" style="min-height: 70vh; display: flex; align-items: center; justify-content: center;">
+    <div>
+        <h1 class="display-1 fw-bold text-accent">500</h1>
+        <h2 class="mb-4 fw-semibold">Internal Server Error</h2>
+        <p class="text-secondary mb-5">Something went wrong on our end. Please try again later or contact support if the issue persists.</p>
+        <a href="{{ url_for('main.index') }}" class="btn-primary-custom" style="padding: 0.8rem 2.5rem; text-decoration: none;">Go to Homepage</a>
+    </div>
+</div>
+{% endblock %}

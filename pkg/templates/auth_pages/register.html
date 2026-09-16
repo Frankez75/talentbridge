@@ -66,6 +66,7 @@
                     {% endfor %}
                 </div>
 
+
                 <div class="mb-3">
                     <label class="form-label"><i class="bi bi-lock"></i> Password</label>
                     <div class="input-group-icon">
@@ -123,6 +124,12 @@
 
             <div class="divider">
                 <span>or continue with</span>
+            </div>
+
+            <div class="text-center mb-3">
+                <a href="{{ url_for('auth.login_google') }}" class="social-btn" style="text-decoration: none;"><i class="bi bi-google"></i></a>
+                <button class="social-btn"><i class="bi bi-facebook"></i></button>
+                <button class="social-btn"><i class="bi bi-apple"></i></button>
             </div>
 
             <div class="text-center">

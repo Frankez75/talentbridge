@@ -335,7 +335,12 @@
                 dataType: 'json',
                 success: function(response) {
                     if(response.status === 'success') {
-                        window.location.href = "{{ url_for('transaction.order_confirmation') }}?order_id=" + response.order_id;
+                        if(response.redirect_url) {
+                            // Redirect to Paystack or confirmation page (if bypassing)
+                            window.location.href = response.redirect_url;
+                        } else {
+                            window.location.href = "{{ url_for('transaction.order_confirmation') }}?order_id=" + response.order_id;
+                        }
                     } else {
                         alert(response.message);
                     }

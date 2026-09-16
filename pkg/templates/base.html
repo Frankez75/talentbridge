@@ -54,15 +54,23 @@
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('main.artwork_listing') }}">Discover</a></li>
                     <li class="nav-item"><a class="nav-link" href="#artists">For Artists</a></li>
                     <li class="nav-item"><a class="nav-link" href="#patrons">For Patrons</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.artwork_listing') }}">Gallery</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('social.communities_list') }}">Communities</a></li>
                 </ul>
                 
                 <div class="d-flex align-items-center gap-2">
                     {% if session.get('user_type') == 'patron' %}
+                        <a href="{{ url_for('social.notifications') }}" class="nav-link position-relative me-3" title="Notifications">
+                            <i class="bi bi-bell fs-5"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none notif-badge">0</span>
+                        </a>
                         <span class="me-2" style="color: #e67300; font-weight: 600;">{{ session.get('user_name', 'Patron') }}</span>
                         <a href="{{ url_for('user.patron_dashboard') }}" class="btn-outline-custom" style="padding: 0.4rem 1.5rem; font-size: 0.9rem;">Dashboard</a>
                         <a href="{{ url_for('auth.logout') }}" class="btn-logout" style="padding: 0.4rem 1.5rem; font-size: 0.9rem;">Logout</a>
                     {% elif session.get('user_type') == 'artist' %}
+                        <a href="{{ url_for('social.notifications') }}" class="nav-link position-relative me-3" title="Notifications">
+                            <i class="bi bi-bell fs-5"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none notif-badge">0</span>
+                        </a>
                         <span class="me-2" style="color: #e67300; font-weight: 600;">{{ session.get('user_name', 'Artist') }}</span>
                         <a href="{{ url_for('user.artist_dashboard') }}" class="btn-outline-custom" style="padding: 0.4rem 1.5rem; font-size: 0.9rem;">Dashboard</a>
                         <a href="{{ url_for('auth.logout') }}" class="btn-logout" style="padding: 0.4rem 1.5rem; font-size: 0.9rem;">Logout</a>
@@ -103,6 +111,13 @@
             localStorage.setItem('tb_user_name', "{{ session.get('user_name', '') | safe }}");
             localStorage.setItem('tb_user_email', "{{ session.get('user_email', '') | safe }}");
             localStorage.setItem('tb_user_type', "{{ session.get('user_type', '') | safe }}");
+            
+            // Fetch unread notifications count
+            $.get("{{ url_for('social.unread_count') }}", function(data) {
+                if(data.count > 0) {
+                    $('.notif-badge').text(data.count).removeClass('d-none');
+                }
+            });
         {% else %}
             localStorage.removeItem('tb_user_name');
             localStorage.removeItem('tb_user_email');

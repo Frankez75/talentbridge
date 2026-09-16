@@ -12,6 +12,9 @@
 <div class="nav-item-custom" data-tab="upload">
     <i class="bi bi-cloud-upload"></i> Upload Artwork
 </div>
+<div class="nav-item-custom" data-tab="feeds">
+    <i class="bi bi-rss"></i> My Feeds
+</div>
 <div class="nav-item-custom" data-tab="orders">
     <i class="bi bi-cart-check"></i> My Sales
 </div>
@@ -364,12 +367,123 @@
             `;
         }
 
+        function renderFeeds() {
+            let html = `
+                <div class="dashboard-card">
+                    <h3 class="fw-bold mb-4"><i class="bi bi-rss"></i> My Feeds</h3>
+                    
+                    <ul class="nav nav-pills mb-4" id="feed-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active rounded-pill px-4" id="following-tab" data-bs-toggle="pill" data-bs-target="#following-feed" type="button" role="tab" style="font-weight: 600;">Artists You Follow</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link rounded-pill px-4 ms-2" id="popular-tab" data-bs-toggle="pill" data-bs-target="#popular-feed" type="button" role="tab" style="font-weight: 600;">Popular Artworks</button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content" id="feed-tab-content">
+                        <div class="tab-pane fade show active" id="following-feed" role="tabpanel">
+                            <div class="text-center py-5" id="following-loading">
+                                <div class="spinner-border text-accent" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                            <div class="row g-4" id="following-content" style="display:none;"></div>
+                        </div>
+                        <div class="tab-pane fade" id="popular-feed" role="tabpanel">
+                            <div class="text-center py-5" id="popular-loading">
+                                <div class="spinner-border text-accent" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                            <div class="row g-4" id="popular-content" style="display:none;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Fetch feeds asynchronously
+            setTimeout(function() {
+                $.ajax({
+                    url: "{{ url_for('social.get_feeds') }}",
+                    type: "GET",
+                    success: function(response) {
+                        $('#following-loading, #popular-loading').hide();
+                        
+                        // Following Feed
+                        if(response.followed_feed && response.followed_feed.length > 0) {
+                            let followedHtml = '';
+                            response.followed_feed.forEach(function(art) {
+                                followedHtml += `
+                                    <div class="col-md-4">
+                                        <div class="artwork-card" onclick="window.location.href='/art/` + art.id + `'">
+                                            <img src="` + (art.image || 'https://placehold.co/400x300/e67300/white?text=Artwork') + `" class="artwork-image" style="width: 100%; height: 200px; object-fit: cover;">
+                                            <div class="artwork-info" style="padding: 1rem;">
+                                                <div class="fw-bold">` + art.title + `</div>
+                                                <div class="text-secondary small">` + art.artist + `</div>
+                                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                                    <span style="color: #e67300; font-weight: bold;">$` + art.price + `</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                            $('#following-content').html(followedHtml).show();
+                        } else {
+                            $('#following-content').html(`
+                                <div class="col-12">
+                                    <div class="empty-state p-5">
+                                        <i class="bi bi-person-heart text-muted mb-3 d-block" style="font-size: 3rem;"></i>
+                                        <h5>No recent updates</h5>
+                                        <p class="text-secondary">Follow more artists to see their latest works here.</p>
+                                    </div>
+                                </div>
+                            `).show();
+                        }
+                        
+                        // Popular Feed
+                        if(response.popular_feed && response.popular_feed.length > 0) {
+                            let popularHtml = '';
+                            response.popular_feed.forEach(function(art) {
+                                popularHtml += `
+                                    <div class="col-md-4">
+                                        <div class="artwork-card" onclick="window.location.href='/art/` + art.id + `'">
+                                            <img src="` + (art.image || 'https://placehold.co/400x300/e67300/white?text=Artwork') + `" class="artwork-image" style="width: 100%; height: 200px; object-fit: cover;">
+                                            <div class="artwork-info" style="padding: 1rem;">
+                                                <div class="fw-bold">` + art.title + `</div>
+                                                <div class="text-secondary small">` + art.artist + `</div>
+                                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                                    <span style="color: #e67300; font-weight: bold;">$` + art.price + `</span>
+                                                    <span class="badge bg-light text-dark border"><i class="bi bi-cart-check"></i> ` + art.purchases + ` sold</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                            $('#popular-content').html(popularHtml).show();
+                        } else {
+                            $('#popular-content').html('<div class="col-12 text-center py-4">No trending arts right now.</div>').show();
+                        }
+                    },
+                    error: function() {
+                        $('#following-loading, #popular-loading').hide();
+                        $('#following-content, #popular-content').html('<div class="col-12 text-danger text-center">Failed to load feeds.</div>').show();
+                    }
+                });
+            }, 100);
+            
+            return html;
+        }
+
         window.loadTab = function(tabName) {
             let content = '';
             switch(tabName) {
                 case 'overview': content = renderOverview(); break;
                 case 'artworks': content = renderArtworks(); break;
                 case 'upload': content = renderUpload(); break;
+                case 'feeds': content = renderFeeds(); break;
                 case 'orders': content = renderOrders(); break;
                 case 'messages': content = renderMessages(); break;
                 case 'profile': content = renderProfile(); break;
