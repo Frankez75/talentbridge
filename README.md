@@ -91,16 +91,17 @@ SECRET_KEY=your-secret-key
 
 🧪 Development Status
 
-Last Commit: July 25, 2026  
-Status: Core functionality implemented, API and email integration pending.  
+Last Commit: September 12, 2026  
+Status: Core functionality implemented.  
 
 The latest updates include:  
 
 · ✅ Fixed Flask issues and core structure  
-· ✅ Database schema defined  
+· ✅ Easier payment and checkout processes
 · ✅ Migration setup completed  
-· 🚧 API endpoints (in progress)  
-· 🚧 Email notifications (in progress)  
+· ✅ Addition of communities and followers
+· ✅ Email notifications
+
 
 ---
 
